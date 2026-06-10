@@ -1,6 +1,19 @@
-export { DEBUG_INVINCIBLE } from './debug-flags';
+export { DEBUG_INVINCIBLE, DEBUG_SHOW_AXES } from './debug-flags';
 export { KeyboardInput } from './input/keyboard-input';
 export { GamepadInput } from './input/gamepad-input';
+export { listConnectedGamepads, wakeGamepads, type ConnectedGamepadInfo } from './input/gamepad-list';
+export {
+  gamepadIdsMatch,
+  pickPreferredGamepadSlot,
+  isPlayStationGamepad,
+  usesStandardGamepadLayout,
+} from './input/gamepad-profiles';
+export {
+  loadFlightPreferences,
+  saveFlightPreferences,
+  normalizeSelectedGamepadId,
+  type FlightPreferences,
+} from './settings/flight-preferences';
 export { CombinedInput } from './input/combined-input';
 export type { IInputSource, FlightInput } from './input/i-input-source';
 export { PlayerShipController } from './flight/player-ship-controller';

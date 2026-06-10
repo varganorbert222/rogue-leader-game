@@ -9,15 +9,19 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BabylonHost } from '@rogue-leader/engine';
-import { MissionManager, type MissionEndState, type MissionHudState } from '@rogue-leader/game';
+import { MissionManager, wakeGamepads, type FlightPreferences, type MissionEndState, type MissionHudState } from '@rogue-leader/game';
 import { AudioBootstrapService } from '../../services/audio-bootstrap.service';
 import { AudioSettingsService } from '../../services/audio-settings.service';
 import { FlightSettingsService } from '../../services/flight-settings.service';
+import {
+  SettingsPanelComponent,
+  type AudioSettingsSnapshot,
+} from '../../components/settings-panel/settings-panel.component';
 
 @Component({
   selector: 'app-game-canvas',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, SettingsPanelComponent],
   templateUrl: './game-canvas.component.html',
   styleUrl: './game-canvas.component.scss',
 })
@@ -47,6 +51,7 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
   };
 
   paused = false;
+  showSettings = false;
   endState: MissionEndState | null = null;
   missionName = '';
 
@@ -65,10 +70,13 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
     const flight = this.flightSettings.get();
     this.mission = new MissionManager(this.host, canvas);
     this.mission.applyAudioSettings(settings.master, settings.music, settings.sfx, settings.muted);
-    this.mission.applyFlightAssist(flight);
+    this.mission.applyFlightPreferences(flight);
 
     try {
       await this.mission.load(missionId);
+      canvas.setAttribute('tabindex', '0');
+      canvas.focus();
+      canvas.addEventListener('pointerdown', () => wakeGamepads());
     } catch (err) {
       console.error(err);
       alert(String(err));
@@ -100,7 +108,14 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
   @HostListener('document:keydown', ['$event'])
   onKey(event: KeyboardEvent): void {
     if (event.code === 'Escape') {
+      if (this.showSettings) {
+        this.closeSettings();
+        return;
+      }
       this.togglePause();
+    }
+    if (this.showSettings || this.paused || this.endState) {
+      return;
     }
     if (event.code === 'KeyM') {
       const s = this.audioSettings.get();
@@ -110,7 +125,34 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
     }
   }
 
+  openSettings(): void {
+    this.showSettings = true;
+    if (!this.paused) {
+      this.paused = true;
+      this.mission?.setPaused(true);
+    }
+  }
+
+  closeSettings(): void {
+    this.showSettings = false;
+  }
+
+  onSettingsAudioChange(snapshot: AudioSettingsSnapshot): void {
+    this.mission?.applyAudioSettings(
+      snapshot.master,
+      snapshot.music,
+      snapshot.sfx,
+      snapshot.muted
+    );
+  }
+
+  onSettingsFlightChange(prefs: FlightPreferences): void {
+    this.mission?.applyFlightPreferences(prefs);
+  }
+
   togglePause(): void {
+    if (this.endState) return;
+    this.showSettings = false;
     this.paused = !this.paused;
     this.mission?.setPaused(this.paused);
   }

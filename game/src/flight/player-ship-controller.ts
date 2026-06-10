@@ -8,6 +8,7 @@ import type { FlightInput } from "../input/i-input-source";
 import {
   applyAutoRoll,
   DEFAULT_FLIGHT_ASSIST,
+  hasFlightControlInput,
   INPUT_DEADZONE,
   ROLL_IDLE_DELAY_SEC,
   type FlightAssistOptions,
@@ -79,7 +80,7 @@ export class PlayerShipController {
       .multiply(rot)
       .normalize();
 
-    if (Math.abs(input.roll) >= INPUT_DEADZONE) {
+    if (hasFlightControlInput(input)) {
       this.rollIdleTime = 0;
     } else if (this.flightAssist.autoRoll) {
       this.rollIdleTime += dt;

@@ -1,37 +1,25 @@
 import { Injectable } from '@angular/core';
-
-const STORAGE_KEY = 'rogue-leader-flight';
-
-export interface FlightSettings {
-  autoRoll: boolean;
-}
-
-const DEFAULTS: FlightSettings = {
-  autoRoll: true,
-};
+import {
+  loadFlightPreferences,
+  saveFlightPreferences,
+  type FlightPreferences,
+} from '@rogue-leader/game';
 
 @Injectable({ providedIn: 'root' })
 export class FlightSettingsService {
-  private settings: FlightSettings = this.load();
+  private settings: FlightPreferences = loadFlightPreferences();
 
-  get(): FlightSettings {
+  get(): FlightPreferences {
     return { ...this.settings };
   }
 
-  update(partial: Partial<FlightSettings>): FlightSettings {
-    this.settings = { ...this.settings, ...partial };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings));
+  update(partial: Partial<FlightPreferences>): FlightPreferences {
+    this.settings = saveFlightPreferences(partial);
     return this.get();
   }
 
-  private load(): FlightSettings {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { ...DEFAULTS };
-      const parsed = JSON.parse(raw) as Partial<FlightSettings>;
-      return { autoRoll: parsed.autoRoll ?? DEFAULTS.autoRoll };
-    } catch {
-      return { ...DEFAULTS };
-    }
+  reload(): FlightPreferences {
+    this.settings = loadFlightPreferences();
+    return this.get();
   }
 }

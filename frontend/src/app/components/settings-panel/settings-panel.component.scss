@@ -1,0 +1,53 @@
+:host {
+  display: block;
+  color: #e8f4ff;
+  font-family: system-ui, sans-serif;
+}
+
+section {
+  margin-bottom: 1.25rem;
+}
+
+h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.hint {
+  opacity: 0.7;
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem;
+}
+
+.hint.warn {
+  color: #ffb070;
+  opacity: 1;
+}
+
+.controls-hint {
+  opacity: 0.75;
+  font-size: 0.85rem;
+  margin: 0;
+  line-height: 1.45;
+}
+
+label {
+  display: block;
+  margin: 0.5rem 0;
+}
+
+input[type='range'] {
+  width: 100%;
+}
+
+.select-row select {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.45rem 0.5rem;
+  background: #0a1424;
+  color: #e8f4ff;
+  border: 1px solid #2a4a6a;
+  border-radius: 4px;
+}

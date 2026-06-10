@@ -1,0 +1,48 @@
+<section>
+  <h2>Audio</h2>
+  <label>Master <input type="range" min="0" max="100" [(ngModel)]="master" (input)="applyAudio()" /></label>
+  <label>Music <input type="range" min="0" max="100" [(ngModel)]="music" (input)="applyAudio()" /></label>
+  <label>SFX <input type="range" min="0" max="100" [(ngModel)]="sfx" (input)="applyAudio()" /></label>
+  <label><input type="checkbox" [(ngModel)]="muted" (change)="applyAudio()" /> Mute all</label>
+</section>
+
+<section>
+  <h2>Flight assist</h2>
+  <p class="hint">After 3 s without pitch/roll input, wings return level (yaw unchanged).</p>
+  <label><input type="checkbox" [(ngModel)]="autoRoll" (change)="applyFlight()" /> Auto roll (bank)</label>
+</section>
+
+<section>
+  <h2>Gamepad</h2>
+  <p class="hint">Press a button on a controller so the browser detects it. The choice is saved.</p>
+  <label class="select-row">
+    Controller
+    <select [(ngModel)]="selectedGamepadId" (change)="applyFlight()">
+      <option [ngValue]="null">Automatic (first connected)</option>
+      @for (pad of gamepads; track pad.index) {
+        <option [ngValue]="pad.id">{{ pad.label }}</option>
+      }
+    </select>
+  </label>
+    @if (gamepads.length === 0) {
+      <p class="hint warn">No controller detected — connect DualSense and press Cross/A once.</p>
+  } @else if (savedGamepadMissing) {
+    <p class="hint warn">Saved controller not connected — plug it in before playing.</p>
+  }
+</section>
+
+@if (showGraphics) {
+  <section>
+    <h2>Graphics</h2>
+    <label><input type="checkbox" [(ngModel)]="shadows" disabled /> Shadows (Part B)</label>
+  </section>
+}
+
+@if (showControlsHint) {
+  <section>
+    <h2>Controls</h2>
+    <p class="controls-hint">
+      ↑↓←→ pitch/yaw · W/S thrust/brake · Q/E roll · Z+stick roll (gamepad) · Shift boost · Space fire · X camera
+    </p>
+  </section>
+}

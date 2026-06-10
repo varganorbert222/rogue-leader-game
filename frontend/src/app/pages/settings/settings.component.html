@@ -1,29 +1,10 @@
 <div class="page">
   <h1>Settings</h1>
 
-  <section>
-    <h2>Audio</h2>
-    <label>Master <input type="range" min="0" max="100" [(ngModel)]="master" (input)="apply()" /></label>
-    <label>Music <input type="range" min="0" max="100" [(ngModel)]="music" (input)="apply()" /></label>
-    <label>SFX <input type="range" min="0" max="100" [(ngModel)]="sfx" (input)="apply()" /></label>
-    <label><input type="checkbox" [(ngModel)]="muted" (change)="apply()" /> Mute all</label>
-  </section>
-
-  <section>
-    <h2>Flight assist</h2>
-    <p class="hint">After 3 s without roll input, wings return level (pitch and yaw unchanged).</p>
-    <label><input type="checkbox" [(ngModel)]="autoRoll" (change)="applyFlight()" /> Auto roll (bank)</label>
-  </section>
-
-  <section>
-    <h2>Graphics</h2>
-    <label><input type="checkbox" [(ngModel)]="shadows" disabled /> Shadows (Part B)</label>
-  </section>
-
-  <section>
-    <h2>Controls</h2>
-    <p>↑↓←→ pitch/yaw · W/S thrust/brake · Q/E roll · Z+stick roll (gamepad) · Shift boost · Space fire · X camera</p>
-  </section>
+  <app-settings-panel
+    (audioChange)="onAudioChange($event)"
+    (flightChange)="onFlightChange()"
+  />
 
   <a routerLink="/" (click)="audio.playUiClick()">Back</a>
 </div>

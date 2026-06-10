@@ -154,6 +154,32 @@ canvas {
   z-index: 10;
 }
 
+.overlay.settings {
+  justify-content: flex-start;
+  overflow-y: auto;
+  padding: 1.5rem 1rem;
+}
+
+.settings-panel-wrap {
+  width: min(100%, 420px);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 1rem 1.25rem 1.5rem;
+  background: rgba(4, 12, 24, 0.92);
+  border: 1px solid rgba(120, 200, 255, 0.35);
+  border-radius: 8px;
+}
+
+.settings-panel-wrap h2 {
+  margin: 0 0 1rem;
+  font-size: 1.35rem;
+}
+
+.settings-panel-wrap button {
+  margin-top: 1rem;
+  width: 100%;
+}
+
 button,
 a {
   padding: 0.6rem 1.2rem;
@@ -163,4 +189,5 @@ a {
   border-radius: 4px;
   text-decoration: none;
   cursor: pointer;
+  font: inherit;
 }

@@ -50,12 +50,26 @@
     </div>
   </div>
 
-  @if (paused) {
+  @if (paused && !showSettings) {
     <div class="overlay pause">
       <h2>Paused</h2>
       <button type="button" (click)="togglePause()">Resume</button>
-      <a routerLink="/settings">Settings</a>
+      <button type="button" (click)="openSettings()">Settings</button>
       <button type="button" (click)="quitToMenu()">Quit to Menu</button>
+    </div>
+  }
+
+  @if (showSettings) {
+    <div class="overlay settings">
+      <div class="settings-panel-wrap">
+        <h2>Settings</h2>
+        <app-settings-panel
+          [showControlsHint]="false"
+          (audioChange)="onSettingsAudioChange($event)"
+          (flightChange)="onSettingsFlightChange($event)"
+        />
+        <button type="button" (click)="closeSettings()">Back to pause</button>
+      </div>
     </div>
   }
 
