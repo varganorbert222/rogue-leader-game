@@ -1,0 +1,31 @@
+.page {
+  min-height: 100vh;
+  padding: 2rem;
+  background: #02060f;
+  color: #e8f4ff;
+  font-family: system-ui, sans-serif;
+  max-width: 480px;
+}
+
+section {
+  margin-bottom: 1.5rem;
+}
+
+.hint {
+  opacity: 0.7;
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem;
+}
+
+label {
+  display: block;
+  margin: 0.5rem 0;
+}
+
+input[type='range'] {
+  width: 100%;
+}
+
+a {
+  color: #8ec8ff;
+}

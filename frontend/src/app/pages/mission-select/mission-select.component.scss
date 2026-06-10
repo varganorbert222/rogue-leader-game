@@ -1,0 +1,43 @@
+.page {
+  min-height: 100vh;
+  padding: 2rem;
+  background: #02060f;
+  color: #e8f4ff;
+  font-family: system-ui, sans-serif;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  max-width: 560px;
+}
+
+li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+}
+
+li.stub {
+  opacity: 0.55;
+}
+
+.badge {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: #f5a623;
+}
+
+button,
+a {
+  color: #e8f4ff;
+}
+
+a {
+  display: inline-block;
+  margin-top: 1rem;
+}

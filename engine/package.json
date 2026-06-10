@@ -1,0 +1,11 @@
+{
+  "name": "@rogue-leader/engine",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@babylonjs/core": "^7.54.3",
+    "@babylonjs/loaders": "^7.54.3"
+  }
+}

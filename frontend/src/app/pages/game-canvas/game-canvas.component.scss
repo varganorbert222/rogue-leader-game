@@ -1,0 +1,166 @@
+.game-root {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.reticle-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.reticle-forward-line {
+  stroke: rgba(100, 220, 255, 0.85);
+  stroke-width: 0.25;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 2px rgba(80, 200, 255, 0.5));
+}
+
+.reticle-outer {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  border: 2px solid rgba(90, 210, 255, 0.75);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 3;
+  box-shadow: 0 0 10px rgba(60, 180, 255, 0.35);
+}
+
+.reticle-inner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border: 2px solid rgba(120, 230, 255, 0.9);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 3;
+  box-shadow: 0 0 6px rgba(80, 200, 255, 0.45);
+}
+
+.reticle-dot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  background: rgba(180, 245, 255, 0.95);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 4;
+  box-shadow: 0 0 4px rgba(120, 220, 255, 0.8);
+}
+
+.hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: #e8f4ff;
+  font-family: system-ui, sans-serif;
+  font-size: 0.85rem;
+  z-index: 1;
+}
+
+.bars {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  width: 200px;
+}
+
+.bar {
+  margin-bottom: 0.4rem;
+}
+
+.track {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  transition: width 0.15s;
+}
+
+.health .fill {
+  background: #e74c3c;
+}
+
+.shield .fill {
+  background: #3498db;
+}
+
+.status {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.backend {
+  opacity: 0.6;
+}
+
+.radar {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 120px;
+  height: 120px;
+  border: 1px solid rgba(120, 200, 255, 0.4);
+  border-radius: 50%;
+  background: rgba(0, 20, 40, 0.5);
+}
+
+.blip.player {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px;
+  background: #4fc3f7;
+  border-radius: 50%;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+button,
+a {
+  padding: 0.6rem 1.2rem;
+  color: #fff;
+  background: rgba(80, 140, 220, 0.35);
+  border: 1px solid rgba(120, 200, 255, 0.5);
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+}

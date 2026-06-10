@@ -1,0 +1,16 @@
+{
+  "name": "rogue-leader-game",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "engine",
+    "game"
+  ],
+  "scripts": {
+    "start": "npm run start --workspace=frontend",
+    "build": "npm run build --workspace=frontend"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

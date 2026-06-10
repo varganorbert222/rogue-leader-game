@@ -1,0 +1,13 @@
+{
+  "id": "mission_02_hoth_surface",
+  "displayName": "Hoth — Snowspeeder vs AT-AT",
+  "skyboxId": "hoth_space",
+  "musicId": "mission_hoth_surface",
+  "stub": true,
+  "stubMessage": "Coming soon — terrain tilemap, AT-AT, harpoon tow cable",
+  "player": { "shipId": "snowspeeder", "spawn": [0, 0, 0], "heading": [0, 0, -1] },
+  "playVolume": { "center": [0, 0, 0], "radius": 500, "softBoundary": true },
+  "waves": [],
+  "winCondition": { "type": "stub" },
+  "loseCondition": { "type": "stub" }
+}
