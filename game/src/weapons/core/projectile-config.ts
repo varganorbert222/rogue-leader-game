@@ -1,3 +1,5 @@
+import type { ProjectileBehavior, WeaponHomingConfig } from '../../config/weapons-manifest';
+
 export interface ProjectileVisualConfig {
   boltLength: number;
   boltDiameter: number;
@@ -9,12 +11,15 @@ export interface ProjectileConfig {
   maxRange: number;
   hitRadius: number;
   visual: ProjectileVisualConfig;
+  behavior?: ProjectileBehavior | string;
+  homing?: WeaponHomingConfig;
 }
 
 export const PLAYER_LASER_PROJECTILE: ProjectileConfig = {
   speed: 420,
   maxRange: 280,
   hitRadius: 0.12,
+  behavior: 'bolt',
   visual: {
     boltLength: 0.75,
     boltDiameter: 0.1,
@@ -26,6 +31,7 @@ export const ENEMY_LASER_PROJECTILE: ProjectileConfig = {
   speed: 360,
   maxRange: 220,
   hitRadius: 0.12,
+  behavior: 'bolt',
   visual: {
     boltLength: 0.65,
     boltDiameter: 0.09,

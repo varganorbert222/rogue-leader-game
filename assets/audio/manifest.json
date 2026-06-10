@@ -5,8 +5,8 @@
       "loop": true,
       "volume": 0.6
     },
-    "hoth_space_combat": {
-      "path": "audio/music/hoth_space_combat.mp3",
+    "asteroid_field_combat": {
+      "path": "audio/music/asteroid_field_combat.mp3",
       "loop": true,
       "volume": 0.55
     },

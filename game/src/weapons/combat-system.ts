@@ -1,13 +1,12 @@
 import type { Scene, TransformNode, Vector3 } from '@babylonjs/core';
+import type { ShipAnchors, ShipManifestEntry } from '@rogue-leader/engine';
 import type { GameEventBus } from '../events/game-events';
 import type { SphereBody } from '../collision/collision-system';
-import { ENEMY_LASER_CANNON } from './definitions/enemy-laser-cannon';
-import { PLAYER_LASER_CANNON } from './definitions/player-laser-cannon';
+import type { WeaponsManifest } from '../config/weapons-manifest';
 import type { CombatTeam } from './core/combat-team';
 import { ProjectileManager, type ProjectileHitCallback } from './core/projectile-manager';
 import type { ProjectileHit } from './core/projectile';
 import { VehicleWeaponSystem } from './core/vehicle-weapon-system';
-import type { ProjectileWeaponDefinition } from './core/weapon-definition';
 
 export type { ProjectileHit };
 
@@ -15,12 +14,17 @@ export class CombatSystem {
   readonly projectiles: ProjectileManager;
 
   private playerWeapons?: VehicleWeaponSystem;
+  private weaponsManifest?: WeaponsManifest;
 
   constructor(
     private readonly scene: Scene,
     private readonly events: GameEventBus
   ) {
     this.projectiles = new ProjectileManager(scene);
+  }
+
+  setWeaponsManifest(manifest: WeaponsManifest): void {
+    this.weaponsManifest = manifest;
   }
 
   initTargets(provider: () => SphereBody[], onHit: ProjectileHitCallback): void {
@@ -30,14 +34,31 @@ export class CombatSystem {
 
   attachPlayer(
     root: TransformNode,
-    loadout: ProjectileWeaponDefinition[] = [PLAYER_LASER_CANNON]
+    shipEntry: ShipManifestEntry,
+    anchors?: ShipAnchors
   ): VehicleWeaponSystem {
-    this.playerWeapons = VehicleWeaponSystem.attach(root, loadout, 'player');
+    if (!this.weaponsManifest) {
+      throw new Error('Weapons manifest not loaded — call setWeaponsManifest first');
+    }
+    this.playerWeapons = VehicleWeaponSystem.attach(
+      root,
+      shipEntry,
+      this.weaponsManifest,
+      'player',
+      anchors
+    );
     return this.playerWeapons;
   }
 
-  attachEnemy(root: TransformNode): VehicleWeaponSystem {
-    return VehicleWeaponSystem.attach(root, [ENEMY_LASER_CANNON], 'enemy');
+  attachEnemy(
+    root: TransformNode,
+    shipEntry: ShipManifestEntry,
+    anchors?: ShipAnchors
+  ): VehicleWeaponSystem {
+    if (!this.weaponsManifest) {
+      throw new Error('Weapons manifest not loaded — call setWeaponsManifest first');
+    }
+    return VehicleWeaponSystem.attach(root, shipEntry, this.weaponsManifest, 'enemy', anchors);
   }
 
   update(dt: number): void {
@@ -51,7 +72,7 @@ export class CombatSystem {
     }
   }
 
-  tryPlayerFire(aimDirection: Vector3): boolean {
+  tryPlayerFirePrimary(aimDirection: Vector3): boolean {
     if (!this.playerWeapons) return false;
     return this.playerWeapons.tryFirePrimary(
       this.projectiles,
@@ -59,6 +80,21 @@ export class CombatSystem {
       aimDirection,
       this.events
     );
+  }
+
+  tryPlayerFireSecondary(aimDirection: Vector3): boolean {
+    if (!this.playerWeapons) return false;
+    return this.playerWeapons.tryFireSecondary(
+      this.projectiles,
+      'player',
+      aimDirection,
+      this.events
+    );
+  }
+
+  /** @deprecated Use tryPlayerFirePrimary */
+  tryPlayerFire(aimDirection: Vector3): boolean {
+    return this.tryPlayerFirePrimary(aimDirection);
   }
 
   tryEnemyFireAt(
@@ -73,6 +109,10 @@ export class CombatSystem {
       this.events,
       maxRange
     );
+  }
+
+  getWeaponsManifest(): WeaponsManifest | undefined {
+    return this.weaponsManifest;
   }
 
   dispose(): void {

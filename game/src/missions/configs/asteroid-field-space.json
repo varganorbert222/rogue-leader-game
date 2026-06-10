@@ -1,8 +1,8 @@
 {
-  "id": "battle_over_hoth_space",
-  "displayName": "Battle over Hoth (space)",
-  "skyboxId": "hoth_space",
-  "musicId": "hoth_space_combat",
+  "id": "asteroid_field_space",
+  "displayName": "Asteroid Field (Space)",
+  "skyboxId": "asteroid_field_space",
+  "musicId": "asteroid_field_combat",
   "player": {
     "shipId": "xwing",
     "spawn": [0, 0, 0],

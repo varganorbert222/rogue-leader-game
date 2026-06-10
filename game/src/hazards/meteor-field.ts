@@ -1,5 +1,5 @@
-import { Quaternion, Vector3, type Scene, type TransformNode } from '@babylonjs/core';
-import type { GltfShipLoader } from '@rogue-leader/engine';
+import { Quaternion, Vector3, type TransformNode } from '@babylonjs/core';
+import type { GltfShipLoader, LoadedEntity } from '@rogue-leader/engine';
 import type { PropManifestEntry } from '@rogue-leader/engine';
 import { HealthComponent } from '../entities/health-component';
 
@@ -36,20 +36,48 @@ function seededRandom(seed: number): () => number {
   };
 }
 
+function shuffleInPlace<T>(items: T[], rand: () => number): void {
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+}
+
+/** Every variant at least once, then random picks; full list shuffled. */
+function buildVariantIndices(
+  spawnCount: number,
+  variantCount: number,
+  rand: () => number
+): number[] {
+  const picks: number[] = Array.from({ length: variantCount }, (_, i) => i);
+  shuffleInPlace(picks, rand);
+
+  while (picks.length < spawnCount) {
+    picks.push(Math.floor(rand() * variantCount));
+  }
+
+  shuffleInPlace(picks, rand);
+  return picks;
+}
+
 export class MeteorField {
   readonly meteors: MeteorInstance[] = [];
+  private templates: LoadedEntity[] = [];
 
   async spawn(
-    scene: Scene,
     loader: GltfShipLoader,
     entry: PropManifestEntry,
     config: MeteorConfig,
     playerSpawn: Vector3
   ): Promise<void> {
+    this.templates = await loader.loadMeteorVariantTemplates(config.prefabId, entry);
+    const variantCount = this.templates.length;
     const rand = seededRandom(config.seed);
+    const spawnCount = Math.max(config.count, variantCount);
+    const variantIndices = buildVariantIndices(spawnCount, variantCount, rand);
     const center = Vector3.FromArray(config.spawnRegion.center);
 
-    for (let i = 0; i < config.count; i++) {
+    for (let i = 0; i < spawnCount; i++) {
       let pos: Vector3;
       let attempts = 0;
       do {
@@ -70,16 +98,15 @@ export class MeteorField {
         attempts++;
       } while (Vector3.Distance(pos, playerSpawn) < 80 && attempts < 20);
 
-      const loaded = await loader.loadProp(config.prefabId, entry);
+      const template = this.templates[variantIndices[i]];
+      const loaded = loader.cloneProp(template, `meteor_${i}`);
       loaded.root.position = pos;
       const scale =
         config.scaleRange[0] + rand() * (config.scaleRange[1] - config.scaleRange[0]);
       loaded.root.scaling.scaleInPlace(scale);
 
       const tumbleAxis = new Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).normalize();
-      const tumbleSpeed = config.slowTumble
-        ? rand() * config.maxAngularSpeed
-        : 0;
+      const tumbleSpeed = config.slowTumble ? rand() * config.maxAngularSpeed : 0;
 
       this.meteors.push({
         id: `meteor_${i}`,
@@ -114,5 +141,7 @@ export class MeteorField {
   dispose(): void {
     this.meteors.forEach((m) => m.root.dispose());
     this.meteors.length = 0;
+    this.templates.forEach((t) => t.root.dispose());
+    this.templates = [];
   }
 }

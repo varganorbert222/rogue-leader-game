@@ -56,7 +56,7 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
   missionName = '';
 
   async ngOnInit(): Promise<void> {
-    const missionId = this.route.snapshot.paramMap.get('missionId') ?? 'battle_over_hoth_space';
+    const missionId = this.route.snapshot.paramMap.get('missionId') ?? 'asteroid_field_space';
     const config = MissionManager.getConfig(missionId);
     this.missionName = config?.displayName ?? missionId;
 

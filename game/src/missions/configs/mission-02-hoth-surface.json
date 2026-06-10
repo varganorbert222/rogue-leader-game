@@ -1,7 +1,7 @@
 {
   "id": "mission_02_hoth_surface",
   "displayName": "Hoth — Snowspeeder vs AT-AT",
-  "skyboxId": "hoth_space",
+  "skyboxId": "asteroid_field_space",
   "musicId": "mission_hoth_surface",
   "stub": true,
   "stubMessage": "Coming soon — terrain tilemap, AT-AT, harpoon tow cable",

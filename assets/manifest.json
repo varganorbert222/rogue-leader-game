@@ -2,12 +2,27 @@
   "ships": {
     "xwing": {
       "lod": [
-        "models/ships/xwing/xwing_LOD0.glb",
-        "models/ships/xwing/xwing_LOD1.glb",
-        "models/ships/xwing/xwing_LOD2.glb"
+        "models/ships/xwing/x-wing_LOD0.glb",
+        "models/ships/xwing/x-wing_LOD1.glb",
+        "models/ships/xwing/x-wing_LOD2.glb"
       ],
       "scale": 1.0,
-      "colliderRadius": 2.5
+      "colliderRadius": 2.5,
+      "axes": {
+        "forward": "-z",
+        "right": "-x",
+        "up": "+y",
+        "mirror": "+x"
+      },
+      "faction": "rebel",
+      "defaultWeapons": {
+        "laser": "rebel_laser",
+        "projectile": "proton_torpedo"
+      },
+      "anchors": {
+        "weapons": {},
+        "engines": {}
+      }
     },
     "tie_fighter": {
       "lod": [
@@ -16,26 +31,44 @@
         "models/ships/tie_fighter/tie_fighter_LOD2.glb"
       ],
       "scale": 1.0,
-      "colliderRadius": 2.0
+      "colliderRadius": 2.0,
+      "axes": {
+        "forward": "-z",
+        "right": "-x",
+        "up": "+y",
+        "mirror": "+x"
+      },
+      "faction": "imperial",
+      "defaultWeapons": {
+        "laser": "imperial_laser"
+      },
+      "anchors": {
+        "engines": {}
+      }
     }
   },
   "props": {
     "meteor": {
-      "lod": ["models/props/meteor/meteor_LOD0.glb"],
-      "scale": [0.8, 2.5],
+      "variantDir": "models/props/meteor",
+      "variantPrefix": "meteor",
+      "variantPad": 2,
+      "scale": [
+        0.8,
+        2.5
+      ],
       "colliderRadius": 3.0
     }
   },
   "skyboxes": {
-    "hoth_space": {
+    "asteroid_field_space": {
       "type": "cubemap",
       "faces": [
-        "textures/skybox/hoth_space/px.jpg",
-        "textures/skybox/hoth_space/nx.jpg",
-        "textures/skybox/hoth_space/py.jpg",
-        "textures/skybox/hoth_space/ny.jpg",
-        "textures/skybox/hoth_space/pz.jpg",
-        "textures/skybox/hoth_space/nz.jpg"
+        "textures/skybox/asteroid_field_space/px.png",
+        "textures/skybox/asteroid_field_space/nx.png",
+        "textures/skybox/asteroid_field_space/py.png",
+        "textures/skybox/asteroid_field_space/ny.png",
+        "textures/skybox/asteroid_field_space/pz.png",
+        "textures/skybox/asteroid_field_space/nz.png"
       ]
     }
   }

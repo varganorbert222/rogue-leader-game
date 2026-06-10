@@ -15,6 +15,7 @@ export interface ProjectileHit {
   team: CombatTeam;
   damage: number;
   weaponId: string;
+  behavior?: string;
 }
 
 export interface ProjectileSpawnOptions {
@@ -30,9 +31,9 @@ export class Projectile {
   readonly team: CombatTeam;
   readonly damage: number;
   readonly weaponId: string;
+  readonly behavior?: string;
   private readonly mesh: Mesh;
-  private readonly direction: Vector3;
-  private readonly velocity: Vector3;
+  private direction: Vector3;
   private readonly config: ProjectileConfig;
   private distanceTraveled = 0;
   private disposed = false;
@@ -41,9 +42,9 @@ export class Projectile {
     this.team = options.team;
     this.damage = options.damage;
     this.weaponId = options.weaponId;
+    this.behavior = options.config.behavior;
     this.config = options.config;
     this.direction = options.direction.clone().normalize();
-    this.velocity = this.direction.scale(this.config.speed);
 
     const { visual } = this.config;
     this.mesh = MeshBuilder.CreateCylinder(
@@ -64,6 +65,10 @@ export class Projectile {
     this.syncMeshTransform(options.origin);
   }
 
+  private get speed(): number {
+    return this.config.speed;
+  }
+
   update(
     dt: number,
     collision: CollisionSystem,
@@ -72,7 +77,12 @@ export class Projectile {
   ): boolean {
     if (this.disposed) return false;
 
-    const step = this.velocity.scale(dt);
+    if (this.config.behavior === 'missile_homing' && this.config.homing) {
+      this.steerHoming(dt, targets);
+    }
+
+    const velocity = this.direction.scale(this.speed);
+    const step = velocity.scale(dt);
     const stepLen = step.length();
     const prev = this.mesh.position.clone();
     const next = prev.add(step);
@@ -116,6 +126,7 @@ export class Projectile {
         team: this.team,
         damage: this.damage,
         weaponId: this.weaponId,
+        behavior: this.behavior,
       });
       this.dispose();
       return false;
@@ -128,6 +139,30 @@ export class Projectile {
 
     this.syncMeshTransform(next);
     return true;
+  }
+
+  private steerHoming(dt: number, targets: SphereBody[]): void {
+    const homing = this.config.homing;
+    if (!homing) return;
+
+    const origin = this.mesh.position;
+    let best: SphereBody | undefined;
+    let bestDist = homing.acquireRange;
+
+    for (const target of targets) {
+      if (target.team === this.team) continue;
+      const dist = Vector3.Distance(origin, target.position);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = target;
+      }
+    }
+
+    if (!best) return;
+
+    const desired = best.position.subtract(origin).normalize();
+    const turn = Math.min(1, homing.turnRate * dt);
+    this.direction = Vector3.Lerp(this.direction, desired, turn).normalize();
   }
 
   dispose(): void {

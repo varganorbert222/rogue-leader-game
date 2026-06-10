@@ -1,10 +1,13 @@
 import { Vector3, type TransformNode } from '@babylonjs/core';
 import { detectWeaponMounts } from '@rogue-leader/engine';
+import type { ShipAnchors, ShipManifestEntry } from '@rogue-leader/engine';
 import type { GameEventBus } from '../../events/game-events';
+import type { WeaponsManifest } from '../../config/weapons-manifest';
 import type { CombatTeam } from './combat-team';
 import { createMountedWeapons, MountedWeapon } from './mounted-weapon';
 import type { ProjectileManager } from './projectile-manager';
-import type { ProjectileWeaponDefinition } from './weapon-definition';
+import { createMountWeaponBindings } from './weapon-registry';
+import type { WeaponFireGroup } from './weapon-definition';
 
 export class VehicleWeaponSystem {
   private readonly weapons: MountedWeapon[];
@@ -15,11 +18,14 @@ export class VehicleWeaponSystem {
 
   static attach(
     root: TransformNode,
-    loadout: ProjectileWeaponDefinition[],
-    _team: CombatTeam
+    shipEntry: ShipManifestEntry,
+    weaponsManifest: WeaponsManifest,
+    _team: CombatTeam,
+    anchors?: ShipAnchors
   ): VehicleWeaponSystem {
-    const mounts = detectWeaponMounts(root);
-    const weapons = createMountedWeapons(loadout, mounts);
+    const mounts = detectWeaponMounts(root, anchors);
+    const bindings = createMountWeaponBindings(weaponsManifest, shipEntry, mounts);
+    const weapons = createMountedWeapons(bindings);
     return new VehicleWeaponSystem(weapons);
   }
 
@@ -33,20 +39,40 @@ export class VehicleWeaponSystem {
     }
   }
 
+  tryFire(
+    projectiles: ProjectileManager,
+    team: CombatTeam,
+    aimDirection: Vector3,
+    events: GameEventBus,
+    group: WeaponFireGroup
+  ): boolean {
+    let fired = false;
+    const dir = aimDirection.clone().normalize();
+    for (const weapon of this.weapons) {
+      if (!matchesFireGroup(weapon.fireGroup, group)) continue;
+      if (weapon.tryFire(projectiles, team, dir, events)) {
+        fired = true;
+      }
+    }
+    return fired;
+  }
+
   tryFirePrimary(
     projectiles: ProjectileManager,
     team: CombatTeam,
     aimDirection: Vector3,
     events: GameEventBus
   ): boolean {
-    let fired = false;
-    const dir = aimDirection.clone().normalize();
-    for (const weapon of this.weapons) {
-      if (weapon.tryFire(projectiles, team, dir, events)) {
-        fired = true;
-      }
-    }
-    return fired;
+    return this.tryFire(projectiles, team, aimDirection, events, 'primary');
+  }
+
+  tryFireSecondary(
+    projectiles: ProjectileManager,
+    team: CombatTeam,
+    aimDirection: Vector3,
+    events: GameEventBus
+  ): boolean {
+    return this.tryFire(projectiles, team, aimDirection, events, 'secondary');
   }
 
   tryFireAtTarget(
@@ -62,10 +88,16 @@ export class VehicleWeaponSystem {
 
     let fired = false;
     for (const weapon of this.weapons) {
+      if (!matchesFireGroup(weapon.fireGroup, 'primary')) continue;
       if (weapon.tryFireAtTarget(projectiles, team, targetPosition, events)) {
         fired = true;
       }
     }
     return fired;
   }
+}
+
+function matchesFireGroup(weaponGroup: WeaponFireGroup, requested: WeaponFireGroup): boolean {
+  if (weaponGroup === 'all') return true;
+  return weaponGroup === requested;
 }

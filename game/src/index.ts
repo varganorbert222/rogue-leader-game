@@ -33,9 +33,17 @@ export {
 } from './flight/flight-assist';
 export { CombatSystem, type ProjectileHit } from './weapons/combat-system';
 export type {
+  ResolvedWeaponDefinition,
   WeaponDefinition,
   ProjectileWeaponDefinition,
+  WeaponDelivery,
+  WeaponBehavior,
+  WeaponFireGroup,
 } from './weapons/core/weapon-definition';
+export {
+  loadWeaponsManifest,
+  type WeaponsManifest,
+} from './config/weapons-manifest';
 export { VehicleWeaponSystem } from './weapons/core/vehicle-weapon-system';
 export { PLAYER_LASER_CANNON } from './weapons/definitions/player-laser-cannon';
 export { ENEMY_LASER_CANNON } from './weapons/definitions/enemy-laser-cannon';
