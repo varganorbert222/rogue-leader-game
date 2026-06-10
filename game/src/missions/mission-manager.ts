@@ -8,11 +8,12 @@ import {
   refreshFirePoints,
   type AssetManifest,
   DebugFloor,
+  DebugAxes,
   type BabylonHost,
 } from '@rogue-leader/engine';
 import { BoidEnemyAI } from '../ai/boid-enemy-ai';
 import { computeFlockCenter } from '../ai/boid-forces';
-import { DEBUG_INVINCIBLE } from '../debug-flags';
+import { DEBUG_INVINCIBLE, DEBUG_SHOW_AXES } from '../debug-flags';
 import { GameAudioBridge } from '../audio/game-audio-bridge';
 import { CollisionSystem, type SphereBody } from '../collision/collision-system';
 import { HealthComponent } from '../entities/health-component';
@@ -30,6 +31,8 @@ import { MeteorField, type MeteorInstance } from '../hazards/meteor-field';
 import { CombinedInput } from '../input/combined-input';
 import { GamepadInput } from '../input/gamepad-input';
 import { KeyboardInput } from '../input/keyboard-input';
+import type { FlightPreferences } from '../settings/flight-preferences';
+import { loadFlightPreferences } from '../settings/flight-preferences';
 import { CombatSystem, type ProjectileHit } from '../weapons/combat-system';
 import type { VehicleWeaponSystem } from '../weapons/core/vehicle-weapon-system';
 import type { MissionConfig, MissionEndState, MissionWave } from './mission-types';
@@ -75,6 +78,7 @@ export class MissionManager {
   private shipLoader!: GltfShipLoader;
   private lodLoader!: LodShipLoader;
   private input!: CombinedInput;
+  private readonly gamepadInput = new GamepadInput();
   private playerController?: PlayerShipController;
   private playerHealth?: HealthComponent;
   private playerLodMeshes: AbstractMesh[][] = [];
@@ -89,6 +93,8 @@ export class MissionManager {
   private engineTrails: ParticleSystem[] = [];
   private meteorHitCooldown = 0;
   private debugFloor?: DebugFloor;
+  private debugWorldAxes?: DebugAxes;
+  private debugShipAxes?: DebugAxes;
 
   constructor(
     private readonly host: BabylonHost,
@@ -120,7 +126,8 @@ export class MissionManager {
     this.assetManifest = await loadAssetManifest('/assets/manifest.json');
     this.lodLoader = new LodShipLoader(this.host.scene, '/assets');
     this.shipLoader = new GltfShipLoader(this.host.scene, '/assets', this.lodLoader);
-    this.input = new CombinedInput([new KeyboardInput(), new GamepadInput()]);
+    this.input = new CombinedInput([new KeyboardInput(), this.gamepadInput]);
+    this.applyFlightPreferences(loadFlightPreferences());
     this.audioBridge = new GameAudioBridge(this.host.audio, this.events);
 
     const sky = this.assetManifest.skyboxes[config.skyboxId];
@@ -171,6 +178,16 @@ export class MissionManager {
       y: 0,
       boundaryRadius: config.playVolume.softBoundary ? config.playVolume.radius : undefined,
     });
+
+    this.debugWorldAxes?.dispose();
+    this.debugShipAxes?.dispose();
+    if (DEBUG_SHOW_AXES) {
+      this.debugWorldAxes = DebugAxes.world(this.host.scene, {
+        origin: volumeCenter,
+        length: 60,
+      });
+      this.debugShipAxes = DebugAxes.local(this.host.scene, playerLoaded.root, 14);
+    }
 
     if (config.introCinematicSec) {
       this.camera.startCinematic(config.introCinematicSec);
@@ -232,6 +249,11 @@ export class MissionManager {
     this.playerController?.setFlightAssist(options);
   }
 
+  applyFlightPreferences(prefs: FlightPreferences): void {
+    this.playerController?.setFlightAssist({ autoRoll: prefs.autoRoll });
+    this.gamepadInput.setPreferredGamepadId(prefs.selectedGamepadId, false);
+  }
+
   setPaused(paused: boolean): void {
     if (paused) this.host.audio.duckMusic(0.35);
     else this.host.audio.unduckMusic();
@@ -291,6 +313,10 @@ export class MissionManager {
     this.combat?.dispose();
     this.debugFloor?.dispose();
     this.debugFloor = undefined;
+    this.debugWorldAxes?.dispose();
+    this.debugWorldAxes = undefined;
+    this.debugShipAxes?.dispose();
+    this.debugShipAxes = undefined;
     this.meteorField.dispose();
     this.enemies.forEach((e) => e.ai.root.dispose());
     this.enemies = [];

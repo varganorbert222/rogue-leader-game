@@ -3,6 +3,7 @@ export { createGraphicsEngine, type GraphicsBackend } from './backend';
 export { AudioManager, type AudioManifest } from './audio/audio-manager';
 export { SkyboxLoader } from './render/skybox-loader';
 export { DebugFloor, type DebugFloorOptions } from './render/debug-floor';
+export { DebugAxes, type DebugAxesOptions } from './render/debug-axes';
 export { TimeOfDayService } from './render/time-of-day';
 export {
   loadAssetManifest,
