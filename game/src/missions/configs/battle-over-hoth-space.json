@@ -1,0 +1,56 @@
+{
+  "id": "battle_over_hoth_space",
+  "displayName": "Battle over Hoth (space)",
+  "skyboxId": "hoth_space",
+  "musicId": "hoth_space_combat",
+  "player": {
+    "shipId": "xwing",
+    "spawn": [0, 0, 0],
+    "heading": [0, 0, -1]
+  },
+  "playVolume": {
+    "center": [0, 0, -200],
+    "radius": 800,
+    "softBoundary": true
+  },
+  "meteors": {
+    "prefabId": "meteor",
+    "count": 25,
+    "seed": 42001,
+    "spawnRegion": {
+      "type": "sphereShell",
+      "center": [0, 0, -200],
+      "innerRadius": 150,
+      "outerRadius": 600
+    },
+    "scaleRange": [0.8, 2.5],
+    "damageOnImpact": 15,
+    "slowTumble": true,
+    "maxAngularSpeed": 0.3
+  },
+  "waves": [
+    {
+      "id": "wave_1",
+      "delaySec": 3,
+      "enemies": [
+        { "shipId": "tie_fighter", "spawn": [-120, 40, -350], "behavior": "attack" },
+        { "shipId": "tie_fighter", "spawn": [120, -30, -380], "behavior": "attack" },
+        { "shipId": "tie_fighter", "spawn": [0, 80, -420], "behavior": "flank" }
+      ]
+    },
+    {
+      "id": "wave_2",
+      "delaySec": 8,
+      "trigger": "wave_1_cleared",
+      "enemies": [
+        { "shipId": "tie_fighter", "spawn": [-200, 0, -500], "behavior": "chase" },
+        { "shipId": "tie_fighter", "spawn": [200, 0, -500], "behavior": "chase" },
+        { "shipId": "tie_fighter", "spawn": [0, -100, -550], "behavior": "attack" },
+        { "shipId": "tie_fighter", "spawn": [0, 100, -520], "behavior": "attack" }
+      ]
+    }
+  ],
+  "winCondition": { "type": "destroy_all_enemies" },
+  "loseCondition": { "type": "player_health_zero" },
+  "introCinematicSec": 5
+}

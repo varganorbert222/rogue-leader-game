@@ -1,0 +1,42 @@
+{
+  "ships": {
+    "xwing": {
+      "lod": [
+        "models/ships/xwing/xwing_LOD0.glb",
+        "models/ships/xwing/xwing_LOD1.glb",
+        "models/ships/xwing/xwing_LOD2.glb"
+      ],
+      "scale": 1.0,
+      "colliderRadius": 2.5
+    },
+    "tie_fighter": {
+      "lod": [
+        "models/ships/tie_fighter/tie_fighter_LOD0.glb",
+        "models/ships/tie_fighter/tie_fighter_LOD1.glb",
+        "models/ships/tie_fighter/tie_fighter_LOD2.glb"
+      ],
+      "scale": 1.0,
+      "colliderRadius": 2.0
+    }
+  },
+  "props": {
+    "meteor": {
+      "lod": ["models/props/meteor/meteor_LOD0.glb"],
+      "scale": [0.8, 2.5],
+      "colliderRadius": 3.0
+    }
+  },
+  "skyboxes": {
+    "hoth_space": {
+      "type": "cubemap",
+      "faces": [
+        "textures/skybox/hoth_space/px.jpg",
+        "textures/skybox/hoth_space/nx.jpg",
+        "textures/skybox/hoth_space/py.jpg",
+        "textures/skybox/hoth_space/ny.jpg",
+        "textures/skybox/hoth_space/pz.jpg",
+        "textures/skybox/hoth_space/nz.jpg"
+      ]
+    }
+  }
+}

@@ -1,0 +1,69 @@
+<div class="game-root">
+  <canvas #gameCanvas></canvas>
+
+  @if (hud.reticleInner.visible && hud.reticleOuter.visible) {
+    <svg class="reticle-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <line
+        class="reticle-forward-line"
+        [attr.x1]="hud.reticleInner.xPct"
+        [attr.y1]="hud.reticleInner.yPct"
+        [attr.x2]="hud.reticleOuter.xPct"
+        [attr.y2]="hud.reticleOuter.yPct"
+      />
+    </svg>
+    <div
+      class="reticle-inner"
+      [style.left.%]="hud.reticleInner.xPct"
+      [style.top.%]="hud.reticleInner.yPct"
+    ></div>
+    <div
+      class="reticle-outer"
+      [style.left.%]="hud.reticleOuter.xPct"
+      [style.top.%]="hud.reticleOuter.yPct"
+    ></div>
+    <div
+      class="reticle-dot"
+      [style.left.%]="hud.reticleInner.xPct"
+      [style.top.%]="hud.reticleInner.yPct"
+    ></div>
+  }
+
+  <div class="hud">
+    <div class="bars">
+      <div class="bar health">
+        <span>Hull</span>
+        <div class="track"><div class="fill" [style.width.%]="(hud.health / hud.maxHealth) * 100"></div></div>
+      </div>
+      <div class="bar shield">
+        <span>Shield</span>
+        <div class="track"><div class="fill" [style.width.%]="(hud.shield / hud.maxShield) * 100"></div></div>
+      </div>
+    </div>
+    <div class="status">
+      <span>Laser</span>
+      <span>Wave {{ hud.wave }}/{{ hud.totalWaves }}</span>
+      <span>Hostiles: {{ hud.enemiesRemaining }}</span>
+      <span class="backend">{{ hud.backend }}</span>
+    </div>
+    <div class="radar" aria-label="Radar">
+      <div class="blip player"></div>
+    </div>
+  </div>
+
+  @if (paused) {
+    <div class="overlay pause">
+      <h2>Paused</h2>
+      <button type="button" (click)="togglePause()">Resume</button>
+      <a routerLink="/settings">Settings</a>
+      <button type="button" (click)="quitToMenu()">Quit to Menu</button>
+    </div>
+  }
+
+  @if (endState) {
+    <div class="overlay end">
+      <h2>{{ endState === 'won' ? 'Mission Complete' : 'Mission Failed' }}</h2>
+      <p>{{ missionName }}</p>
+      <button type="button" (click)="quitToMenu()">Return to Menu</button>
+    </div>
+  }
+</div>

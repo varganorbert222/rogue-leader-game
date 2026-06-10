@@ -1,0 +1,19 @@
+<div class="page">
+  <h1>Mission Select</h1>
+  <ul>
+    @for (m of missions; track m.id) {
+      <li [class.stub]="m.stub">
+        <div>
+          <strong>{{ m.displayName }}</strong>
+          @if (m.stub) {
+            <span class="badge">Coming soon</span>
+          }
+        </div>
+        <button type="button" [disabled]="m.stub" (click)="play(m.id, m.stub, m.stubMessage)">
+          {{ m.stub ? 'Locked' : 'Launch' }}
+        </button>
+      </li>
+    }
+  </ul>
+  <a routerLink="/" (click)="audio.playUiClick()">Back</a>
+</div>
