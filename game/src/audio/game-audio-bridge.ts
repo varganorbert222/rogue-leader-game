@@ -6,8 +6,14 @@ export class GameAudioBridge {
     private readonly audio: AudioManager,
     events: GameEventBus
   ) {
-    events.on('WeaponFired', () => this.audio.playSfx('laser_fire'));
-    events.on('ProjectileHit', () => this.audio.playSfx('laser_hit'));
+    events.on('WeaponFired', (e) => {
+      const sfx = (e.payload?.['sfx'] as string) ?? 'laser_fire';
+      this.audio.playSfx(sfx);
+    });
+    events.on('ProjectileHit', (e) => {
+      const sfx = (e.payload?.['sfx'] as string) ?? 'laser_hit';
+      this.audio.playSfx(sfx);
+    });
     events.on('EntityDestroyed', () => this.audio.playSfx('explosion_small'));
     events.on('PlayerDamaged', () => this.audio.playSfx('player_damage'));
     events.on('MeteorImpact', () => this.audio.playSfx('meteor_impact'));
@@ -17,7 +23,7 @@ export class GameAudioBridge {
     events.on('MissileLaunched', () => this.audio.playSfx('missile_launch'));
     events.on('HarpoonAttached', () => this.audio.playSfx('harpoon_attach'));
     events.on('MissionStarted', (e) => {
-      const id = (e.payload?.['musicId'] as string) ?? 'hoth_space_combat';
+      const id = (e.payload?.['musicId'] as string) ?? 'asteroid_field_combat';
       this.audio.crossfadeMusic(id, 1200);
     });
     events.on('MissionEnded', () => this.audio.stopMusic(800));

@@ -1,8 +1,8 @@
 import {
   Quaternion,
   Scalar,
+  TransformNode,
   Vector3,
-  type TransformNode,
 } from "@babylonjs/core";
 import type { FlightInput } from "../input/i-input-source";
 import {
@@ -37,14 +37,27 @@ export class PlayerShipController {
   private flightAssist: FlightAssistOptions = { ...DEFAULT_FLIGHT_ASSIST };
   private rollIdleTime = 0;
   private visualBank = 0;
+  private readonly bankPivot?: TransformNode;
 
   constructor(
     public readonly root: TransformNode,
     private readonly visualRoot?: TransformNode,
+    private readonly invertForwardRoll = false,
     private readonly maxSpeed = DEFAULT_MAX_SPEED,
     private readonly boostMultiplier = DEFAULT_BOOST_MULTIPLIER,
     private readonly minSpeed = MIN_FLIGHT_SPEED,
-  ) {}
+  ) {
+    if (visualRoot) {
+      const bank = new TransformNode(`${visualRoot.name}_bank`, visualRoot.getScene());
+      bank.parent = visualRoot;
+      for (const child of [...visualRoot.getChildren()]) {
+        if (child !== bank) {
+          child.parent = bank;
+        }
+      }
+      this.bankPivot = bank;
+    }
+  }
 
   setFlightAssist(options: Partial<FlightAssistOptions>): void {
     this.flightAssist = { ...this.flightAssist, ...options };
@@ -115,7 +128,7 @@ export class PlayerShipController {
   }
 
   private updateVisualYawBank(dt: number, input: FlightInput): void {
-    if (!this.visualRoot) return;
+    if (!this.bankPivot) return;
 
     const hasYaw = Math.abs(input.yaw) >= INPUT_DEADZONE;
     const target = hasYaw
@@ -123,9 +136,10 @@ export class PlayerShipController {
       : 0;
     const blend = hasYaw ? 1 - Math.pow(0.00005, dt) : 1 - Math.pow(0.001, dt);
     this.visualBank = Scalar.Lerp(this.visualBank, target, blend);
-    this.visualRoot.rotationQuaternion = Quaternion.RotationAxis(
+    const rollAngle = this.invertForwardRoll ? -this.visualBank : this.visualBank;
+    this.bankPivot.rotationQuaternion = Quaternion.RotationAxis(
       Vector3.Backward(),
-      this.visualBank,
+      rollAngle
     );
   }
 

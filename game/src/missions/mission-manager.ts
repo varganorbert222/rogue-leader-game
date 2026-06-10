@@ -1,16 +1,17 @@
-import { Quaternion, Vector3, type AbstractMesh, type ParticleSystem } from '@babylonjs/core';
+import { Quaternion, Vector3, type AbstractMesh } from '@babylonjs/core';
 import {
   GltfShipLoader,
   LodShipLoader,
   ParticleFx,
   SkyboxLoader,
   loadAssetManifest,
-  refreshFirePoints,
   type AssetManifest,
   DebugFloor,
   DebugAxes,
   type BabylonHost,
 } from '@rogue-leader/engine';
+import { loadWeaponsManifest, type WeaponsManifest } from '../config/weapons-manifest';
+import { EngineVfxController } from '../vfx/engine-vfx-controller';
 import { BoidEnemyAI } from '../ai/boid-enemy-ai';
 import { computeFlockCenter } from '../ai/boid-forces';
 import { DEBUG_INVINCIBLE, DEBUG_SHOW_AXES } from '../debug-flags';
@@ -36,7 +37,7 @@ import { loadFlightPreferences } from '../settings/flight-preferences';
 import { CombatSystem, type ProjectileHit } from '../weapons/combat-system';
 import type { VehicleWeaponSystem } from '../weapons/core/vehicle-weapon-system';
 import type { MissionConfig, MissionEndState, MissionWave } from './mission-types';
-import battleOverHoth from './configs/battle-over-hoth-space.json';
+import asteroidFieldSpace from './configs/asteroid-field-space.json';
 import mission02 from './configs/mission-02-hoth-surface.json';
 import mission03 from './configs/mission-03-tatooine.json';
 
@@ -65,7 +66,7 @@ interface EnemyInstance {
 }
 
 const MISSIONS: Record<string, MissionConfig> = {
-  battle_over_hoth_space: battleOverHoth as unknown as MissionConfig,
+  asteroid_field_space: asteroidFieldSpace as unknown as MissionConfig,
   mission_02_hoth_surface: mission02 as unknown as MissionConfig,
   mission_03_tatooine: mission03 as unknown as MissionConfig,
 };
@@ -90,7 +91,8 @@ export class MissionManager {
   private wavesSpawned = 0;
   private waveTimer = 0;
   private endState: MissionEndState = 'playing';
-  private engineTrails: ParticleSystem[] = [];
+  private weaponsManifest!: WeaponsManifest;
+  private readonly engineVfx = new EngineVfxController();
   private meteorHitCooldown = 0;
   private debugFloor?: DebugFloor;
   private debugWorldAxes?: DebugAxes;
@@ -124,6 +126,7 @@ export class MissionManager {
 
     this.config = config;
     this.assetManifest = await loadAssetManifest('/assets/manifest.json');
+    this.weaponsManifest = await loadWeaponsManifest('/assets/weapons/manifest.json');
     this.lodLoader = new LodShipLoader(this.host.scene, '/assets');
     this.shipLoader = new GltfShipLoader(this.host.scene, '/assets', this.lodLoader);
     this.input = new CombinedInput([new KeyboardInput(), this.gamepadInput]);
@@ -147,21 +150,29 @@ export class MissionManager {
 
     this.playerController = new PlayerShipController(
       playerLoaded.root,
-      playerLoaded.visualRoot
+      playerLoaded.visualRoot,
+      playerLoaded.visual.invertForwardRoll
     );
     this.playerHealth = new HealthComponent(100, 100, 50, 50);
     this.playerLodMeshes = playerLoaded.lodMeshes;
 
     this.combat = new CombatSystem(this.host.scene, this.events);
+    this.combat.setWeaponsManifest(this.weaponsManifest);
     this.combat.initTargets(
       () => this.getProjectileTargets(),
       (hit) => this.handleProjectileHit(hit)
     );
-    this.combat.attachPlayer(playerLoaded.root);
+    this.combat.attachPlayer(playerLoaded.root, shipEntry, playerLoaded.anchors);
+    this.engineVfx.attach(
+      this.host.scene,
+      playerLoaded.root,
+      shipEntry,
+      this.weaponsManifest,
+      playerLoaded.anchors
+    );
 
     if (config.meteors && this.assetManifest.props[config.meteors.prefabId]) {
       await this.meteorField.spawn(
-        this.host.scene,
         this.shipLoader,
         this.assetManifest.props[config.meteors.prefabId],
         config.meteors,
@@ -279,8 +290,12 @@ export class MissionManager {
       dt
     );
 
+    const aim = this.playerController.getForward();
     if (input.fire) {
-      this.combat.tryPlayerFire(this.playerController.getForward());
+      this.combat.tryPlayerFirePrimary(aim);
+    }
+    if (input.fireSecondary) {
+      this.combat.tryPlayerFireSecondary(aim);
     }
     if (input.boost) {
       this.events.emit({ type: 'BoostStarted' });
@@ -292,7 +307,7 @@ export class MissionManager {
     this.meteorHitCooldown = Math.max(0, this.meteorHitCooldown - dt);
     this.checkMeteorCollisions();
     this.updateLod();
-    this.updateEngineTrails();
+    this.engineVfx.update();
 
     if (!DEBUG_INVINCIBLE && this.playerHealth.isDead()) {
       this.endState = 'lost';
@@ -320,8 +335,7 @@ export class MissionManager {
     this.meteorField.dispose();
     this.enemies.forEach((e) => e.ai.root.dispose());
     this.enemies = [];
-    this.engineTrails.forEach((t) => t.dispose());
-    this.engineTrails = [];
+    this.engineVfx.dispose();
     this.events.clear();
   }
 
@@ -360,7 +374,7 @@ export class MissionManager {
         health: new HealthComponent(40, 40, 0, 0),
         radius: entry.colliderRadius,
         lodMeshes: loaded.lodMeshes,
-        weapons: this.combat.attachEnemy(loaded.root),
+        weapons: this.combat.attachEnemy(loaded.root, entry, loaded.anchors),
       });
     }
   }
@@ -444,7 +458,11 @@ export class MissionManager {
 
   private handleProjectileHit(hit: ProjectileHit): void {
     ParticleFx.hitSpark(this.host.scene, hit.point);
-    this.events.emit({ type: 'ProjectileHit' });
+    const hitSfx = this.weaponsManifest.weapons[hit.weaponId]?.audio?.hit ?? 'laser_hit';
+    this.events.emit({
+      type: 'ProjectileHit',
+      payload: { weaponId: hit.weaponId, behavior: hit.behavior, sfx: hitSfx },
+    });
 
     if (hit.team === 'enemy' && hit.targetId === 'player') {
       if (!DEBUG_INVINCIBLE) {
@@ -529,18 +547,4 @@ export class MissionManager {
     }
   }
 
-  private updateEngineTrails(): void {
-    if (!this.playerController) return;
-    const pts = refreshFirePoints(this.playerController.root);
-    if (this.engineTrails.length === 0) {
-      pts.engines.forEach((p) => {
-        this.engineTrails.push(ParticleFx.engineTrail(this.host.scene, p.clone()));
-      });
-    }
-    this.engineTrails.forEach((trail, i) => {
-      if (pts.engines[i]) {
-        trail.emitter = pts.engines[i].clone();
-      }
-    });
-  }
 }

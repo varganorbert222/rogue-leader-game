@@ -9,10 +9,38 @@ export {
   loadAssetManifest,
   type AssetManifest,
   type ShipManifestEntry,
+  type ShipAnchorBindings,
   type PropManifestEntry,
   type SkyboxManifestEntry,
 } from './loaders/asset-manifest';
+export {
+  detectShipAnchors,
+  getAnchorForward,
+  type ShipAnchors,
+  type EngineAnchor,
+  type WeaponAnchor,
+  type WeaponDelivery,
+} from './loaders/ship-anchor-detector';
+export {
+  ModelAxisCorrection,
+  ShipAxisFrame,
+  applyModelAxisCorrection,
+  DEFAULT_SHIP_AXIS_CONFIG,
+  axisIdToVector,
+  resolveShipAxisConfig,
+  resolveShipVisualOptions,
+  type AxisId,
+  type ShipAxisConventionConfig,
+  type ShipVisualOptions,
+} from './loaders/ship-axis-convention';
+export {
+  createEngineTrail,
+  updateEngineTrailEmitter,
+  DEFAULT_ENGINE_VFX,
+  type EngineVfxProfile,
+} from './vfx/engine-vfx';
 export { GltfShipLoader, type LoadedEntity } from './loaders/gltf-ship-loader';
+export { discoverNumberedGlbVariants } from './loaders/meteor-variant-discovery';
 export { LodShipLoader } from './loaders/lod-ship-loader';
 export { detectFirePoints, refreshFirePoints, type FirePoints } from './loaders/firepoint-detector';
 export {

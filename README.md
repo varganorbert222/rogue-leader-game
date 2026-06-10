@@ -1,6 +1,6 @@
 # Rogue Leader — WebGPU flight game
 
-Angular 19 + Babylon.js 7 monorepo. MVP mission: **Battle over Hoth (space)**.
+Angular 19 + Babylon.js 7 monorepo. MVP mission: **Asteroid Field (Space)**.
 
 ## Requirements
 
@@ -73,7 +73,7 @@ Copy GLB, cubemap faces, and MP3 files into `assets/` following `ASSETS_CHECKLIS
 
 | Id | Status |
 |----|--------|
-| `battle_over_hoth_space` | Playable MVP |
+| `asteroid_field_space` | Playable MVP |
 | `mission_02_hoth_surface` | Menu stub |
 | `mission_03_tatooine` | Menu stub |
 

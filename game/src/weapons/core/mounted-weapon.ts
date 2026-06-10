@@ -4,15 +4,19 @@ import { getMountForward } from '@rogue-leader/engine';
 import type { GameEventBus } from '../../events/game-events';
 import type { CombatTeam } from './combat-team';
 import type { ProjectileManager } from './projectile-manager';
-import type { ProjectileWeaponDefinition } from './weapon-definition';
+import type { ResolvedWeaponDefinition, WeaponFireGroup } from './weapon-definition';
 
 export class MountedWeapon {
   private cooldown = 0;
 
   constructor(
     public readonly mount: DetectedWeaponMount,
-    public readonly definition: ProjectileWeaponDefinition
+    public readonly definition: ResolvedWeaponDefinition
   ) {}
+
+  get fireGroup(): WeaponFireGroup {
+    return this.definition.fireGroup;
+  }
 
   update(dt: number): void {
     this.cooldown = Math.max(0, this.cooldown - dt);
@@ -31,7 +35,20 @@ export class MountedWeapon {
     if (!this.ready) return false;
 
     this.cooldown = this.definition.cooldownSec;
-    events.emit({ type: 'WeaponFired', payload: { team } });
+    events.emit({
+      type: 'WeaponFired',
+      payload: {
+        team,
+        weaponId: this.definition.id,
+        delivery: this.definition.delivery,
+        behavior: this.definition.behavior,
+        sfx: this.definition.audio?.fire,
+      },
+    });
+
+    if (this.definition.behavior === 'missile_homing') {
+      events.emit({ type: 'MissileLaunched', payload: { weaponId: this.definition.id } });
+    }
 
     const origin = this.mount.node.getAbsolutePosition();
     const mountForward = getMountForward(this.mount.node);
@@ -65,19 +82,7 @@ export class MountedWeapon {
 }
 
 export function createMountedWeapons(
-  definitions: ProjectileWeaponDefinition[],
-  mounts: DetectedWeaponMount[]
+  bindings: { mount: DetectedWeaponMount; definition: ResolvedWeaponDefinition }[]
 ): MountedWeapon[] {
-  const weapons: MountedWeapon[] = [];
-
-  for (const def of definitions) {
-    const matching = mounts.filter((m) => m.weaponType === def.mountType);
-    if (matching.length === 0) continue;
-
-    for (const mount of matching) {
-      weapons.push(new MountedWeapon(mount, def));
-    }
-  }
-
-  return weapons;
+  return bindings.map((b) => new MountedWeapon(b.mount, b.definition));
 }
