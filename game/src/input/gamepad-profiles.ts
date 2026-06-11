@@ -1,6 +1,13 @@
 /** Sony USB vendor id in Gamepad.id strings (054c). */
 const SONY_VENDOR = '054c';
 
+/** Standard Gamepad API: L2 / R2 analog trigger button indices. */
+const STANDARD_L2_INDEX = 6;
+const STANDARD_R2_INDEX = 7;
+/** Standard Gamepad API: L1 / R1 shoulder button indices. */
+const STANDARD_L1_INDEX = 4;
+const STANDARD_R1_INDEX = 5;
+
 export function normalizeGamepadIdKey(id: string): string {
   return id.toLowerCase().replace(/[^a-z0-9]+/g, '');
 }
@@ -132,20 +139,18 @@ export interface GamepadTriggerValues {
   lTrigger: number;
 }
 
-export function readGamepadTriggers(pad: Gamepad): GamepadTriggerValues {
-  const btn = (i: number) => pad.buttons[i]?.pressed ?? false;
-  const trigger = (i: number) => {
-    const b = pad.buttons[i];
-    if (!b) return 0;
-    return b.value > 0.05 ? b.value : 0;
-  };
+function triggerButtonValue(pad: Gamepad, index: number): number {
+  const button = pad.buttons[index];
+  if (!button) return 0;
+  return button.value > 0.05 ? button.value : 0;
+}
 
-  if (usesStandardGamepadLayout(pad)) {
-    let rTrigger = trigger(7);
-    let lTrigger = trigger(6);
-    if (rTrigger < 0.05 && btn(5)) rTrigger = 1;
-    if (lTrigger < 0.05 && btn(4)) lTrigger = 1;
-    return { rTrigger, lTrigger };
+export function readGamepadTriggers(pad: Gamepad): GamepadTriggerValues {
+  if (usesStandardGamepadLayout(pad) && pad.buttons.length > STANDARD_R2_INDEX) {
+    return {
+      rTrigger: triggerButtonValue(pad, STANDARD_R2_INDEX),
+      lTrigger: triggerButtonValue(pad, STANDARD_L2_INDEX),
+    };
   }
 
   // Firefox / legacy PS: L2/R2 often on axes 4/5 (0..1 or -1..1).
@@ -154,26 +159,26 @@ export function readGamepadTriggers(pad: Gamepad): GamepadTriggerValues {
       if (v >= 0 && v <= 1) return v;
       return ScalarClamp((v + 1) * 0.5, 0, 1);
     };
-    let rTrigger = axisValue(pad.axes[5] ?? 0);
-    let lTrigger = axisValue(pad.axes[4] ?? 0);
-    if (rTrigger < 0.05 && btn(5)) rTrigger = 1;
-    if (lTrigger < 0.05 && btn(4)) lTrigger = 1;
-    return { rTrigger, lTrigger };
+    return {
+      rTrigger: axisValue(pad.axes[5] ?? 0),
+      lTrigger: axisValue(pad.axes[4] ?? 0),
+    };
   }
 
-  let rTrigger = trigger(7);
-  let lTrigger = trigger(6);
-  if (rTrigger < 0.05 && btn(5)) rTrigger = 1;
-  if (lTrigger < 0.05 && btn(4)) lTrigger = 1;
+  const btn = (i: number) => pad.buttons[i]?.pressed ?? false;
+  let rTrigger = triggerButtonValue(pad, STANDARD_R2_INDEX);
+  let lTrigger = triggerButtonValue(pad, STANDARD_L2_INDEX);
+  if (rTrigger < 0.05 && btn(STANDARD_R1_INDEX)) rTrigger = 1;
+  if (lTrigger < 0.05 && btn(STANDARD_L1_INDEX)) lTrigger = 1;
   return { rTrigger, lTrigger };
 }
 
+/** L1 held — roll modifier for stick-based roll (legacy GamepadInput path). */
 export function isRollModifierHeld(pad: Gamepad): boolean {
   const btn = (i: number) => pad.buttons[i]?.pressed ?? false;
-  const trigger = (i: number) => pad.buttons[i]?.value ?? 0;
 
   if (usesStandardGamepadLayout(pad) || isPlayStationGamepad(pad)) {
-    return btn(4) || trigger(6) > 0.5;
+    return btn(STANDARD_L1_INDEX);
   }
 
   return btn(7) || btn(8);
