@@ -17,16 +17,18 @@ export const DEFAULT_FLIGHT_ASSIST: FlightAssistOptions = {
 
 export const INPUT_DEADZONE = 0.06;
 
-/** Seconds without pitch/roll input before auto-roll begins. */
-export const ROLL_IDLE_DELAY_SEC = 1;
+/** Seconds without pitch/roll/yaw input before auto-roll begins. */
+export const ROLL_IDLE_DELAY_SEC = 3;
 
 export function hasFlightControlInput(input: {
   pitch: number;
   roll: number;
+  yaw: number;
 }): boolean {
   return (
     Math.abs(input.pitch) >= INPUT_DEADZONE ||
-    Math.abs(input.roll) >= INPUT_DEADZONE
+    Math.abs(input.roll) >= INPUT_DEADZONE ||
+    Math.abs(input.yaw) >= INPUT_DEADZONE
   );
 }
 
