@@ -176,8 +176,7 @@ export class ScriptedCameraDriver {
     this.useLegacyIntro = false;
   }
 
-  /** @deprecated Mission intro — replaced by JSON sequences later. */
-  startLegacyIntro(durationSec: number): void {
+  startIntro(durationSec: number): void {
     this.sequence = null;
     this.useLegacyIntro = true;
     this.legacyDuration = durationSec;

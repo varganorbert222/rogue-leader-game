@@ -30,6 +30,3 @@ export function directionToVehicleInput(
     throttle: Scalar.Clamp(speedDelta * 0.04, -1, 1),
   };
 }
-
-/** @deprecated Use directionToVehicleInput */
-export const directionToFlightInput = directionToVehicleInput;

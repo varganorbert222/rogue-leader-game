@@ -1,7 +1,8 @@
 import { Vector3 } from "@babylonjs/core";
 import type { DetectedWeaponMount } from "@rogue-leader/engine";
 import { getMountForward } from "@rogue-leader/engine";
-import type { GameEventBus } from "../../events/game-events";
+import { GameEvents, type GameEventBus } from '../../events/game-events';
+import { ProjectileBehaviors } from '../../constants/weapon-behaviors';
 import {
   clampToDeflectionCone,
   computeConvergenceDirection,
@@ -139,25 +140,23 @@ export class MountedWeapon {
     if (!this.ready) return false;
 
     this.cooldown = this.definition.cooldownSec;
-    events.emit({
-      type: "WeaponFired",
-      payload: {
+    const origin = this.mount.node.getAbsolutePosition();
+    events.emit(
+      GameEvents.weaponFired({
         team,
         weaponId: this.definition.id,
         delivery: this.definition.delivery,
         behavior: this.definition.behavior,
+        faction,
         sfx: this.definition.audio?.fire,
-      },
-    });
+        position: origin.clone(),
+      }),
+    );
 
-    if (this.definition.behavior === "missile_homing") {
-      events.emit({
-        type: "MissileLaunched",
-        payload: { weaponId: this.definition.id },
-      });
+    if (this.definition.behavior === ProjectileBehaviors.MissileHoming) {
+      events.emit(GameEvents.missileLaunched(this.definition.id));
     }
 
-    const origin = this.mount.node.getAbsolutePosition();
     const dir = this.getAimDirection(aimDirection);
 
     projectiles.spawn({

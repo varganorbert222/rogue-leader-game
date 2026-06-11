@@ -7,6 +7,7 @@ import {
 import type { LoadedEntity, ShipManifestEntry } from '@rogue-leader/engine';
 import type { LodRuntimeState } from '@rogue-leader/engine';
 import type { FactionId } from '../combat/faction';
+import { computeEngineSpeedRatio } from '../audio/engine-audio-config';
 import {
   resolveShipFlightStats,
   type ShipFlightStatsConfig,
@@ -104,6 +105,22 @@ export class Vehicle {
 
   getSpeed(): number {
     return this.flight.getSpeed();
+  }
+
+  getMinSpeed(): number {
+    return this.flight.getMinSpeed();
+  }
+
+  getMaxSpeed(): number {
+    return this.flight.getMaxSpeed();
+  }
+
+  getEngineSpeedRatio(): number {
+    return computeEngineSpeedRatio(
+      this.getSpeed(),
+      this.getMinSpeed(),
+      this.getMaxSpeed()
+    );
   }
 
   getCruiseSpeed(): number {

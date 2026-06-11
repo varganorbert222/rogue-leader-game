@@ -247,12 +247,4 @@ export class LodShipLoader {
       return null;
     }
   }
-
-  /** @deprecated Use updateLodByScreenCoverage on LodRuntimeState instead. */
-  updateLod(lodMeshes: AbstractMesh[][], _cameraDistance: number): void {
-    if (lodMeshes.length === 0) return;
-    lodMeshes.forEach((group, idx) => {
-      group.forEach((m) => m.setEnabled(idx === 0));
-    });
-  }
 }

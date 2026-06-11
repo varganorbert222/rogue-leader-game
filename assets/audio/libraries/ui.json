@@ -1,0 +1,35 @@
+{
+  "id": "ui",
+  "category": "ui",
+  "basePath": "audio/sfx/ui",
+  "clips": {
+    "ui_back": {
+      "registry": "ui/back",
+      "spatial": false,
+      "volume": 0.75,
+      "volumeRange": [0.95, 1.0],
+      "pitchRange": [0.98, 1.02],
+      "maxVoices": 2
+    },
+    "ui_click": {
+      "registry": "ui/click",
+      "spatial": false,
+      "volume": 0.78,
+      "volumeRange": [0.95, 1.0],
+      "pitchRange": [0.96, 1.04],
+      "maxVoices": 3
+    },
+    "ui_hover": {
+      "registry": "ui/hover",
+      "spatial": false,
+      "volume": 0.55,
+      "volumeRange": [0.9, 1.0],
+      "pitchRange": [0.98, 1.02],
+      "cooldownMs": 80,
+      "maxVoices": 2
+    }
+  },
+  "aliases": {
+    "ui_confirm": "ui_click"
+  }
+}

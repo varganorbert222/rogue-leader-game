@@ -18,6 +18,8 @@ export interface MissionConfig {
   displayName: string;
   skyboxId: string;
   musicId: string;
+  /** Adaptive calm ↔ combat score set id from audio manifest. */
+  musicSetId?: string;
   player: {
     shipId: string;
     spawn: [number, number, number];
@@ -53,3 +55,9 @@ export interface MissionConfig {
 }
 
 export type MissionEndState = 'playing' | 'won' | 'lost';
+
+export const MissionEndStates = {
+  Playing: 'playing',
+  Won: 'won',
+  Lost: 'lost',
+} as const satisfies Record<string, MissionEndState>;

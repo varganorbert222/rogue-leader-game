@@ -1,24 +1,49 @@
 {
+  "version": 2,
+  "libraries": {
+    "sfx": "audio/libraries/sfx.json",
+    "ui": "audio/libraries/ui.json"
+  },
   "music": {
     "menu_loop": {
       "path": "audio/music/menu_loop.mp3",
       "loop": true,
       "volume": 0.6
     },
+    "asteroid_field_explore": {
+      "path": "audio/music/asteroid_field_explore.mp3",
+      "loop": true,
+      "volume": 0.5
+    },
     "asteroid_field_combat": {
       "path": "audio/music/asteroid_field_combat.mp3",
       "loop": true,
       "volume": 0.55
+    },
+    "mission_space_explore": {
+      "path": "audio/music/mission_space_explore.mp3",
+      "loop": true,
+      "volume": 0.5
     },
     "mission_space_combat": {
       "path": "audio/music/mission_space_combat.mp3",
       "loop": true,
       "volume": 0.55
     },
+    "mission_hoth_explore": {
+      "path": "audio/music/mission_hoth_explore.mp3",
+      "loop": true,
+      "volume": 0.48
+    },
     "mission_hoth_surface": {
       "path": "audio/music/mission_hoth_surface.mp3",
       "loop": true,
       "volume": 0.5
+    },
+    "mission_tatooine_explore": {
+      "path": "audio/music/mission_tatooine_explore.mp3",
+      "loop": true,
+      "volume": 0.48
     },
     "mission_tatooine": {
       "path": "audio/music/mission_tatooine.mp3",
@@ -26,63 +51,50 @@
       "volume": 0.5
     }
   },
-  "sfx": {
-    "laser_fire": {
-      "path": "audio/sfx/laser_fire.mp3",
-      "volume": 0.8,
-      "cooldownMs": 60
+  "musicSets": {
+    "asteroid_field_space": {
+      "layers": [
+        { "id": "asteroid_field_explore", "role": "calm", "volume": 0.5 },
+        { "id": "asteroid_field_combat", "role": "combat", "volume": 0.55 }
+      ],
+      "crossfadeMs": 2800,
+      "attackThreshold": 0.32,
+      "releaseThreshold": 0.14,
+      "smoothing": 2.4
     },
-    "laser_hit": {
-      "path": "audio/sfx/laser_hit.mp3",
-      "volume": 0.9
+    "mission_space": {
+      "layers": [
+        { "id": "mission_space_explore", "role": "calm", "volume": 0.5 },
+        { "id": "mission_space_combat", "role": "combat", "volume": 0.55 }
+      ],
+      "crossfadeMs": 3000,
+      "attackThreshold": 0.35,
+      "releaseThreshold": 0.15,
+      "smoothing": 2.2
     },
-    "explosion_small": {
-      "path": "audio/sfx/explosion_small.mp3",
-      "volume": 1.0
+    "mission_hoth": {
+      "layers": [
+        { "id": "mission_hoth_explore", "role": "calm", "volume": 0.48 },
+        { "id": "mission_hoth_surface", "role": "combat", "volume": 0.5 }
+      ],
+      "crossfadeMs": 3200,
+      "attackThreshold": 0.3,
+      "releaseThreshold": 0.12,
+      "smoothing": 2.0
     },
-    "explosion_large": {
-      "path": "audio/sfx/explosion_large.mp3",
-      "volume": 1.0
-    },
-    "player_damage": {
-      "path": "audio/sfx/player_damage.mp3",
-      "volume": 0.9
-    },
-    "meteor_impact": {
-      "path": "audio/sfx/meteor_impact.mp3",
-      "volume": 1.0
-    },
-    "shield_hit": {
-      "path": "audio/sfx/shield_hit.mp3",
-      "volume": 0.8
-    },
-    "boost": {
-      "path": "audio/sfx/boost.mp3",
-      "volume": 0.7
-    },
-    "engine_loop": {
-      "path": "audio/sfx/engine_loop.mp3",
-      "volume": 0.5
-    },
-    "missile_lock": {
-      "path": "audio/sfx/missile_lock.mp3",
-      "volume": 0.8
-    },
-    "missile_launch": {
-      "path": "audio/sfx/missile_launch.mp3",
-      "volume": 0.9
-    },
-    "harpoon_attach": {
-      "path": "audio/sfx/harpoon_attach.mp3",
-      "volume": 0.9
-    },
-    "ui_click": {
-      "path": "audio/sfx/ui_click.mp3",
-      "volume": 0.7
-    },
-    "ui_confirm": {
-      "path": "audio/sfx/ui_confirm.mp3",
-      "volume": 0.7
+    "mission_tatooine": {
+      "layers": [
+        { "id": "mission_tatooine_explore", "role": "calm", "volume": 0.48 },
+        { "id": "mission_tatooine", "role": "combat", "volume": 0.5 }
+      ],
+      "crossfadeMs": 2800,
+      "attackThreshold": 0.33,
+      "releaseThreshold": 0.14,
+      "smoothing": 2.3
     }
+  },
+  "engineAudio": {
+    "speedPitchMin": 0.5,
+    "speedPitchMax": 1.1
   }
 }

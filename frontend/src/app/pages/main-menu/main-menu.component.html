@@ -2,9 +2,9 @@
   <h1>Rogue Leader</h1>
   <p class="subtitle">Asteroid Field (Space)</p>
   <nav>
-    <button type="button" (click)="start()">Start Game</button>
-    <a routerLink="/mission-select" (click)="audio.playUiClick()">Mission Select</a>
-    <button type="button" (click)="settings()">Settings</button>
-    <button type="button" (click)="controls()">Irányítás</button>
+    <button type="button" (click)="start()" (mouseenter)="audio.playUiHover()">Start Game</button>
+    <a routerLink="/mission-select" (click)="audio.playUiClick()" (mouseenter)="audio.playUiHover()">Mission Select</a>
+    <button type="button" (click)="settings()" (mouseenter)="audio.playUiHover()">Settings</button>
+    <button type="button" (click)="controls()" (mouseenter)="audio.playUiHover()">Irányítás</button>
   </nav>
 </div>

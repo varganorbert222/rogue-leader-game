@@ -72,8 +72,3 @@ export function getShortestRollToLevelAngle(rotation: Quaternion): number {
   const cos = Vector3.Dot(shipUp, targetUp);
   return Math.atan2(sin, cos);
 }
-
-/** @deprecated Auto-roll is integrated into ShipFlightController angular dynamics. */
-export function applyAutoRoll(rotation: Quaternion, _dt: number): Quaternion {
-  return rotation;
-}

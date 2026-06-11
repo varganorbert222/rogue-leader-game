@@ -73,11 +73,8 @@ export type { Actor, ActorRole } from './actors/actor';
 export { ActorWorld } from './actors/actor-world';
 export { PlayerActor } from './actors/player-actor';
 export { NpcActor } from './actors/npc-actor';
-/** @deprecated Use Vehicle */
-export { PlayerShipController } from './flight/player-ship-controller';
 export {
   CameraController,
-  type CameraMode,
   type CameraViewMode,
   type CameraDriverKind,
 } from './flight/camera-controller';
@@ -111,8 +108,7 @@ export {
 export { CombatSystem, type ProjectileHit } from './weapons/combat-system';
 export type {
   ResolvedWeaponDefinition,
-  WeaponDefinition,
-  ProjectileWeaponDefinition,
+  StubWeaponDefinition,
   WeaponDelivery,
   WeaponBehavior,
   WeaponFireGroup,
@@ -122,12 +118,10 @@ export {
   type WeaponsManifest,
 } from './config/weapons-manifest';
 export { VehicleWeaponSystem } from './weapons/core/vehicle-weapon-system';
-export { PLAYER_LASER_CANNON } from './weapons/definitions/player-laser-cannon';
-export { ENEMY_LASER_CANNON } from './weapons/definitions/enemy-laser-cannon';
 export { MissileWeapon } from './weapons/missile-weapon';
 export { HarpoonWeapon } from './weapons/harpoon-weapon';
 export { HealthComponent } from './entities/health-component';
-export { BoidNpcInput, BoidEnemyAI, type EnemyBehavior } from './ai/boid-npc-input';
+export { BoidNpcInput, type EnemyBehavior } from './ai/boid-npc-input';
 export { BehaviorNpcInput } from './ai/behavior-npc-input';
 export { NpcStateMachine } from './ai/npc-state-machine';
 export { RadarSystem } from './combat/radar-system';
@@ -147,4 +141,42 @@ export {
   type MissionLoadState,
 } from './missions/mission-manager';
 export type { MissionConfig, MissionEndState } from './missions/mission-types';
-export { GameAudioBridge } from './audio/game-audio-bridge';
+export { MissionEndStates } from './missions/mission-types';
+export {
+  SfxClipIds,
+  MusicTrackIds,
+  UiSfxClipIds,
+  ShipIds,
+  DEFAULT_PLAYER_SHIP_ID,
+  MissionIds,
+  DEFAULT_MISSION_ID,
+  WinConditionTypes,
+  EntityDestroyKinds,
+  ProjectileBehaviors,
+  AmmoIds,
+  CombatTeams,
+  ActorRoles,
+  Factions,
+  DamageSeverities,
+  isMissileHitBehavior,
+  type SfxClipId,
+  type MusicTrackId,
+  type UiSfxClipId,
+  type ShipId,
+  type MissionId,
+  type EntityDestroyKind,
+  type DamageSeverity,
+} from './constants';
+export {
+  GameEventTypes,
+  GameEventPayloadKeys,
+  GameEvents,
+  GameEventBus,
+  type GameEventType,
+  type GameEvent,
+} from './events/game-events';
+export { ShipAudioCatalog } from './audio/ship-audio-map';
+export { ShipEngineAudioManager, type ShipEngineAudioSource } from './audio/ship-engine-audio';
+export { WeaponHitSfxResolver } from './audio/weapon-hit-sfx';
+export { GameAudioBridge, type GameAudioUpdateContext } from './audio/game-audio-bridge';
+export { CombatIntensityTracker } from './audio/combat-intensity';

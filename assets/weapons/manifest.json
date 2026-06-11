@@ -18,8 +18,8 @@
         "hitRadius": 0.12
       },
       "audio": {
-        "fire": "laser_fire",
-        "hit": "laser_hit"
+        "fire": "rebel_cannon_fire",
+        "hit": "bullet_hit"
       }
     },
     "imperial_laser": {
@@ -36,8 +36,8 @@
         "hitRadius": 0.12
       },
       "audio": {
-        "fire": "laser_fire",
-        "hit": "laser_hit"
+        "fire": "imperial_cannon_fire",
+        "hit": "bullet_hit"
       }
     },
     "ion_laser": {
@@ -54,8 +54,8 @@
         "hitRadius": 0.14
       },
       "audio": {
-        "fire": "laser_fire",
-        "hit": "shield_hit"
+        "fire": "rebel_cannon_fire",
+        "hit": "bullet_hit"
       }
     },
     "proton_torpedo": {
@@ -76,8 +76,7 @@
         "acquireRange": 220
       },
       "audio": {
-        "fire": "missile_launch",
-        "hit": "explosion_small"
+        "hit": "missile_hit"
       }
     },
     "concussion_rocket": {
@@ -94,8 +93,7 @@
         "hitRadius": 0.25
       },
       "audio": {
-        "fire": "missile_launch",
-        "hit": "explosion_small"
+        "hit": "missile_hit"
       }
     },
     "concussion_bomb": {
@@ -112,8 +110,7 @@
         "hitRadius": 0.5
       },
       "audio": {
-        "fire": "missile_launch",
-        "hit": "explosion_small"
+        "hit": "missile_hit"
       }
     },
     "unguided_missile": {
@@ -130,8 +127,7 @@
         "hitRadius": 0.3
       },
       "audio": {
-        "fire": "missile_launch",
-        "hit": "explosion_small"
+        "hit": "missile_hit"
       }
     }
   },

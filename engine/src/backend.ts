@@ -1,6 +1,13 @@
 import { Engine, WebGPUEngine, type AbstractEngine } from '@babylonjs/core';
+import '@babylonjs/core/Audio/audioEngine';
 
 export type GraphicsBackend = 'WebGPU' | 'WebGL2';
+
+const ENGINE_OPTIONS = {
+  audioEngine: true,
+  preserveDrawingBuffer: true,
+  stencil: true,
+} as const;
 
 /** Try WebGPU first, fall back to WebGL2. */
 export async function createGraphicsEngine(
@@ -9,7 +16,11 @@ export async function createGraphicsEngine(
   try {
     const webgpuSupported = await WebGPUEngine.IsSupportedAsync;
     if (webgpuSupported) {
-      const webgpu = new WebGPUEngine(canvas, { antialias: true, adaptToDeviceRatio: true });
+      const webgpu = new WebGPUEngine(canvas, {
+        antialias: true,
+        adaptToDeviceRatio: true,
+        ...ENGINE_OPTIONS,
+      });
       await webgpu.initAsync();
       console.info('[Graphics] WebGPU');
       return { engine: webgpu, backend: 'WebGPU' };
@@ -19,8 +30,7 @@ export async function createGraphicsEngine(
   }
 
   const engine = new Engine(canvas, true, {
-    preserveDrawingBuffer: true,
-    stencil: true,
+    ...ENGINE_OPTIONS,
     adaptToDeviceRatio: true,
   });
   console.info('[Graphics] WebGL2');

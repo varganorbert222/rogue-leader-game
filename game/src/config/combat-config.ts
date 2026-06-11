@@ -8,7 +8,6 @@ export interface TargetingConfig {
   autoAimRange: number;
   /** Half-angle (degrees) of the auto-aim cone around the crosshair axis. */
   targetConeHalfAngleDeg: number;
-  /** @deprecated HUD hint only — cone angle governs lock. */
   targetScreenRadiusPct: number;
   /** Distance along crosshair axis where wing mounts converge (m). */
   convergenceDistance: number;

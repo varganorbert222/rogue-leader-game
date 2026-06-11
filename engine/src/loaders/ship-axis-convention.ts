@@ -174,9 +174,6 @@ export class ModelAxisCorrection {
   }
 }
 
-/** @deprecated Use ModelAxisCorrection — visual-only export fix. */
-export class ShipAxisFrame extends ModelAxisCorrection {}
-
 function basisMatrix(right: Vector3, up: Vector3, forward: Vector3): Matrix {
   return Matrix.FromValues(
     right.x,

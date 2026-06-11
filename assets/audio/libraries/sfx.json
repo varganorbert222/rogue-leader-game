@@ -1,0 +1,94 @@
+{
+  "id": "sfx",
+  "category": "sfx",
+  "basePath": "audio/sfx",
+  "clips": {
+    "rebel_cannon_fire": {
+      "registry": "cannon/rebel",
+      "volume": 0.82,
+      "volumeRange": [0.88, 1.0],
+      "pitchRange": [0.94, 1.06],
+      "cooldownMs": 55,
+      "maxVoices": 8
+    },
+    "imperial_cannon_fire": {
+      "registry": "cannon/imperial",
+      "volume": 0.85,
+      "volumeRange": [0.9, 1.0],
+      "pitchRange": [0.95, 1.05],
+      "cooldownMs": 70,
+      "maxVoices": 6
+    },
+    "bullet_hit": {
+      "registry": "bullet/hit",
+      "volume": 0.88,
+      "volumeRange": [0.85, 1.0],
+      "pitchRange": [0.9, 1.1],
+      "maxVoices": 8
+    },
+    "bullet_whoosh": {
+      "registry": "bullet/whoosh",
+      "volume": 0.72,
+      "volumeRange": [0.8, 1.0],
+      "pitchRange": [0.92, 1.08],
+      "cooldownMs": 180,
+      "maxVoices": 4
+    },
+    "fighter_explosion": {
+      "registry": "explosion/fighter",
+      "volume": 1.0,
+      "volumeRange": [0.9, 1.0],
+      "pitchRange": [0.88, 1.12],
+      "maxVoices": 5
+    },
+    "asteroid_explosion": {
+      "registry": "asteroid/explosion",
+      "volume": 0.95,
+      "volumeRange": [0.88, 1.0],
+      "pitchRange": [0.9, 1.1],
+      "maxVoices": 4
+    },
+    "missile_hit": {
+      "registry": "projectile/missile_hit",
+      "volume": 0.95,
+      "volumeRange": [0.9, 1.0],
+      "pitchRange": [0.94, 1.06],
+      "maxVoices": 3
+    },
+    "xwing_engine": {
+      "registry": "xwing/engine",
+      "volume": 0.42,
+      "loop": true,
+      "maxVoices": 14
+    },
+    "tie_fighter_engine": {
+      "registry": "tie_fighter/engine",
+      "volume": 0.48,
+      "loop": true,
+      "maxVoices": 14
+    },
+    "xwing_inbound": {
+      "registry": "xwing/inbound",
+      "volume": 0.78,
+      "volumeRange": [0.9, 1.0],
+      "pitchRange": [0.96, 1.04],
+      "cooldownMs": 2500,
+      "maxVoices": 2
+    },
+    "tie_fighter_inbound": {
+      "registry": "tie_fighter/inbound",
+      "volume": 0.8,
+      "volumeRange": [0.9, 1.0],
+      "pitchRange": [0.95, 1.05],
+      "cooldownMs": 2500,
+      "maxVoices": 2
+    }
+  },
+  "aliases": {
+    "laser_fire": "rebel_cannon_fire",
+    "laser_hit": "bullet_hit",
+    "explosion_small": "fighter_explosion",
+    "explosion_large": "fighter_explosion",
+    "engine_loop": "xwing_engine"
+  }
+}

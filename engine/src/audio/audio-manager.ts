@@ -1,25 +1,45 @@
-import type { Scene } from '@babylonjs/core';
+import { AbstractEngine, type Scene, type Vector3 } from '@babylonjs/core';
+import '@babylonjs/core/Audio/audioEngine';
+import { loadAudioLibraries } from './audio-library-loader';
 import { AudioBus } from './audio-bus';
+import type {
+  AudioManifest,
+  EngineAudioDef,
+  LoopTransformOptions,
+  MusicSetDef,
+  PlayOneShotOptions,
+  StartLoopOptions,
+  SfxRegistry,
+} from './audio-types';
+import { ClipPlayer } from './clip-player';
+import { DynamicMusicController } from './dynamic-music';
 import { MusicController } from './music-controller';
-import { SfxPool } from './sfx-pool';
+import { loadSfxRegistry } from './sfx-registry';
 
-export interface AudioManifest {
-  music: Record<string, { path: string; loop: boolean; volume: number }>;
-  sfx: Record<string, { path: string; volume: number; cooldownMs?: number }>;
-}
+export type {
+  AudioManifest,
+  LoopTransformOptions,
+  PlayOneShotOptions,
+  StartLoopOptions,
+} from './audio-types';
 
 const warnedMissing = new Set<string>();
 
 export class AudioManager {
   readonly bus = new AudioBus();
   private readonly music: MusicController;
-  private readonly sfx: SfxPool;
+  private readonly dynamicMusic: DynamicMusicController;
+  private readonly clips: ClipPlayer;
   private unlocked = false;
   private manifest: AudioManifest | null = null;
+  private musicSets: Record<string, MusicSetDef> = {};
 
   constructor(private readonly scene: Scene) {
+    this.scene.audioEnabled = true;
+    this.scene.audioPositioningRefreshRate = 0;
     this.music = new MusicController(scene, this.bus);
-    this.sfx = new SfxPool(scene, this.bus);
+    this.dynamicMusic = new DynamicMusicController(scene, this.bus);
+    this.clips = new ClipPlayer(scene, this.bus);
   }
 
   async loadManifest(url: string, baseUrl = '/assets'): Promise<void> {
@@ -27,12 +47,23 @@ export class AudioManager {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       this.manifest = (await res.json()) as AudioManifest;
+      this.musicSets = this.manifest.musicSets ?? {};
+
       for (const [id, entry] of Object.entries(this.manifest.music)) {
         this.music.register(id, entry, baseUrl);
+        this.dynamicMusic.register(id, entry, baseUrl);
       }
-      for (const [id, entry] of Object.entries(this.manifest.sfx)) {
-        this.sfx.register(id, entry, baseUrl);
+
+      if (this.manifest.sfx) {
+        for (const [id, entry] of Object.entries(this.manifest.sfx)) {
+          if (!this.clips.hasClip(id)) {
+            this.clips.registerLegacy(id, entry, baseUrl);
+          }
+        }
       }
+
+      const registry: SfxRegistry | null = await loadSfxRegistry(baseUrl);
+      await loadAudioLibraries(this.manifest, this.clips, baseUrl, registry);
     } catch (err) {
       console.warn('[Audio] manifest load failed — SFX/music will no-op', err);
       this.manifest = { music: {}, sfx: {} };
@@ -41,16 +72,27 @@ export class AudioManager {
 
   async unlock(): Promise<void> {
     this.unlocked = true;
+    const audioEngine = AbstractEngine.audioEngine;
+    if (!audioEngine) return;
+    audioEngine.useCustomUnlockedButton = true;
+    audioEngine.unlock();
+  }
+
+  /** Update listener state for Doppler (position follows active camera automatically). */
+  updateListener(position: Vector3, velocity: Vector3): void {
+    this.clips.setListenerState(position, velocity);
   }
 
   setMasterVolume(v: number): void {
     this.bus.master = Math.max(0, Math.min(1, v));
     this.music.applyBusVolume();
+    this.dynamicMusic.applyBusVolume();
   }
 
   setMusicVolume(v: number): void {
     this.bus.music = Math.max(0, Math.min(1, v));
     this.music.applyBusVolume();
+    this.dynamicMusic.applyBusVolume();
   }
 
   setSfxVolume(v: number): void {
@@ -60,6 +102,41 @@ export class AudioManager {
   setMuted(muted: boolean): void {
     this.bus.muted = muted;
     this.music.applyBusVolume();
+    this.dynamicMusic.applyBusVolume();
+  }
+
+  playOneShot(id: string, options?: PlayOneShotOptions): void {
+    if (!this.unlocked) return;
+    if (!this.clips.hasClip(id) && !warnedMissing.has(`clip:${id}`)) {
+      warnedMissing.add(`clip:${id}`);
+      console.warn(`[Audio] missing clip id: ${id}`);
+      return;
+    }
+    this.clips.playOneShot(id, options);
+  }
+
+  playSfx(id: string, options?: PlayOneShotOptions): void {
+    this.playOneShot(id, options);
+  }
+
+  startLoop(id: string, options?: StartLoopOptions | number): string {
+    if (!this.unlocked) return '';
+    if (typeof options === 'number') {
+      return this.clips.startLoop(id, { volumeScale: options });
+    }
+    return this.clips.startLoop(id, options);
+  }
+
+  setLoopTransform(handle: string, options: LoopTransformOptions): void {
+    this.clips.setLoopTransform(handle, options);
+  }
+
+  setLoopVolume(handle: string, volumeScale: number): void {
+    this.clips.setLoopVolume(handle, volumeScale);
+  }
+
+  stopLoop(handle: string): void {
+    this.clips.stopLoop(handle);
   }
 
   playMusic(id: string, options?: { fadeInMs?: number }): void {
@@ -69,39 +146,62 @@ export class AudioManager {
       console.warn(`[Audio] missing music id: ${id}`);
       return;
     }
+    this.dynamicMusic.stop(0);
     this.music.play(id, options?.fadeInMs ?? 0);
   }
 
   stopMusic(fadeOutMs = 0): void {
+    this.dynamicMusic.stop(fadeOutMs);
     this.music.stop(fadeOutMs);
   }
 
   crossfadeMusic(toId: string, durationMs: number): void {
     if (!this.unlocked) return;
+    this.dynamicMusic.stop(0);
     this.music.crossfade(toId, durationMs);
+  }
+
+  startMusicSet(setId: string): boolean {
+    if (!this.unlocked) return false;
+    const set = this.musicSets[setId];
+    if (!set || !this.manifest) {
+      if (!warnedMissing.has(`musicSet:${setId}`)) {
+        warnedMissing.add(`musicSet:${setId}`);
+        console.warn(`[Audio] missing music set: ${setId}`);
+      }
+      return false;
+    }
+    this.music.stop(0);
+    this.dynamicMusic.startSet(set, this.manifest.music);
+    return true;
+  }
+
+  setMusicIntensity(value: number, dt: number): void {
+    if (!this.unlocked) return;
+    this.dynamicMusic.setIntensity(value, dt);
+  }
+
+  isDynamicMusicActive(): boolean {
+    return this.dynamicMusic.isActive();
+  }
+
+  getEngineAudioConfig(): EngineAudioDef | undefined {
+    return this.manifest?.engineAudio;
   }
 
   duckMusic(factor = 0.35): void {
     this.music.duck(factor);
+    this.dynamicMusic.duck(factor);
   }
 
   unduckMusic(): void {
     this.music.unduck();
-  }
-
-  playSfx(id: string, options?: { volume?: number; cooldownMs?: number }): void {
-    if (!this.unlocked) return;
-    const entry = this.manifest?.sfx[id];
-    if (!entry && !warnedMissing.has(`sfx:${id}`)) {
-      warnedMissing.add(`sfx:${id}`);
-      console.warn(`[Audio] missing sfx id: ${id}`);
-      return;
-    }
-    this.sfx.play(id, options?.volume ?? 1, options?.cooldownMs ?? entry?.cooldownMs);
+    this.dynamicMusic.unduck();
   }
 
   dispose(): void {
     this.music.dispose();
-    this.sfx.dispose();
+    this.dynamicMusic.dispose();
+    this.clips.dispose();
   }
 }

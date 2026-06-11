@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "generatedAt": "2026-06-11T19:53:54.914Z",
+  "preferredFormats": [
+    ".wav",
+    ".ogg",
+    ".mp3"
+  ],
+  "groups": {
+    "asteroid/explosion": {
+      "basePath": "audio/sfx/asteroid",
+      "files": [
+        "asteroid_splash_01.wav",
+        "asteroid_splash_02.wav"
+      ]
+    },
+    "bullet/hit": {
+      "basePath": "audio/sfx/bullet",
+      "files": [
+        "cannon_bullet_hit_01.wav",
+        "cannon_bullet_hit_02.wav",
+        "cannon_bullet_hit_03.wav"
+      ]
+    },
+    "bullet/whoosh": {
+      "basePath": "audio/sfx/bullet",
+      "files": [
+        "cannon_bullet_whoosh_01.wav",
+        "cannon_bullet_whoosh_02.wav",
+        "cannon_bullet_whoosh_03.wav",
+        "cannon_bullet_whoosh_04.wav",
+        "cannon_bullet_whoosh_05.wav",
+        "cannon_bullet_whoosh_06.wav",
+        "cannon_bullet_whoosh_07.wav",
+        "cannon_bullet_whoosh_08.wav",
+        "cannon_bullet_whoosh_09.wav",
+        "cannon_bullet_whoosh_10.wav",
+        "cannon_bullet_whoosh_11.wav",
+        "cannon_bullet_whoosh_12.wav",
+        "cannon_bullet_whoosh_13.wav",
+        "cannon_bullet_whoosh_14.wav",
+        "cannon_bullet_whoosh_15.wav",
+        "cannon_bullet_whoosh_16.wav"
+      ]
+    },
+    "cannon/imperial": {
+      "basePath": "audio/sfx/cannon",
+      "files": [
+        "imperial_cannon_01.wav",
+        "imperial_cannon_02.wav"
+      ]
+    },
+    "cannon/rebel": {
+      "basePath": "audio/sfx/cannon",
+      "files": [
+        "rebel_cannon_01.wav",
+        "rebel_cannon_02.wav",
+        "rebel_cannon_03.wav",
+        "rebel_cannon_04.wav"
+      ]
+    },
+    "explosion/fighter": {
+      "basePath": "audio/sfx/explosion",
+      "files": [
+        "fighter_explosion_01.wav",
+        "fighter_explosion_02.wav",
+        "fighter_explosion_03.wav",
+        "fighter_explosion_04.wav",
+        "fighter_explosion_05.wav",
+        "fighter_explosion_06.wav",
+        "fighter_explosion_07.wav"
+      ]
+    },
+    "projectile/missile_hit": {
+      "basePath": "audio/sfx/projectile",
+      "files": [
+        "missile_hit_01.wav"
+      ]
+    },
+    "tie_fighter/engine": {
+      "basePath": "audio/sfx/tie_fighter",
+      "files": [
+        "tie_fighter_engine.wav"
+      ]
+    },
+    "tie_fighter/inbound": {
+      "basePath": "audio/sfx/tie_fighter",
+      "files": [
+        "tie_fighter_inbound_01.wav",
+        "tie_fighter_inbound_02.wav",
+        "tie_fighter_inbound_03.wav",
+        "tie_fighter_inbound_04.wav",
+        "tie_fighter_inbound_05.wav",
+        "tie_fighter_inbound_06.wav",
+        "tie_fighter_inbound_07.wav",
+        "tie_fighter_inbound_08.wav"
+      ]
+    },
+    "ui/back": {
+      "basePath": "audio/sfx/ui",
+      "files": [
+        "back.ogg"
+      ]
+    },
+    "ui/click": {
+      "basePath": "audio/sfx/ui",
+      "files": [
+        "click.ogg"
+      ]
+    },
+    "ui/hover": {
+      "basePath": "audio/sfx/ui",
+      "files": [
+        "hover.ogg"
+      ]
+    },
+    "xwing/engine": {
+      "basePath": "audio/sfx/xwing",
+      "files": [
+        "xwing_engine.wav"
+      ]
+    },
+    "xwing/inbound": {
+      "basePath": "audio/sfx/xwing",
+      "files": [
+        "xwing_inbound_01.wav",
+        "xwing_inbound_02.wav"
+      ]
+    },
+    "xwing/sfoil": {
+      "basePath": "audio/sfx/xwing",
+      "files": [
+        "xwing_sfoil.wav"
+      ]
+    }
+  }
+}

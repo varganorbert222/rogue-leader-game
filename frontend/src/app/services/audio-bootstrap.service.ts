@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BabylonHost } from '@rogue-leader/engine';
+import { MusicTrackIds, UiSfxClipIds } from '@rogue-leader/game';
 import { AudioSettingsService } from './audio-settings.service';
 
 /** Hidden 1×1 canvas so menu routes can play music via Babylon Sound. */
@@ -34,15 +35,23 @@ export class AudioBootstrapService {
       await host.audio.unlock();
       this.unlocked = true;
     }
-    host.audio.playMusic('menu_loop', { fadeInMs: 500 });
+    host.audio.playMusic(MusicTrackIds.MenuLoop, { fadeInMs: 500 });
   }
 
   playUiClick(): void {
-    this.host?.audio.playSfx('ui_click');
+    this.host?.audio.playSfx(UiSfxClipIds.Click);
   }
 
   playUiConfirm(): void {
-    this.host?.audio.playSfx('ui_confirm');
+    this.host?.audio.playSfx(UiSfxClipIds.Click);
+  }
+
+  playUiBack(): void {
+    this.host?.audio.playSfx(UiSfxClipIds.Back);
+  }
+
+  playUiHover(): void {
+    this.host?.audio.playSfx(UiSfxClipIds.Hover);
   }
 
   stopMusic(): void {
