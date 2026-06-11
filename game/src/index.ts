@@ -1,6 +1,22 @@
-export { DEBUG_INVINCIBLE, DEBUG_SHOW_AXES } from './debug-flags';
+export {
+  loadDebugPreferences,
+  saveDebugPreferences,
+  cloneDebugPreferences,
+  DEFAULT_DEBUG_PREFERENCES,
+  type DebugPreferences,
+  type DebugOverlayToggles,
+  type DebugLabelToggles,
+  type DebugGameplayToggles,
+} from './debug/debug-preferences';
 export { KeyboardInput } from './input/keyboard-input';
 export { GamepadInput } from './input/gamepad-input';
+export { BoundPlayerInput } from './input/bound-player-input';
+export { startBindingCapture, type BindingCaptureSession } from './input/binding-capture';
+export {
+  formatBinding,
+  formatKeyboardCode,
+  formatGamepadButton,
+} from './input/binding-labels';
 export { listConnectedGamepads, wakeGamepads, type ConnectedGamepadInfo } from './input/gamepad-list';
 export {
   gamepadIdsMatch,
@@ -14,6 +30,31 @@ export {
   normalizeSelectedGamepadId,
   type FlightPreferences,
 } from './settings/flight-preferences';
+export {
+  loadControlBindings,
+  saveControlBindings,
+  resetControlBindings,
+  cloneControlBindings,
+  DEFAULT_CONTROL_BINDINGS,
+  CONTROL_ACTION_LABELS,
+  AXIS_ACTION_IDS,
+  BUTTON_ACTION_IDS,
+  type ControlBindingsConfig,
+  type ControlActionId,
+  type Binding,
+  type AxisActionBindings,
+  type ButtonActionBindings,
+  type StickSettings,
+  type TriggerSettings,
+} from './settings/control-bindings';
+export {
+  applyCapturedBinding,
+  isAxisAction,
+  isButtonAction,
+  removeGamepadButtonBinding,
+  removeKeyboardBinding,
+  type BindingPole,
+} from './settings/control-binding-utils';
 export { CombinedInput } from './input/combined-input';
 export type { IInputSource, FlightInput } from './input/i-input-source';
 export type { IPlayerInputSource } from './input/i-player-input-source';
@@ -34,7 +75,26 @@ export { PlayerActor } from './actors/player-actor';
 export { NpcActor } from './actors/npc-actor';
 /** @deprecated Use Vehicle */
 export { PlayerShipController } from './flight/player-ship-controller';
-export { CameraController, type CameraMode } from './flight/camera-controller';
+export {
+  CameraController,
+  type CameraMode,
+  type CameraViewMode,
+  type CameraDriverKind,
+} from './flight/camera-controller';
+export {
+  CAMERA_SPRING_PROFILES,
+  DEFAULT_CAMERA_SPRING_PROFILE,
+  cycleCameraSpringProfile,
+  type CameraSpringProfile,
+  type CameraSpringProfileId,
+} from './flight/camera-profile';
+export {
+  FollowCameraDriver,
+  ScriptedCameraDriver,
+  RailCameraDriver,
+  type CameraSequence,
+  type CameraSequenceKeyframe,
+} from './flight/camera-drivers';
 export {
   MIN_FLIGHT_SPEED,
   RETICLE_INNER_DISTANCE,
@@ -68,6 +128,17 @@ export { MissileWeapon } from './weapons/missile-weapon';
 export { HarpoonWeapon } from './weapons/harpoon-weapon';
 export { HealthComponent } from './entities/health-component';
 export { BoidNpcInput, BoidEnemyAI, type EnemyBehavior } from './ai/boid-npc-input';
+export { BehaviorNpcInput } from './ai/behavior-npc-input';
+export { NpcStateMachine } from './ai/npc-state-machine';
+export { RadarSystem } from './combat/radar-system';
+export { updateWeaponAimForObserver } from './combat/weapon-aim-controller';
+export {
+  loadNpcBehaviorConfig,
+  DEFAULT_NPC_BEHAVIOR_CONFIG,
+  type NpcBehaviorConfig,
+  type NpcStateId,
+} from './config/npc-behavior-config';
+export { GameDebugOverlay } from './debug/game-debug-overlay';
 export { CollisionSystem } from './collision/collision-system';
 export { MeteorField } from './hazards/meteor-field';
 export {

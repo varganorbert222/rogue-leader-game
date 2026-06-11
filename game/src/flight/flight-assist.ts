@@ -32,8 +32,8 @@ export function hasFlightControlInput(input: {
   );
 }
 
-/** Max angular speed (radians/sec) for auto-roll correction. */
-export const AUTO_ROLL_RATE = 1.5;
+/** Max commanded roll rate (rad/s) during auto-roll level-out. */
+export const AUTO_ROLL_RATE = 1.35;
 
 /**
  * When |forward.y| exceeds this, roll vs yaw is undefined (nose near vertical).
@@ -73,24 +73,7 @@ export function getShortestRollToLevelAngle(rotation: Quaternion): number {
   return Math.atan2(sin, cos);
 }
 
-/**
- * Removes wing bank via the shortest rotation around the nose axis.
- */
-export function applyAutoRoll(rotation: Quaternion, dt: number): Quaternion {
-  if (!canAutoRoll(rotation)) {
-    return rotation;
-  }
-
-  const rollAngle = getShortestRollToLevelAngle(rotation);
-  if (Math.abs(rollAngle) < 0.002) {
-    return rotation;
-  }
-
-  const fwd = getShipForward(rotation);
-  // Apply a capped angular step towards level to make the correction
-  // feel smooth and uniform regardless of how large the initial bank is.
-  const maxStep = AUTO_ROLL_RATE * dt; // radians per frame cap
-  const step = Math.abs(rollAngle) <= maxStep ? rollAngle : Math.sign(rollAngle) * maxStep;
-  const correction = Quaternion.RotationAxis(fwd, step);
-  return correction.multiply(rotation).normalize();
+/** @deprecated Auto-roll is integrated into ShipFlightController angular dynamics. */
+export function applyAutoRoll(rotation: Quaternion, _dt: number): Quaternion {
+  return rotation;
 }

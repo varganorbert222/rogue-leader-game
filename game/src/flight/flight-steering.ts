@@ -2,7 +2,8 @@ import { Quaternion, Scalar, Vector3 } from '@babylonjs/core';
 import { ZERO_VEHICLE_INPUT, type VehicleInput } from '../input/vehicle-input';
 import { getShipForward, getShipRight, getShipUp } from './ship-forward';
 
-const STEERING_GAIN = 2.8;
+/** Proportional heading error → flight axes; flight angular smoother handles inertia. */
+const STEERING_GAIN = 2.35;
 
 /**
  * Map a desired world heading into normalized flight axes (same input model as the player).

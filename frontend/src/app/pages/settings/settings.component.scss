@@ -10,3 +10,21 @@
 a {
   color: #8ec8ff;
 }
+
+.nav-hint {
+  margin: 1.25rem 0 0;
+  font-size: 0.9rem;
+
+  a {
+    text-decoration: none;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid #2a4a6a;
+    border-radius: 6px;
+    display: inline-block;
+    background: rgba(10, 24, 40, 0.5);
+
+    &:hover {
+      border-color: #4a8ec0;
+    }
+  }
+}

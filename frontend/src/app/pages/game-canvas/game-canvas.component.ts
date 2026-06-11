@@ -12,13 +12,18 @@ import { BabylonHost } from '@rogue-leader/engine';
 import {
   MissionManager,
   wakeGamepads,
+  type ControlBindingsConfig,
+  type DebugPreferences,
   type FlightPreferences,
   type MissionEndState,
   type MissionHudState,
 } from '@rogue-leader/game';
+import { ControlsPanelComponent } from '../../components/controls-panel/controls-panel.component';
 import { AudioBootstrapService } from '../../services/audio-bootstrap.service';
 import { AudioSettingsService } from '../../services/audio-settings.service';
+import { DebugSettingsService } from '../../services/debug-settings.service';
 import { FlightSettingsService } from '../../services/flight-settings.service';
+import { DebugPanelComponent } from '../../components/debug-panel/debug-panel.component';
 import {
   SettingsPanelComponent,
   type AudioSettingsSnapshot,
@@ -27,7 +32,7 @@ import {
 @Component({
   selector: 'app-game-canvas',
   standalone: true,
-  imports: [RouterLink, SettingsPanelComponent],
+  imports: [RouterLink, SettingsPanelComponent, ControlsPanelComponent, DebugPanelComponent],
   templateUrl: './game-canvas.component.html',
   styleUrl: './game-canvas.component.scss',
 })
@@ -41,6 +46,7 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
   private readonly audioBootstrap = inject(AudioBootstrapService);
   private readonly audioSettings = inject(AudioSettingsService);
   private readonly flightSettings = inject(FlightSettingsService);
+  private readonly debugSettings = inject(DebugSettingsService);
 
   hud: MissionHudState = {
     health: 100,
@@ -52,6 +58,7 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
     enemiesRemaining: 0,
     backend: '…',
     laserReady: true,
+    torpedoesRemaining: 0,
     reticleInner: { xPct: 50, yPct: 50, visible: false },
     reticleOuter: { xPct: 50, yPct: 50, visible: false },
     targetLock: null,
@@ -59,6 +66,8 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
 
   paused = false;
   showSettings = false;
+  showControls = false;
+  showDebug = false;
   endState: MissionEndState | null = null;
   missionName = '';
   loading = true;
@@ -77,9 +86,11 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
 
     const settings = this.audioSettings.get();
     const flight = this.flightSettings.get();
+    const debug = this.debugSettings.get();
     this.mission = new MissionManager(this.host, canvas);
     this.mission.applyAudioSettings(settings.master, settings.music, settings.sfx, settings.muted);
     this.mission.applyFlightPreferences(flight);
+    this.mission.applyDebugPreferences(debug);
     this.mission.setLoadProgressCallback((progress) => {
       this.loadingMessage = progress.message;
     });
@@ -122,13 +133,26 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
   @HostListener('document:keydown', ['$event'])
   onKey(event: KeyboardEvent): void {
     if (event.code === 'Escape') {
+      if (this.showDebug) {
+        this.closeDebug();
+        return;
+      }
+      if (this.showControls) {
+        this.closeControls();
+        return;
+      }
       if (this.showSettings) {
         this.closeSettings();
         return;
       }
       this.togglePause();
     }
-    if (this.showSettings || this.paused || this.endState) {
+    if (event.code === 'F3') {
+      event.preventDefault();
+      this.toggleDebug();
+      return;
+    }
+    if (this.showSettings || this.showControls || this.showDebug || this.paused || this.endState) {
       return;
     }
     if (event.code === 'KeyM') {
@@ -151,6 +175,45 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
     this.showSettings = false;
   }
 
+  openControls(): void {
+    this.showControls = true;
+    if (!this.paused) {
+      this.paused = true;
+      this.mission?.setPaused(true);
+    }
+  }
+
+  closeControls(): void {
+    this.showControls = false;
+  }
+
+  openDebug(): void {
+    this.showDebug = true;
+    if (!this.paused) {
+      this.paused = true;
+      this.mission?.setPaused(true);
+    }
+  }
+
+  closeDebug(): void {
+    this.showDebug = false;
+  }
+
+  toggleDebug(): void {
+    if (this.endState) return;
+    if (this.showDebug) {
+      this.closeDebug();
+      return;
+    }
+    this.showSettings = false;
+    this.showControls = false;
+    this.openDebug();
+  }
+
+  onDebugChange(prefs: DebugPreferences): void {
+    this.mission?.applyDebugPreferences(prefs);
+  }
+
   onSettingsAudioChange(snapshot: AudioSettingsSnapshot): void {
     this.mission?.applyAudioSettings(
       snapshot.master,
@@ -164,9 +227,18 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
     this.mission?.applyFlightPreferences(prefs);
   }
 
+  onControlsChange(config: ControlBindingsConfig): void {
+    this.mission?.applyControlBindings(config);
+    this.flightSettings.update({
+      selectedGamepadId: config.gamepad.selectedGamepadId,
+    });
+  }
+
   togglePause(): void {
     if (this.endState) return;
     this.showSettings = false;
+    this.showControls = false;
+    this.showDebug = false;
     this.paused = !this.paused;
     this.mission?.setPaused(this.paused);
   }

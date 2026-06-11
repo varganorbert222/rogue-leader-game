@@ -1,0 +1,56 @@
+<div class="debug-panel">
+  <section class="master">
+    <h3>Master</h3>
+    <label class="master-toggle">
+      <input type="checkbox" [(ngModel)]="prefs.masterEnabled" (change)="onMasterToggle()" />
+      Enable all debug visuals
+    </label>
+    <p class="hint">Turns off every overlay, gizmo, and label at once.</p>
+  </section>
+
+  <section [class.disabled]="!prefs.masterEnabled">
+    <h3>Overlays</h3>
+    <div class="grid">
+      <label><input type="checkbox" [(ngModel)]="prefs.overlays.worldAxes" (change)="onOverlayToggle()" /> World axes</label>
+      <label><input type="checkbox" [(ngModel)]="prefs.overlays.shipAxes" (change)="onOverlayToggle()" /> Ship axes</label>
+      <label><input type="checkbox" [(ngModel)]="prefs.overlays.playVolumeGrid" (change)="onOverlayToggle()" /> Play volume grid</label>
+      <label><input type="checkbox" [(ngModel)]="prefs.overlays.navPaths" (change)="onOverlayToggle()" /> Nav paths</label>
+      <label><input type="checkbox" [(ngModel)]="prefs.overlays.navWaypoints" (change)="onOverlayToggle()" /> Nav waypoints</label>
+      <label><input type="checkbox" [(ngModel)]="prefs.overlays.wanderZones3d" (change)="onOverlayToggle()" /> Wander zones (3D)</label>
+      <label><input type="checkbox" [(ngModel)]="prefs.overlays.npcRadarRings" (change)="onOverlayToggle()" /> NPC radar spheres</label>
+      <label><input type="checkbox" [(ngModel)]="prefs.overlays.npcSteeringVectors" (change)="onOverlayToggle()" /> NPC steering vectors</label>
+      <label><input type="checkbox" [(ngModel)]="prefs.overlays.playerAimVectors" (change)="onOverlayToggle()" /> Player aim vectors</label>
+      <label><input type="checkbox" [(ngModel)]="prefs.overlays.playerRadarRing" (change)="onOverlayToggle()" /> Player radar sphere</label>
+      <label><input type="checkbox" [(ngModel)]="prefs.overlays.vehicleWireframes" (change)="onOverlayToggle()" /> Vehicle wireframes</label>
+      <label><input type="checkbox" [(ngModel)]="prefs.overlays.projectileGizmos" (change)="onOverlayToggle()" /> Projectile gizmos</label>
+      <label><input type="checkbox" [(ngModel)]="prefs.overlays.meteorWireframes" (change)="onOverlayToggle()" /> Meteor wireframes</label>
+    </div>
+  </section>
+
+  <section [class.disabled]="!prefs.masterEnabled">
+    <h3>Labels &amp; gizmos</h3>
+    <label class="sub-master">
+      <input type="checkbox" [(ngModel)]="prefs.labels.enabled" (change)="onLabelToggle()" />
+      Enable labels
+    </label>
+    <div class="grid" [class.disabled]="!prefs.labels.enabled">
+      <label><input type="checkbox" [(ngModel)]="prefs.labels.vehicles" (change)="onLabelToggle()" /> Vehicles <span class="tag veh">VEH</span></label>
+      <label><input type="checkbox" [(ngModel)]="prefs.labels.projectiles" (change)="onLabelToggle()" /> Projectiles <span class="tag prj">PRJ</span></label>
+      <label><input type="checkbox" [(ngModel)]="prefs.labels.navWaypoints" (change)="onLabelToggle()" /> Nav waypoints <span class="tag wp">WP</span></label>
+      <label><input type="checkbox" [(ngModel)]="prefs.labels.navPaths" (change)="onLabelToggle()" /> Nav paths <span class="tag path">PATH</span></label>
+      <label><input type="checkbox" [(ngModel)]="prefs.labels.wanderZones" (change)="onLabelToggle()" /> Wander zones <span class="tag zone">ZONE</span></label>
+      <label><input type="checkbox" [(ngModel)]="prefs.labels.meteors" (change)="onLabelToggle()" /> Meteors <span class="tag mtr">MTR</span></label>
+      <label><input type="checkbox" [(ngModel)]="prefs.labels.npcActors" (change)="onLabelToggle()" /> NPC actors <span class="tag npc">NPC</span></label>
+    </div>
+  </section>
+
+  <section>
+    <h3>Gameplay debug</h3>
+    <label>
+      <input type="checkbox" [(ngModel)]="prefs.gameplay.invincible" (change)="onGameplayToggle()" />
+      Player invincible
+    </label>
+  </section>
+
+  <button type="button" class="reset" (click)="resetDefaults()">Reset debug defaults</button>
+</div>

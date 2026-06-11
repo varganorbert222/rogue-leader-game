@@ -1,17 +1,25 @@
 import { Quaternion, Scalar, TransformNode, Vector3 } from '@babylonjs/core';
 import type { VehicleInput } from '../input/vehicle-input';
 import {
-  applyAutoRoll,
+  AngularRateSmoother,
+  DEFAULT_ANGULAR_DYNAMICS,
+} from './angular-dynamics';
+import {
+  canAutoRoll,
   DEFAULT_FLIGHT_ASSIST,
+  getShortestRollToLevelAngle,
   hasFlightControlInput,
+  AUTO_ROLL_RATE,
   ROLL_IDLE_DELAY_SEC,
   type FlightAssistOptions,
 } from './flight-assist';
-import { MIN_FLIGHT_SPEED } from './flight-constants';
 import type { ResolvedShipFlightStats } from '../config/ship-flight-stats';
 import { computeRogueFlightAxes } from './rogue-flight-controls';
 import { applySoftBoundary, type SoftBoundary } from './soft-boundary';
 import { getShipForward } from './ship-forward';
+
+/** P gain for auto-roll: error (rad) → commanded roll rate (rad/s). */
+const AUTO_ROLL_KP = 2.8;
 
 /** Shared Rogue-style flight kinematics for player and NPC ships. */
 export class ShipFlightController {
@@ -20,6 +28,7 @@ export class ShipFlightController {
   private readonly forward = new Vector3(0, 0, 1);
   private flightAssist: FlightAssistOptions = { ...DEFAULT_FLIGHT_ASSIST };
   private rollIdleTime = 0;
+  private readonly angular = new AngularRateSmoother();
 
   constructor(
     public readonly root: TransformNode,
@@ -36,19 +45,40 @@ export class ShipFlightController {
     const rot = this.root.rotationQuaternion ?? Quaternion.Identity();
     const { pitchAxis, yawAxis, rollAxis } = computeRogueFlightAxes(rot);
 
-    const pitchQ = Quaternion.RotationAxis(pitchAxis, input.pitch * dt * this.stats.pitchRate);
-    const yawQ = Quaternion.RotationAxis(yawAxis, input.yaw * dt * this.stats.yawRate);
-    const rollQ = Quaternion.RotationAxis(rollAxis, -input.roll * dt * this.stats.rollRate);
-    let newRot = pitchQ.multiply(yawQ).multiply(rollQ).multiply(rot).normalize();
+    let targetPitch = input.pitch * this.stats.pitchRate;
+    let targetYaw = input.yaw * this.stats.yawRate;
+    let targetRoll = -input.roll * this.stats.rollRate;
 
     if (hasFlightControlInput(input)) {
       this.rollIdleTime = 0;
-    } else if (this.flightAssist.autoRoll) {
+    } else {
       this.rollIdleTime += dt;
-      if (this.rollIdleTime >= ROLL_IDLE_DELAY_SEC) {
-        newRot = applyAutoRoll(newRot, dt);
+      if (
+        this.flightAssist.autoRoll &&
+        this.rollIdleTime >= ROLL_IDLE_DELAY_SEC &&
+        canAutoRoll(rot)
+      ) {
+        const rollError = getShortestRollToLevelAngle(rot);
+        targetRoll = Scalar.Clamp(
+          rollError * AUTO_ROLL_KP,
+          -AUTO_ROLL_RATE,
+          AUTO_ROLL_RATE
+        );
       }
     }
+
+    const rates = this.angular.step(
+      dt,
+      targetPitch,
+      targetYaw,
+      targetRoll,
+      DEFAULT_ANGULAR_DYNAMICS
+    );
+
+    const pitchQ = Quaternion.RotationAxis(pitchAxis, rates.pitch * dt);
+    const yawQ = Quaternion.RotationAxis(yawAxis, rates.yaw * dt);
+    const rollQ = Quaternion.RotationAxis(rollAxis, rates.roll * dt);
+    const newRot = pitchQ.multiply(yawQ).multiply(rollQ).multiply(rot).normalize();
 
     this.root.rotationQuaternion = newRot;
 

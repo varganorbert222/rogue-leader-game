@@ -28,25 +28,96 @@
     "slowTumble": true,
     "maxAngularSpeed": 0.3
   },
+  "navigation": {
+    "paths": {
+      "tie_patrol_loop": {
+        "points": [
+          [-200, 40, -380],
+          [200, 40, -380],
+          [200, -40, -480],
+          [-200, -40, -480]
+        ],
+        "loop": true
+      },
+      "tie_patrol_upper": {
+        "points": [
+          [-180, 120, -300],
+          [180, 120, -300],
+          [180, 60, -420],
+          [-180, 60, -420]
+        ],
+        "loop": true
+      }
+    },
+    "zones": {
+      "wander_sector_a": {
+        "type": "sphere",
+        "center": [0, 0, -520],
+        "radius": 120
+      },
+      "wander_sector_b": {
+        "type": "sphere",
+        "center": [280, -30, -450],
+        "radius": 100
+      }
+    },
+    "flocks": {
+      "wave_1": { "pathId": "tie_patrol_loop", "combatRole": "patrol_only" },
+      "wave_2": { "pathId": "tie_patrol_upper", "combatRole": "patrol_only" },
+      "wave_3": { "zoneIds": ["wander_sector_a"], "combatRole": "wander_guard" },
+      "wave_4": { "zoneIds": ["wander_sector_b"], "combatRole": "wander_guard" },
+      "wave_5": { "combatRole": "hunter" }
+    }
+  },
   "waves": [
     {
       "id": "wave_1",
       "delaySec": 3,
       "enemies": [
-        { "shipId": "tie_fighter", "spawn": [-120, 40, -350], "behavior": "attack" },
-        { "shipId": "tie_fighter", "spawn": [120, -30, -380], "behavior": "attack" },
-        { "shipId": "tie_fighter", "spawn": [0, 80, -420], "behavior": "flank" }
+        { "shipId": "tie_fighter", "spawn": [-120, 40, -350], "behavior": "chase" },
+        { "shipId": "tie_fighter", "spawn": [120, -30, -380], "behavior": "chase" },
+        { "shipId": "tie_fighter", "spawn": [0, 80, -420], "behavior": "chase" }
       ]
     },
     {
       "id": "wave_2",
-      "delaySec": 8,
+      "delaySec": 5,
       "trigger": "wave_1_cleared",
       "enemies": [
-        { "shipId": "tie_fighter", "spawn": [-200, 0, -500], "behavior": "chase" },
-        { "shipId": "tie_fighter", "spawn": [200, 0, -500], "behavior": "chase" },
-        { "shipId": "tie_fighter", "spawn": [0, -100, -550], "behavior": "attack" },
-        { "shipId": "tie_fighter", "spawn": [0, 100, -520], "behavior": "attack" }
+        { "shipId": "tie_fighter", "spawn": [-180, 120, -300], "behavior": "chase" },
+        { "shipId": "tie_fighter", "spawn": [180, 120, -300], "behavior": "chase" },
+        { "shipId": "tie_fighter", "spawn": [0, 90, -360], "behavior": "chase" }
+      ]
+    },
+    {
+      "id": "wave_3",
+      "delaySec": 5,
+      "trigger": "wave_2_cleared",
+      "enemies": [
+        { "shipId": "tie_fighter", "spawn": [-60, 20, -500], "behavior": "attack" },
+        { "shipId": "tie_fighter", "spawn": [60, -20, -540], "behavior": "attack" },
+        { "shipId": "tie_fighter", "spawn": [0, 50, -520], "behavior": "chase" }
+      ]
+    },
+    {
+      "id": "wave_4",
+      "delaySec": 5,
+      "trigger": "wave_3_cleared",
+      "enemies": [
+        { "shipId": "tie_fighter", "spawn": [240, -20, -430], "behavior": "attack" },
+        { "shipId": "tie_fighter", "spawn": [300, -40, -470], "behavior": "chase" },
+        { "shipId": "tie_fighter", "spawn": [260, 30, -450], "behavior": "attack" }
+      ]
+    },
+    {
+      "id": "wave_5",
+      "delaySec": 6,
+      "trigger": "wave_4_cleared",
+      "enemies": [
+        { "shipId": "tie_fighter", "spawn": [-150, 0, -250], "behavior": "flank" },
+        { "shipId": "tie_fighter", "spawn": [150, 0, -250], "behavior": "flank" },
+        { "shipId": "tie_fighter", "spawn": [0, -80, -280], "behavior": "attack" },
+        { "shipId": "tie_fighter", "spawn": [0, 80, -280], "behavior": "chase" }
       ]
     }
   ],

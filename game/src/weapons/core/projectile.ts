@@ -187,6 +187,22 @@ export class Projectile {
     return target.team !== this.team && target.team !== 'neutral';
   }
 
+  getDebugSnapshot(id: string): {
+    id: string;
+    position: Vector3;
+    direction: Vector3;
+    team: CombatTeam;
+    weaponId: string;
+  } {
+    return {
+      id,
+      position: this.mesh.position.clone(),
+      direction: this.direction.clone(),
+      team: this.team,
+      weaponId: this.weaponId,
+    };
+  }
+
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;

@@ -1,6 +1,17 @@
 {
+  "radar": {
+    "radius": 175
+  },
+  "playerAmmo": {
+    "magazines": {
+      "proton_torpedo": 8,
+      "concussion_rocket": 6,
+      "concussion_bomb": 4
+    }
+  },
   "targeting": {
     "autoAimRange": 500,
+    "targetConeHalfAngleDeg": 6,
     "targetScreenRadiusPct": 12,
     "convergenceDistance": 1000,
     "maxDeflectionDeg": 35,

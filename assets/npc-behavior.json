@@ -1,0 +1,37 @@
+{
+  "radarRadius": 175,
+  "attackEnterRange": 100,
+  "attackExitRange": 130,
+  "loseRadarRange": 220,
+  "fireRange": 140,
+  "pathArriveRadius": 45,
+  "wanderRetargetRadius": 35,
+  "initialState": "patrol",
+  "states": {
+    "patrol": {
+      "speedFactor": 0.75,
+      "separationWeight": 2.8,
+      "alignmentWeight": 0.9,
+      "cohesionWeight": 0.7
+    },
+    "chase": {
+      "speedFactor": 1.0,
+      "separationWeight": 2.4,
+      "alignmentWeight": 0.6,
+      "cohesionWeight": 0.5
+    },
+    "attack": {
+      "speedFactor": 1.2,
+      "separationWeight": 2.0,
+      "alignmentWeight": 0.3,
+      "cohesionWeight": 0.2
+    }
+  },
+  "transitions": [
+    { "from": "patrol", "to": "chase", "when": "radar_hostile" },
+    { "from": "chase", "to": "attack", "when": "radar_hostile_close" },
+    { "from": "attack", "to": "chase", "when": "radar_hostile_far" },
+    { "from": "chase", "to": "patrol", "when": "radar_clear" },
+    { "from": "attack", "to": "patrol", "when": "radar_clear" }
+  ]
+}

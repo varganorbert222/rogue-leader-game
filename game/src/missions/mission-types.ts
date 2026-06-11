@@ -1,3 +1,5 @@
+import type { MissionNavigationConfig } from '../ai/navigation/nav-types';
+
 export interface MissionWaveEnemy {
   shipId: string;
   spawn: [number, number, number];
@@ -42,6 +44,7 @@ export interface MissionConfig {
     maxAngularSpeed: number;
   };
   waves: MissionWave[];
+  navigation?: MissionNavigationConfig;
   winCondition: { type: string };
   loseCondition: { type: string };
   introCinematicSec?: number;

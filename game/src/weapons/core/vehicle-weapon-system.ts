@@ -11,6 +11,7 @@ import { createMountedWeapons, MountedWeapon } from './mounted-weapon';
 import type { ProjectileManager } from './projectile-manager';
 import { createMountWeaponBindings } from './weapon-registry';
 import type { WeaponFireGroup } from './weapon-definition';
+import type { PlayerAmmoStore } from '../player-ammo';
 
 export interface WeaponAimTarget {
   position: Vector3;
@@ -66,6 +67,9 @@ export class VehicleWeaponSystem {
     for (const weapon of this.weapons) {
       if (useAutoAim && target) {
         weapon.updateAutoAim(
+          axisOrigin,
+          axisDirection,
+          targeting.convergenceDistance,
           target.position,
           target.velocity,
           shooterVel,
@@ -93,14 +97,34 @@ export class VehicleWeaponSystem {
     shooterId: string,
     aimDirection: Vector3,
     events: GameEventBus,
-    group: WeaponFireGroup
+    group: WeaponFireGroup,
+    playerAmmo?: PlayerAmmoStore
   ): boolean {
     let fired = false;
     const dir = aimDirection.clone().normalize();
     for (const weapon of this.weapons) {
       if (!matchesFireGroup(weapon.fireGroup, group)) continue;
+      if (group === 'primary' && weapon.definition.delivery !== 'laser') continue;
+      if (group === 'secondary' && weapon.definition.delivery !== 'projectile') continue;
+
+      if (
+        team === 'player' &&
+        weapon.definition.delivery === 'projectile' &&
+        playerAmmo &&
+        !playerAmmo.canFire(weapon.definition.id)
+      ) {
+        continue;
+      }
+
       if (weapon.tryFire(projectiles, team, faction, shooterId, dir, events)) {
         fired = true;
+        if (
+          team === 'player' &&
+          weapon.definition.delivery === 'projectile' &&
+          playerAmmo
+        ) {
+          playerAmmo.consume(weapon.definition.id);
+        }
       }
     }
     return fired;
@@ -112,9 +136,19 @@ export class VehicleWeaponSystem {
     faction: FactionId,
     shooterId: string,
     aimDirection: Vector3,
-    events: GameEventBus
+    events: GameEventBus,
+    playerAmmo?: PlayerAmmoStore
   ): boolean {
-    return this.tryFire(projectiles, team, faction, shooterId, aimDirection, events, 'primary');
+    return this.tryFire(
+      projectiles,
+      team,
+      faction,
+      shooterId,
+      aimDirection,
+      events,
+      'primary',
+      playerAmmo
+    );
   }
 
   tryFireSecondary(
@@ -123,9 +157,19 @@ export class VehicleWeaponSystem {
     faction: FactionId,
     shooterId: string,
     aimDirection: Vector3,
-    events: GameEventBus
+    events: GameEventBus,
+    playerAmmo?: PlayerAmmoStore
   ): boolean {
-    return this.tryFire(projectiles, team, faction, shooterId, aimDirection, events, 'secondary');
+    return this.tryFire(
+      projectiles,
+      team,
+      faction,
+      shooterId,
+      aimDirection,
+      events,
+      'secondary',
+      playerAmmo
+    );
   }
 
   getPrimaryAimDirection(fallback: Vector3): Vector3 {

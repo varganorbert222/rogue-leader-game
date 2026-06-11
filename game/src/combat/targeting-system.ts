@@ -3,6 +3,7 @@ import { isAutoAimCandidate, type FactionId } from './faction';
 import type { TargetingConfig } from '../config/combat-config';
 import { projectWorldToScreen, type HudScreenPoint } from '../flight/screen-project';
 import { isTargetInAimHemisphere } from '../weapons/aim-solver';
+import { angularOffsetDeg, isInsideAimCone } from './targeting-cone';
 
 export interface TargetEntity {
   id: string;
@@ -20,10 +21,40 @@ export interface ActiveTarget {
   screenPoint: HudScreenPoint;
 }
 
+interface ScoredCandidate {
+  active: ActiveTarget;
+  angleDeg: number;
+  distance: number;
+}
+
 export class TargetingSystem {
   private active: ActiveTarget | null = null;
 
   getActiveTarget(): ActiveTarget | null {
+    return this.active;
+  }
+
+  clear(): void {
+    this.active = null;
+  }
+
+  /** Radar-based lock — angular cone priority, then world distance. */
+  updateRadar(
+    observerFaction: FactionId,
+    observerPos: Vector3,
+    aimAxis: Vector3,
+    candidates: TargetEntity[],
+    radius: number,
+    coneHalfAngleDeg: number
+  ): ActiveTarget | null {
+    this.active = this.pickBestInCone(
+      observerFaction,
+      observerPos,
+      aimAxis,
+      candidates,
+      coneHalfAngleDeg,
+      radius
+    );
     return this.active;
   }
 
@@ -41,57 +72,21 @@ export class TargetingSystem {
       return null;
     }
 
-    if (
-      this.active &&
-      !this.refreshActiveTarget(
-        scene,
-        observerFaction,
-        observerPos,
-        aimAxis,
-        reticle,
-        candidates,
-        config
-      )
-    ) {
-      this.active = null;
-    }
+    const scored = this.scoreCandidates(
+      scene,
+      observerFaction,
+      observerPos,
+      aimAxis,
+      reticle,
+      candidates,
+      config
+    );
 
-    if (this.active) {
-      return this.active;
-    }
-
-    let best: ActiveTarget | null = null;
-    let bestScore = Infinity;
-
-    for (const candidate of candidates) {
-      const parsed = evaluateCandidate(
-        scene,
-        observerFaction,
-        observerPos,
-        aimAxis,
-        reticle,
-        candidate,
-        config
-      );
-      if (!parsed) continue;
-
-      if (parsed.screenDist > config.targetScreenRadiusPct) continue;
-
-      const score =
-        parsed.screenDist * config.screenDistanceWeight +
-        parsed.distance * config.worldDistanceWeight;
-
-      if (score < bestScore) {
-        bestScore = score;
-        best = parsed.active;
-      }
-    }
-
-    this.active = best;
-    return best;
+    this.active = this.pickBestScored(scored);
+    return this.active;
   }
 
-  private refreshActiveTarget(
+  private scoreCandidates(
     scene: Scene,
     observerFaction: FactionId,
     observerPos: Vector3,
@@ -99,62 +94,104 @@ export class TargetingSystem {
     reticle: HudScreenPoint,
     candidates: TargetEntity[],
     config: TargetingConfig
-  ): boolean {
-    if (!this.active) return false;
+  ): ScoredCandidate[] {
+    const scored: ScoredCandidate[] = [];
 
-    const candidate = candidates.find((c) => c.id === this.active!.id);
-    if (!candidate) return false;
+    for (const candidate of candidates) {
+      const parsed = this.evaluateCandidate(
+        scene,
+        observerFaction,
+        observerPos,
+        aimAxis,
+        candidate,
+        config
+      );
+      if (!parsed) continue;
+      scored.push(parsed);
+    }
 
-    const parsed = evaluateCandidate(
-      scene,
-      observerFaction,
-      observerPos,
-      aimAxis,
-      reticle,
-      candidate,
-      config
-    );
-    if (!parsed) return false;
-    if (parsed.screenDist > config.targetScreenRadiusPct) return false;
-
-    this.active = parsed.active;
-    return true;
+    return scored;
   }
-}
 
-function screenDistanceFromReticle(point: HudScreenPoint, reticle: HudScreenPoint): number {
-  return Math.hypot(point.xPct - reticle.xPct, point.yPct - reticle.yPct);
-}
+  private pickBestInCone(
+    observerFaction: FactionId,
+    observerPos: Vector3,
+    aimAxis: Vector3,
+    candidates: TargetEntity[],
+    coneHalfAngleDeg: number,
+    maxRange: number
+  ): ActiveTarget | null {
+    const scored: ScoredCandidate[] = [];
 
-function evaluateCandidate(
-  scene: Scene,
-  observerFaction: FactionId,
-  observerPos: Vector3,
-  aimAxis: Vector3,
-  reticle: HudScreenPoint,
-  candidate: TargetEntity,
-  config: TargetingConfig
-): { active: ActiveTarget; screenDist: number; distance: number } | null {
-  if (!isAutoAimCandidate(observerFaction, candidate.faction)) return null;
-  if (!isTargetInAimHemisphere(observerPos, aimAxis, candidate.position)) return null;
+    for (const candidate of candidates) {
+      if (!isAutoAimCandidate(observerFaction, candidate.faction)) continue;
+      if (!isTargetInAimHemisphere(observerPos, aimAxis, candidate.position)) continue;
 
-  const distance = Vector3.Distance(observerPos, candidate.position);
-  if (distance > config.autoAimRange) return null;
+      const distance = Vector3.Distance(observerPos, candidate.position);
+      if (distance > maxRange) continue;
 
-  const screenPoint = projectWorldToScreen(scene, candidate.position);
-  if (!screenPoint.visible) return null;
+      const angleDeg = angularOffsetDeg(observerPos, aimAxis, candidate.position);
+      if (angleDeg > coneHalfAngleDeg) continue;
 
-  const screenDist = screenDistanceFromReticle(screenPoint, reticle);
+      scored.push({
+        angleDeg,
+        distance,
+        active: {
+          id: candidate.id,
+          position: candidate.position.clone(),
+          velocity: candidate.velocity.clone(),
+          distance,
+          screenPoint: { xPct: 50, yPct: 50, visible: true },
+        },
+      });
+    }
 
-  return {
-    screenDist,
-    distance,
-    active: {
-      id: candidate.id,
-      position: candidate.position.clone(),
-      velocity: candidate.velocity.clone(),
+    return this.pickBestScored(scored);
+  }
+
+  private pickBestScored(scored: ScoredCandidate[]): ActiveTarget | null {
+    if (scored.length === 0) return null;
+
+    scored.sort((a, b) => {
+      if (a.angleDeg !== b.angleDeg) return a.angleDeg - b.angleDeg;
+      return a.distance - b.distance;
+    });
+
+    return scored[0].active;
+  }
+
+  private evaluateCandidate(
+    scene: Scene,
+    observerFaction: FactionId,
+    observerPos: Vector3,
+    aimAxis: Vector3,
+    candidate: TargetEntity,
+    config: TargetingConfig
+  ): ScoredCandidate | null {
+    if (!isAutoAimCandidate(observerFaction, candidate.faction)) return null;
+    if (!isTargetInAimHemisphere(observerPos, aimAxis, candidate.position)) return null;
+
+    const distance = Vector3.Distance(observerPos, candidate.position);
+    if (distance > config.autoAimRange) return null;
+
+    const angleDeg = angularOffsetDeg(observerPos, aimAxis, candidate.position);
+    if (!isInsideAimCone(observerPos, aimAxis, candidate.position, config.targetConeHalfAngleDeg)) {
+      return null;
+    }
+
+    const screenPoint = projectWorldToScreen(scene, candidate.position);
+    if (!screenPoint.visible) return null;
+
+    return {
+      angleDeg,
       distance,
-      screenPoint,
-    },
-  };
+      active: {
+        id: candidate.id,
+        position: candidate.position.clone(),
+        velocity: candidate.velocity.clone(),
+        distance,
+        screenPoint,
+      },
+    };
+  }
 }

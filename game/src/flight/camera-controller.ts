@@ -1,51 +1,54 @@
 import {
   FreeCamera,
   Quaternion,
-  Scalar,
   Vector3,
   type Scene,
   type TransformNode,
 } from '@babylonjs/core';
 import type { CameraInput } from '../input/camera-input';
 import type { FlightInput } from '../input/i-input-source';
-import { getShipForward, getShipRight, getShipUp } from './ship-forward';
+import {
+  FollowCameraDriver,
+  OUTSIDE_VIEW_MODES,
+  ScriptedCameraDriver,
+  type CameraViewMode,
+} from './camera-drivers';
+import {
+  CAMERA_SPRING_PROFILES,
+  cycleCameraSpringProfile,
+  DEFAULT_CAMERA_SPRING_PROFILE,
+  type CameraSpringProfileId,
+} from './camera-profile';
+import { CameraSpringRig } from './camera-spring';
+import { getShipForward, getShipUp } from './ship-forward';
 
-/** Rogue Leader / Rogue Squadron outside camera presets */
-export type CameraMode = 'standard' | 'close' | 'far' | 'cockpit' | 'cinematic';
+export type { CameraViewMode };
+/** @deprecated Use CameraViewMode */
+export type CameraMode = CameraViewMode;
 
-const MODE_PRESETS: Record<Exclude<CameraMode, 'cinematic'>, { distance: number; height: number }> = {
-  standard: { distance: 18, height: 4 },
-  close: { distance: 12, height: 3 },
-  far: { distance: 32, height: 8 },
-  cockpit: { distance: 0, height: 0 },
-};
-
-const OUTSIDE_MODES: Exclude<CameraMode, 'cinematic' | 'cockpit'>[] = [
-  'standard',
-  'close',
-  'far',
-];
+export type CameraDriverKind = 'follow' | 'scripted';
 
 export class CameraController {
   private readonly camera: FreeCamera;
-  private mode: CameraMode = 'standard';
-  private cinematicTime = 0;
-  private cinematicDuration = 0;
+  private readonly spring = new CameraSpringRig();
+  private readonly followDriver = new FollowCameraDriver();
+  private readonly scriptedDriver = new ScriptedCameraDriver();
+
+  private activeDriver: CameraDriverKind = 'follow';
+  private viewMode: CameraViewMode = 'standard';
+  private springProfileId: CameraSpringProfileId = DEFAULT_CAMERA_SPRING_PROFILE;
   private shakeTime = 0;
 
-  private readonly positionVelocity = Vector3.Zero();
-  private readonly angularVelocity = Vector3.Zero();
-  private readonly cameraOrientation = Quaternion.Identity();
-  private orientationInitialized = false;
+  private readonly followState = {
+    orbitAngle: 0,
+    distanceBias: 0,
+    dropOffset: 0,
+    lookAroundYaw: 0,
+    lookAroundPitch: 0,
+  };
 
-  private orbitAngle = 0;
-  private distanceBias = 0;
-  private dropOffset = 0;
-  private lookAroundYaw = 0;
-  private lookAroundPitch = 0;
-
-  private readonly springStiffness = 140;
-  private readonly springDamping = 18;
+  private prevShipPos: Vector3 | null = null;
+  private prevShipRot = Quaternion.Identity();
 
   constructor(scene: Scene, canvas: HTMLCanvasElement) {
     this.camera = new FreeCamera('chaseCam', Vector3.Zero(), scene);
@@ -59,41 +62,71 @@ export class CameraController {
     return this.camera;
   }
 
+  getMode(): CameraViewMode {
+    return this.viewMode;
+  }
+
+  getSpringProfileId(): CameraSpringProfileId {
+    return this.springProfileId;
+  }
+
+  setSpringProfile(id: CameraSpringProfileId): void {
+    this.springProfileId = id;
+  }
+
+  cycleSpringProfile(): CameraSpringProfileId {
+    this.springProfileId = cycleCameraSpringProfile(this.springProfileId);
+    return this.springProfileId;
+  }
+
+  getActiveDriver(): CameraDriverKind {
+    return this.activeDriver;
+  }
+
+  /** Switch to scripted / cinematic driver (mission intros, future rails). */
+  useScriptedDriver(): ScriptedCameraDriver {
+    this.activeDriver = 'scripted';
+    this.viewMode = 'cinematic';
+    return this.scriptedDriver;
+  }
+
+  useFollowDriver(): void {
+    this.activeDriver = 'follow';
+    if (this.viewMode === 'cinematic') {
+      this.viewMode = 'standard';
+    }
+  }
+
   startCinematic(durationSec: number): void {
-    this.mode = 'cinematic';
-    this.cinematicTime = 0;
-    this.cinematicDuration = durationSec;
+    this.useScriptedDriver();
+    this.scriptedDriver.startLegacyIntro(durationSec);
   }
 
-  /** X — toggle cockpit / chase (Rogue Leader) */
-  toggleCockpit(): CameraMode {
-    this.mode = this.mode === 'cockpit' ? 'standard' : 'cockpit';
-    if (this.mode !== 'cockpit') {
-      this.lookAroundYaw = 0;
-      this.lookAroundPitch = 0;
+  toggleCockpit(): CameraViewMode {
+    this.useFollowDriver();
+    this.viewMode = this.viewMode === 'cockpit' ? 'standard' : 'cockpit';
+    if (this.viewMode !== 'cockpit') {
+      this.followState.lookAroundYaw = 0;
+      this.followState.lookAroundPitch = 0;
     }
-    return this.mode;
+    return this.viewMode;
   }
 
-  /** ~ / F-keys — cycle standard → close → far */
-  cycleOutsideView(): CameraMode {
-    if (this.mode === 'cockpit' || this.mode === 'cinematic') {
-      this.mode = 'standard';
-      return this.mode;
+  cycleOutsideView(): CameraViewMode {
+    this.useFollowDriver();
+    if (this.viewMode === 'cockpit' || this.viewMode === 'cinematic') {
+      this.viewMode = 'standard';
+      return this.viewMode;
     }
-    const idx = OUTSIDE_MODES.indexOf(this.mode as (typeof OUTSIDE_MODES)[number]);
-    const next = OUTSIDE_MODES[(idx + 1) % OUTSIDE_MODES.length];
-    this.mode = next;
-    return this.mode;
+    const idx = OUTSIDE_VIEW_MODES.indexOf(
+      this.viewMode as (typeof OUTSIDE_VIEW_MODES)[number]
+    );
+    this.viewMode = OUTSIDE_VIEW_MODES[(idx + 1) % OUTSIDE_VIEW_MODES.length];
+    return this.viewMode;
   }
 
-  /** Z — drop camera below craft */
   triggerDropCamera(): void {
-    this.dropOffset = 1;
-  }
-
-  getMode(): CameraMode {
-    return this.mode;
+    this.followState.dropOffset = 1;
   }
 
   shake(duration = 0.25): void {
@@ -106,126 +139,94 @@ export class CameraController {
       for (let i = 0; i < input.cameraCycle; i++) this.cycleOutsideView();
     }
     if (input?.cameraDrop) this.triggerDropCamera();
+    if (input?.cameraProfileCycle) this.cycleSpringProfile();
 
-    const orbitInput = input?.cameraOrbit ?? 0;
-    const distInput = input?.cameraDistance ?? 0;
-    this.orbitAngle = Scalar.Lerp(this.orbitAngle, orbitInput * 0.9, 1 - Math.pow(0.001, dt));
-    this.distanceBias = Scalar.Lerp(this.distanceBias, distInput * 8, 1 - Math.pow(0.001, dt));
-    this.dropOffset = Math.max(0, this.dropOffset - dt * 1.2);
+    const shipPos = target.getAbsolutePosition();
+    const shipRot = target.rotationQuaternion ?? Quaternion.Identity();
+    const lagReferenceRot = this.prevShipRot.clone();
+    const shipVel =
+      this.prevShipPos && dt > 0
+        ? shipPos.subtract(this.prevShipPos).scale(1 / dt)
+        : Vector3.Zero();
 
-    if (input?.lookAround && this.mode === 'cockpit') {
-      this.lookAroundYaw = Scalar.Clamp(this.lookAroundYaw + orbitInput * dt * 2.5, -0.8, 0.8);
-      this.lookAroundPitch = Scalar.Clamp(this.lookAroundPitch + distInput * dt * 2.5, -0.5, 0.5);
-    } else if (this.mode !== 'cockpit') {
-      this.lookAroundYaw = Scalar.Lerp(this.lookAroundYaw, 0, 1 - Math.pow(0.02, dt));
-      this.lookAroundPitch = Scalar.Lerp(this.lookAroundPitch, 0, 1 - Math.pow(0.02, dt));
-    }
+    const shakeOffset = this.sampleShake(dt);
+    const profile = CAMERA_SPRING_PROFILES[this.springProfileId];
 
-    const pos = target.getAbsolutePosition();
-    const rot = target.rotationQuaternion ?? Quaternion.Identity();
-    const fwd = getShipForward(rot);
-    const right = getShipRight(rot);
-    const up = getShipUp(rot);
+    let desiredPos: Vector3;
+    let desiredRot: Quaternion;
+    let directAttach = false;
 
-    let distance = MODE_PRESETS.standard.distance;
-    let height = MODE_PRESETS.standard.height;
+    if (this.activeDriver === 'scripted') {
+      this.scriptedDriver.update(dt);
+      const pose = this.scriptedDriver.computeDesired({ dt, target, timeSec: 0 });
+      desiredPos = pose.position;
+      desiredRot = pose.orientation;
+      directAttach = pose.directAttach ?? false;
 
-    if (this.mode === 'cinematic') {
-      this.cinematicTime += dt;
-      const t = Math.min(1, this.cinematicTime / this.cinematicDuration);
-      distance = 40 - t * 20;
-      height = 12 - t * 6;
-      if (t >= 1) this.mode = 'standard';
-    } else if (this.mode === 'cockpit') {
-      const cockpitPos = pos.add(fwd.scale(0.35)).add(up.scale(0.15));
-      this.springMoveTo(cockpitPos, dt);
-
-      const lookYaw = Quaternion.RotationAxis(up, this.lookAroundYaw);
-      const lookPitch = Quaternion.RotationAxis(right, this.lookAroundPitch);
-      const lookOffset = lookPitch.multiply(lookYaw);
-      this.springOrientation(this.targetCameraRotation(rot, lookOffset), dt);
-      return;
+      if (this.scriptedDriver.isFinished()) {
+        this.useFollowDriver();
+        this.viewMode = 'standard';
+      }
     } else {
-      const preset = MODE_PRESETS[this.mode as keyof typeof MODE_PRESETS] ?? MODE_PRESETS.standard;
-      distance = preset.distance + this.distanceBias;
-      height = preset.height;
+      const pose = this.followDriver.computeDesired({
+        dt,
+        target,
+        viewMode: this.viewMode,
+        input,
+        inputResponse: profile.inputResponse,
+        shipVelocity: shipVel,
+        rotationLag: profile.rotationLag,
+        velocityLag: profile.velocityLag,
+        prevShipRot: lagReferenceRot,
+        shakeOffset,
+        state: this.followState,
+      });
+      desiredPos = pose.position;
+      desiredRot = pose.orientation;
+      directAttach = pose.directAttach ?? false;
     }
 
-    const back = fwd.scale(-1);
-    const orbitRight = right.scale(Math.sin(this.orbitAngle) * distance * 0.35);
-    const dropDown = up.scale(-this.dropOffset * 10);
-
-    let desired = pos
-      .add(back.scale(distance))
-      .add(up.scale(height))
-      .add(orbitRight)
-      .add(dropDown);
-
-    if (this.shakeTime > 0) {
-      this.shakeTime -= dt;
-      desired.x += (Math.random() - 0.5) * 0.8;
-      desired.y += (Math.random() - 0.5) * 0.8;
-    }
-
-    this.springMoveTo(desired, dt);
-    this.springOrientation(this.targetCameraRotation(rot), dt);
-  }
-
-  /** Camera orientation matches ship (+Z forward in this project). */
-  private targetCameraRotation(shipRot: Quaternion, lookOffset?: Quaternion): Quaternion {
-    return lookOffset ? lookOffset.multiply(shipRot).normalize() : shipRot.clone();
-  }
-
-  private springMoveTo(desired: Vector3, dt: number): void {
-    const displacement = desired.clone().subtract(this.camera.position);
-    const accel = displacement
-      .scale(this.springStiffness)
-      .subtract(this.positionVelocity.scale(this.springDamping));
-    this.positionVelocity.addInPlace(accel.scale(dt));
-    this.camera.position.addInPlace(this.positionVelocity.scale(dt));
-  }
-
-  private springOrientation(target: Quaternion, dt: number): void {
-    if (!this.orientationInitialized) {
-      this.cameraOrientation.copyFrom(target);
-      this.orientationInitialized = true;
-      this.applyCameraOrientation();
+    if (directAttach) {
+      this.camera.position.copyFrom(desiredPos);
+      this.spring.reset(desiredPos, desiredRot);
+      this.camera.rotationQuaternion = desiredRot.clone();
+      this.camera.upVector.copyFrom(getShipUp(desiredRot));
+      this.prevShipPos = shipPos.clone();
+      this.prevShipRot = shipRot.clone();
       return;
     }
 
-    const inv = this.cameraOrientation.conjugate().normalize();
-    let delta = target.multiply(inv).normalize();
-    if (delta.w < 0) {
-      delta = new Quaternion(-delta.x, -delta.y, -delta.z, -delta.w);
-    }
+    this.prevShipPos = shipPos.clone();
+    this.prevShipRot = shipRot.clone();
 
-    const angle = 2 * Math.acos(Scalar.Clamp(delta.w, -1, 1));
-    let axis: Vector3;
-    if (angle < 1e-6) {
-      axis = Vector3.Zero();
-    } else {
-      const sinHalf = Math.sin(angle / 2);
-      axis = new Vector3(delta.x / sinHalf, delta.y / sinHalf, delta.z / sinHalf);
-    }
+    const nextPos = this.spring.stepPosition(
+      this.camera.position,
+      desiredPos,
+      dt,
+      profile.positionStiffness,
+      profile.positionDamping
+    );
+    this.camera.position.copyFrom(nextPos);
 
-    const rotDisplacement = axis.scale(angle);
-    const accel = rotDisplacement
-      .scale(this.springStiffness)
-      .subtract(this.angularVelocity.scale(this.springDamping));
-    this.angularVelocity.addInPlace(accel.scale(dt));
-
-    const step = this.angularVelocity.length() * dt;
-    if (step > 1e-6) {
-      const stepAxis = this.angularVelocity.clone().normalize();
-      const stepQ = Quaternion.RotationAxis(stepAxis, step);
-      this.cameraOrientation.copyFrom(stepQ.multiply(this.cameraOrientation).normalize());
-    }
-
-    this.applyCameraOrientation();
+    const nextRot = this.spring.stepOrientation(
+      desiredRot,
+      dt,
+      profile.orientationStiffness,
+      profile.orientationDamping
+    );
+    this.camera.rotationQuaternion = nextRot;
+    this.camera.upVector.copyFrom(this.spring.upVector());
   }
 
-  private applyCameraOrientation(): void {
-    this.camera.rotationQuaternion = this.cameraOrientation.clone();
-    this.camera.upVector.copyFrom(getShipUp(this.cameraOrientation));
+  private sampleShake(dt: number): Vector3 {
+    if (this.shakeTime <= 0) {
+      return Vector3.Zero();
+    }
+    this.shakeTime -= dt;
+    return new Vector3(
+      (Math.random() - 0.5) * 0.8,
+      (Math.random() - 0.5) * 0.8,
+      0
+    );
   }
 }

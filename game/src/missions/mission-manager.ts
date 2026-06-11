@@ -54,12 +54,18 @@ import {
   projectWorldToScreen,
   type HudScreenPoint,
 } from "../flight/screen-project";
-import { getShipForward, shipRotationFromHeading } from "../flight/ship-forward";
+import {
+  getShipForward,
+  shipRotationFromHeading,
+} from "../flight/ship-forward";
 import { MeteorField, type MeteorInstance } from "../hazards/meteor-field";
-import { CombinedInput } from "../input/combined-input";
-import { GamepadInput } from "../input/gamepad-input";
-import { KeyboardInput } from "../input/keyboard-input";
+import { BoundPlayerInput } from "../input/bound-player-input";
 import type { FlightPreferences } from "../settings/flight-preferences";
+import {
+  loadControlBindings,
+  saveControlBindings,
+  type ControlBindingsConfig,
+} from "../settings/control-bindings";
 import { loadFlightPreferences } from "../settings/flight-preferences";
 import { CombatSystem, type ProjectileHit } from "../weapons/combat-system";
 import type { VehicleWeaponSystem } from "../weapons/core/vehicle-weapon-system";
@@ -111,8 +117,7 @@ export class MissionManager {
   private config!: MissionConfig;
   private assetManifest!: AssetManifest;
   private shipLoader!: GltfShipLoader;
-  private input!: CombinedInput;
-  private readonly gamepadInput = new GamepadInput();
+  private readonly boundInput = new BoundPlayerInput();
   private readonly world = new ActorWorld();
   private loadState: MissionLoadState = { loading: false, message: "" };
   private loadProgressCallback?: (progress: LodLoadProgress) => void;
@@ -213,7 +218,7 @@ export class MissionManager {
       this.loadState = { loading: true, message: progress.message };
       this.loadProgressCallback?.(progress);
     });
-    this.input = new CombinedInput([new KeyboardInput(), this.gamepadInput]);
+    this.applyControlBindings(loadControlBindings());
     this.applyFlightPreferences(loadFlightPreferences());
     this.audioBridge = new GameAudioBridge(this.host.audio, this.events);
 
@@ -350,7 +355,9 @@ export class MissionManager {
       enemiesRemaining: this.world.getNpcCount(),
       backend: this.host.backend,
       laserReady: true,
-      torpedoesRemaining: this.combat.getPlayerAmmo().getCount("proton_torpedo"),
+      torpedoesRemaining: this.combat
+        .getPlayerAmmo()
+        .getCount("proton_torpedo"),
       reticleInner,
       reticleOuter,
       targetLock: player?.targeting.getActiveTarget()?.screenPoint ?? null,
@@ -372,7 +379,14 @@ export class MissionManager {
 
   applyFlightPreferences(prefs: FlightPreferences): void {
     this.world.player?.vehicle.setFlightAssist({ autoRoll: prefs.autoRoll });
-    this.gamepadInput.setPreferredGamepadId(prefs.selectedGamepadId, false);
+    const config = this.boundInput.getConfig();
+    config.gamepad.selectedGamepadId = prefs.selectedGamepadId;
+    this.boundInput.setConfig(config);
+  }
+
+  applyControlBindings(config: ControlBindingsConfig): void {
+    const saved = saveControlBindings(config);
+    this.boundInput.setConfig(saved);
   }
 
   setPaused(paused: boolean): void {
@@ -384,8 +398,8 @@ export class MissionManager {
     const player = this.world.player;
     if (this.endState !== "playing" || !player) return;
 
-    this.input.update();
-    const playerInput = this.input.getPlayerInput();
+    this.boundInput.update();
+    const playerInput = this.boundInput.getPlayerInput();
     const boundary = this.config.playVolume.softBoundary
       ? {
           center: Vector3.FromArray(this.config.playVolume.center),
@@ -434,7 +448,7 @@ export class MissionManager {
   }
 
   dispose(): void {
-    this.input?.dispose();
+    this.boundInput.dispose();
     this.combat?.dispose();
     this.debugFloor?.dispose();
     this.debugFloor = undefined;
@@ -694,7 +708,8 @@ export class MissionManager {
     const prefs = this.debugPreferences;
     const enabled = prefs.masterEnabled;
     const center =
-      volumeCenter ?? Vector3.FromArray(this.config?.playVolume.center ?? [0, 0, 0]);
+      volumeCenter ??
+      Vector3.FromArray(this.config?.playVolume.center ?? [0, 0, 0]);
 
     this.debugFloor?.setEnabled(enabled && prefs.overlays.playVolumeGrid);
 

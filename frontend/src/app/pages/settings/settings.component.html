@@ -2,9 +2,14 @@
   <h1>Settings</h1>
 
   <app-settings-panel
+    [showControlsHint]="false"
     (audioChange)="onAudioChange($event)"
     (flightChange)="onFlightChange()"
   />
+
+  <p class="nav-hint">
+    <a routerLink="/controls" (click)="audio.playUiClick()">Irányítás / Controls →</a>
+  </p>
 
   <a routerLink="/" (click)="audio.playUiClick()">Back</a>
 </div>

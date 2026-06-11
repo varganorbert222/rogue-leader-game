@@ -1,18 +1,21 @@
-import { Vector3 } from '@babylonjs/core';
-import type { DetectedWeaponMount } from '@rogue-leader/engine';
-import { getMountForward } from '@rogue-leader/engine';
-import type { GameEventBus } from '../../events/game-events';
+import { Vector3 } from "@babylonjs/core";
+import type { DetectedWeaponMount } from "@rogue-leader/engine";
+import { getMountForward } from "@rogue-leader/engine";
+import type { GameEventBus } from "../../events/game-events";
 import {
   clampToDeflectionCone,
   computeConvergenceDirection,
   computeLeadDirection,
   isTargetInAimHemisphere,
   rotateTowardDirection,
-} from '../aim-solver';
-import type { CombatTeam } from './combat-team';
-import type { FactionId } from '../../combat/faction';
-import type { ProjectileManager } from './projectile-manager';
-import type { ResolvedWeaponDefinition, WeaponFireGroup } from './weapon-definition';
+} from "../aim-solver";
+import type { CombatTeam } from "./combat-team";
+import type { FactionId } from "../../combat/faction";
+import type { ProjectileManager } from "./projectile-manager";
+import type {
+  ResolvedWeaponDefinition,
+  WeaponFireGroup,
+} from "./weapon-definition";
 
 export class MountedWeapon {
   private cooldown = 0;
@@ -21,7 +24,7 @@ export class MountedWeapon {
 
   constructor(
     public readonly mount: DetectedWeaponMount,
-    public readonly definition: ResolvedWeaponDefinition
+    public readonly definition: ResolvedWeaponDefinition,
   ) {
     // Initialize aim direction to center (mount forward)
     const centerAim = getMountForward(mount.node).clone();
@@ -51,14 +54,14 @@ export class MountedWeapon {
     convergenceDistance: number,
     _maxDeflectionRad: number,
     dt: number,
-    aimSpeedRad: number
+    aimSpeedRad: number,
   ): void {
     const origin = this.mount.node.getAbsolutePosition();
     const restAim = computeConvergenceDirection(
       origin,
       axisOrigin,
       axisDirection,
-      convergenceDistance
+      convergenceDistance,
     );
     this.applySmoothedAim(restAim, dt, aimSpeedRad);
   }
@@ -72,14 +75,14 @@ export class MountedWeapon {
     shooterVel: Vector3,
     maxDeflectionRad: number,
     dt: number,
-    aimSpeedRad: number
+    aimSpeedRad: number,
   ): void {
     const origin = this.mount.node.getAbsolutePosition();
     const restAim = computeConvergenceDirection(
       origin,
       axisOrigin,
       axisDirection,
-      convergenceDistance
+      convergenceDistance,
     );
 
     if (!isTargetInAimHemisphere(origin, restAim, targetPos)) {
@@ -92,7 +95,7 @@ export class MountedWeapon {
       targetPos,
       targetVel,
       this.projectileSpeed,
-      shooterVel
+      shooterVel,
     );
     const desired = clampToDeflectionCone(restAim, leadDir, maxDeflectionRad);
     this.applySmoothedAim(desired, dt, aimSpeedRad);
@@ -102,7 +105,11 @@ export class MountedWeapon {
     return this.smoothedAimDir;
   }
 
-  private applySmoothedAim(desired: Vector3, dt: number, aimSpeedRad: number): void {
+  private applySmoothedAim(
+    desired: Vector3,
+    dt: number,
+    aimSpeedRad: number,
+  ): void {
     const current = this.getSmoothedAim();
     const maxStep = aimSpeedRad * dt;
     this.smoothedAimDir = rotateTowardDirection(current, desired, maxStep);
@@ -127,13 +134,13 @@ export class MountedWeapon {
     faction: FactionId,
     shooterId: string,
     aimDirection: Vector3,
-    events: GameEventBus
+    events: GameEventBus,
   ): boolean {
     if (!this.ready) return false;
 
     this.cooldown = this.definition.cooldownSec;
     events.emit({
-      type: 'WeaponFired',
+      type: "WeaponFired",
       payload: {
         team,
         weaponId: this.definition.id,
@@ -143,8 +150,11 @@ export class MountedWeapon {
       },
     });
 
-    if (this.definition.behavior === 'missile_homing') {
-      events.emit({ type: 'MissileLaunched', payload: { weaponId: this.definition.id } });
+    if (this.definition.behavior === "missile_homing") {
+      events.emit({
+        type: "MissileLaunched",
+        payload: { weaponId: this.definition.id },
+      });
     }
 
     const origin = this.mount.node.getAbsolutePosition();
@@ -169,14 +179,24 @@ export class MountedWeapon {
     faction: FactionId,
     shooterId: string,
     aimDirection: Vector3,
-    events: GameEventBus
+    events: GameEventBus,
   ): boolean {
-    return this.tryFire(projectiles, team, faction, shooterId, aimDirection, events);
+    return this.tryFire(
+      projectiles,
+      team,
+      faction,
+      shooterId,
+      aimDirection,
+      events,
+    );
   }
 }
 
 export function createMountedWeapons(
-  bindings: { mount: DetectedWeaponMount; definition: ResolvedWeaponDefinition }[]
+  bindings: {
+    mount: DetectedWeaponMount;
+    definition: ResolvedWeaponDefinition;
+  }[],
 ): MountedWeapon[] {
   return bindings.map((b) => new MountedWeapon(b.mount, b.definition));
 }

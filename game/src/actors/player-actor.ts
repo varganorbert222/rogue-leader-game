@@ -1,6 +1,10 @@
 import { Quaternion, type Scene, Vector3 } from '@babylonjs/core';
 import type { FactionId } from '../combat/faction';
 import { TargetingSystem, type TargetEntity } from '../combat/targeting-system';
+import {
+  updateWeaponAimForObserver,
+  type WeaponAimDebugInfo,
+} from '../combat/weapon-aim-controller';
 import type { TargetingConfig } from '../config/combat-config';
 import type { SphereBody } from '../collision/collision-system';
 import type { HealthComponent } from '../entities/health-component';
@@ -22,12 +26,14 @@ export interface PlayerActorUpdateContext {
   camera: CameraController;
   combat: CombatSystem;
   targetingConfig: TargetingConfig;
+  radarRadius: number;
   hostileTargets: TargetEntity[];
 }
 
 export class PlayerActor implements Actor {
   readonly role: ActorRole = 'player';
   readonly targeting = new TargetingSystem();
+  lastAimDebug: WeaponAimDebugInfo | null = null;
 
   constructor(
     readonly id: string,
@@ -48,7 +54,6 @@ export class PlayerActor implements Actor {
     return this.vehicle.velocity;
   }
 
-  /** Swap the craft this player occupies (e.g. enter another ship). */
   enterVehicle(vehicle: Vehicle): void {
     this.vehicle = vehicle;
   }
@@ -90,31 +95,24 @@ export class PlayerActor implements Actor {
       shipPos.add(shipForward.scale(RETICLE_INNER_DISTANCE))
     );
 
-    const target = this.targeting.update(
-      context.scene,
-      this.faction,
-      vehicle.position,
-      shipForward,
-      reticleInner,
-      context.hostileTargets,
-      context.targetingConfig
-    );
-
-    context.combat.updateWeaponAim(
-      vehicle.weapons,
-      shipPos,
-      shipForward,
-      target
-        ? {
-            position: target.position,
-            velocity: target.velocity,
-            distance: target.distance,
-          }
-        : null,
-      vehicle.velocity,
-      context.targetingConfig,
-      context.dt
-    );
+    const { debug } = updateWeaponAimForObserver({
+      scene: context.scene,
+      combat: context.combat,
+      weapons: vehicle.weapons,
+      observerId: this.id,
+      observerFaction: this.faction,
+      observerPos: vehicle.position,
+      observerVel: vehicle.velocity,
+      aimAxis: shipForward,
+      candidates: context.hostileTargets,
+      targeting: context.targetingConfig,
+      radarRadius: context.radarRadius,
+      dt: context.dt,
+      mode: 'screen',
+      targetingSystem: this.targeting,
+      reticle: reticleInner,
+    });
+    this.lastAimDebug = debug;
 
     const aim = vehicle.getForward();
     if (input.combat.fire) {
@@ -126,7 +124,7 @@ export class PlayerActor implements Actor {
         aim
       );
     }
-    if (input.combat.fireSecondary) {
+    if (input.combat.fireSecondaryPressed) {
       context.combat.tryFireSecondary(
         vehicle.weapons,
         vehicle.combatTeam,
