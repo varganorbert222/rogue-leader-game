@@ -6,7 +6,8 @@ import type { GameEventBus } from '../events/game-events';
 import type { SphereBody } from '../collision/collision-system';
 import type { WeaponsManifest } from '../config/weapons-manifest';
 import type { CombatTeam } from './core/combat-team';
-import { ProjectileManager, type ProjectileHitCallback } from './core/projectile-manager';
+import { ProjectileManager, type ProjectileHitCallback, type ProjectilePassByCallback } from './core/projectile-manager';
+import type { ProjectilePassByObserver } from '../audio/projectile-pass-by';
 import type { ProjectileHit } from './core/projectile';
 import { VehicleWeaponSystem } from './core/vehicle-weapon-system';
 import type { PlayerAmmoConfig } from '../config/combat-config';
@@ -44,6 +45,14 @@ export class CombatSystem {
     this.projectiles.setHitCallback(onHit);
   }
 
+  initProjectilePassBy(onPassBy: ProjectilePassByCallback): void {
+    this.projectiles.setPassByCallback(onPassBy);
+  }
+
+  updatePassByObserver(observer: ProjectilePassByObserver): void {
+    this.projectiles.setPassByObserver(observer);
+  }
+
   attachWeapons(
     root: import('@babylonjs/core').TransformNode,
     shipEntry: ShipManifestEntry,
@@ -60,24 +69,6 @@ export class CombatSystem {
       team,
       anchors
     );
-  }
-
-  /** @deprecated Use attachWeapons */
-  attachPlayer(
-    root: import('@babylonjs/core').TransformNode,
-    shipEntry: ShipManifestEntry,
-    anchors?: ShipAnchors
-  ): VehicleWeaponSystem {
-    return this.attachWeapons(root, shipEntry, 'player', anchors);
-  }
-
-  /** @deprecated Use attachWeapons */
-  attachEnemy(
-    root: import('@babylonjs/core').TransformNode,
-    shipEntry: ShipManifestEntry,
-    anchors?: ShipAnchors
-  ): VehicleWeaponSystem {
-    return this.attachWeapons(root, shipEntry, 'enemy', anchors);
   }
 
   updateWeapons(weaponSystems: VehicleWeaponSystem[], dt: number): void {
@@ -104,38 +95,6 @@ export class CombatSystem {
       targeting,
       dt
     );
-  }
-
-  /** @deprecated Use updateWeaponAim with explicit VehicleWeaponSystem */
-  updatePlayerWeaponAim(
-    axisOrigin: Vector3,
-    axisDirection: Vector3,
-    target: { position: Vector3; velocity: Vector3; distance: number } | null,
-    shooterVel: Vector3,
-    targeting: TargetingConfig,
-    dt: number,
-    playerWeapons?: VehicleWeaponSystem
-  ): void {
-    playerWeapons?.updateWeaponAim(
-      axisOrigin,
-      axisDirection,
-      target,
-      shooterVel,
-      targeting,
-      dt
-    );
-  }
-
-  /** @deprecated Use updateWeapons */
-  update(dt: number, weaponSystems: VehicleWeaponSystem[] = []): void {
-    this.updateWeapons(weaponSystems, dt);
-  }
-
-  /** @deprecated Use updateWeapons */
-  updateEnemyWeapons(enemySystems: VehicleWeaponSystem[], dt: number): void {
-    for (const system of enemySystems) {
-      system.update(dt);
-    }
   }
 
   tryFirePrimary(
@@ -196,52 +155,6 @@ export class CombatSystem {
       targetVelocity,
       shooterVelocity,
       this.events,
-      targeting,
-      maxRange
-    );
-  }
-
-  /** @deprecated Use tryFirePrimary with explicit VehicleWeaponSystem */
-  tryPlayerFirePrimary(
-    aimDirection: Vector3,
-    faction: FactionId,
-    _targeting: TargetingConfig,
-    playerWeapons?: VehicleWeaponSystem
-  ): boolean {
-    if (!playerWeapons) return false;
-    return this.tryFirePrimary(playerWeapons, 'player', faction, 'player', aimDirection);
-  }
-
-  /** @deprecated Use tryFireSecondary with explicit VehicleWeaponSystem */
-  tryPlayerFireSecondary(
-    aimDirection: Vector3,
-    faction: FactionId,
-    _targeting: TargetingConfig,
-    playerWeapons?: VehicleWeaponSystem
-  ): boolean {
-    if (!playerWeapons) return false;
-    return this.tryFireSecondary(playerWeapons, 'player', faction, 'player', aimDirection);
-  }
-
-  /** @deprecated Use tryFireAtTarget */
-  tryEnemyFireAt(
-    enemyWeapons: VehicleWeaponSystem,
-    faction: FactionId,
-    shooterId: string,
-    targetPosition: Vector3,
-    targetVelocity: Vector3,
-    shooterVelocity: Vector3,
-    targeting: TargetingConfig,
-    maxRange: number
-  ): boolean {
-    return this.tryFireAtTarget(
-      enemyWeapons,
-      'enemy',
-      faction,
-      shooterId,
-      targetPosition,
-      targetVelocity,
-      shooterVelocity,
       targeting,
       maxRange
     );

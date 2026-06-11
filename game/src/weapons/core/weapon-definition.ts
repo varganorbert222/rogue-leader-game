@@ -23,29 +23,9 @@ export interface ResolvedWeaponDefinition {
   audio?: WeaponAudioConfig;
 }
 
-/** @deprecated Use ResolvedWeaponDefinition + weapons manifest. */
-export interface ProjectileWeaponDefinition {
-  id: string;
-  kind: 'projectile';
-  mountType: string;
-  cooldownSec: number;
-  damage: number;
-  projectile: ProjectileConfig;
-}
-
-/** @deprecated Missiles use projectile delivery + behavior in manifest. */
+/** Minimal weapon metadata for future stub weapons (missile / harpoon placeholders). */
 export interface StubWeaponDefinition {
   id: string;
   kind: 'missile' | 'harpoon';
   mountType: string;
-}
-
-/** @deprecated */
-export type WeaponDefinition = ProjectileWeaponDefinition | StubWeaponDefinition;
-
-/** @deprecated */
-export function isProjectileWeapon(
-  def: WeaponDefinition
-): def is ProjectileWeaponDefinition {
-  return def.kind === 'projectile';
 }

@@ -23,8 +23,6 @@ import { CameraSpringRig } from './camera-spring';
 import { getShipForward, getShipUp } from './ship-forward';
 
 export type { CameraViewMode };
-/** @deprecated Use CameraViewMode */
-export type CameraMode = CameraViewMode;
 
 export type CameraDriverKind = 'follow' | 'scripted';
 
@@ -97,9 +95,9 @@ export class CameraController {
     }
   }
 
-  startCinematic(durationSec: number): void {
+  startIntro(durationSec: number): void {
     this.useScriptedDriver();
-    this.scriptedDriver.startLegacyIntro(durationSec);
+    this.scriptedDriver.startIntro(durationSec);
   }
 
   toggleCockpit(): CameraViewMode {

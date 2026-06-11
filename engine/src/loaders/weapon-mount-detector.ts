@@ -7,10 +7,8 @@ import {
   type WeaponDelivery,
 } from './ship-anchor-detector';
 
-/** @deprecated Use WeaponAnchor from ship-anchor-detector. */
 export interface DetectedWeaponMount {
   slotId: string;
-  /** @deprecated Use delivery + behaviorHint. */
   weaponType: string;
   delivery: WeaponDelivery;
   behaviorHint?: string;

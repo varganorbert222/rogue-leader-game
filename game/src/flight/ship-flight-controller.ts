@@ -110,6 +110,14 @@ export class ShipFlightController {
     return this.speed;
   }
 
+  getMinSpeed(): number {
+    return this.stats.minSpeed;
+  }
+
+  getMaxSpeed(): number {
+    return this.stats.maxSpeed;
+  }
+
   getCruiseSpeed(): number {
     return this.stats.cruiseSpeed;
   }

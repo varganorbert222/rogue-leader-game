@@ -11,6 +11,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BabylonHost } from '@rogue-leader/engine';
 import {
   MissionManager,
+  DEFAULT_MISSION_ID,
   wakeGamepads,
   type ControlBindingsConfig,
   type DebugPreferences,
@@ -74,7 +75,8 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
   loadingMessage = 'Loading mission…';
 
   async ngOnInit(): Promise<void> {
-    const missionId = this.route.snapshot.paramMap.get('missionId') ?? 'asteroid_field_space';
+    const missionId =
+      this.route.snapshot.paramMap.get('missionId') ?? DEFAULT_MISSION_ID;
     const config = MissionManager.getConfig(missionId);
     this.missionName = config?.displayName ?? missionId;
 

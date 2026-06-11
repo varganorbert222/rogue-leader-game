@@ -37,13 +37,28 @@ import {
 import { GameDebugOverlay } from "../debug/game-debug-overlay";
 import { EngineVfxController } from "../vfx/engine-vfx-controller";
 import { Vehicle } from "../vehicles/vehicle";
-import { GameAudioBridge } from "../audio/game-audio-bridge";
+import {
+  GameAudioBridge,
+  type GameAudioUpdateContext,
+  type ShipEngineAudioSource,
+} from "../audio/game-audio-bridge";
+import type { PlayerInput } from "../input/player-input";
 import {
   CollisionSystem,
   type SphereBody,
 } from "../collision/collision-system";
 import { HealthComponent } from "../entities/health-component";
-import { GameEventBus } from "../events/game-events";
+import { GameEventBus, GameEvents } from "../events/game-events";
+import {
+  ActorRoles,
+  AmmoIds,
+  CombatTeams,
+  EntityDestroyKinds,
+  MissionIds,
+  SfxClipIds,
+  WinConditionTypes,
+} from "../constants";
+import { WeaponHitSfxResolver } from "../audio/weapon-hit-sfx";
 import { CameraController } from "../flight/camera-controller";
 import {
   RETICLE_INNER_DISTANCE,
@@ -80,6 +95,7 @@ import type {
   MissionEndState,
   MissionWave,
 } from "./mission-types";
+import { MissionEndStates } from "./mission-types";
 import asteroidFieldSpace from "./configs/asteroid-field-space.json";
 import mission02 from "./configs/mission-02-hoth-surface.json";
 import mission03 from "./configs/mission-03-tatooine.json";
@@ -106,9 +122,9 @@ export interface MissionHudState {
 }
 
 const MISSIONS: Record<string, MissionConfig> = {
-  asteroid_field_space: asteroidFieldSpace as unknown as MissionConfig,
-  mission_02_hoth_surface: mission02 as unknown as MissionConfig,
-  mission_03_tatooine: mission03 as unknown as MissionConfig,
+  [MissionIds.AsteroidFieldSpace]: asteroidFieldSpace as unknown as MissionConfig,
+  [MissionIds.HothSurface]: mission02 as unknown as MissionConfig,
+  [MissionIds.Tatooine]: mission03 as unknown as MissionConfig,
 };
 
 export class MissionManager {
@@ -128,7 +144,8 @@ export class MissionManager {
   private wavesSpawned = 0;
   private waveTimer = 0;
   private waveSpawnInProgress = false;
-  private endState: MissionEndState = "playing";
+  private endState: MissionEndState = MissionEndStates.Playing;
+  private hitSfxResolver?: WeaponHitSfxResolver;
   private weaponsManifest!: WeaponsManifest;
   private combatConfig!: CombatConfig;
   private npcBehaviorConfig!: NpcBehaviorConfig;
@@ -137,6 +154,7 @@ export class MissionManager {
   private readonly gameDebugOverlay = new GameDebugOverlay();
   private readonly engineVfx = new EngineVfxController();
   private meteorHitCooldown = 0;
+  private prevListenerPosition: Vector3 | null = null;
   private debugFloor?: DebugFloor;
   private debugWorldAxes?: DebugAxes;
   private debugShipAxes?: DebugAxes;
@@ -206,6 +224,7 @@ export class MissionManager {
     this.weaponsManifest = await loadWeaponsManifest(
       "/assets/weapons/manifest.json",
     );
+    this.hitSfxResolver = new WeaponHitSfxResolver(this.weaponsManifest);
     this.combatConfig = await loadCombatConfig("/assets/combat.json");
     this.npcBehaviorConfig = await loadNpcBehaviorConfig(
       "/assets/npc-behavior.json",
@@ -230,6 +249,14 @@ export class MissionManager {
       () => this.getProjectileTargets(),
       (hit) => this.handleProjectileHit(hit),
     );
+    this.combat.initProjectilePassBy((weaponId, point, velocity) => {
+      this.events.emit(
+        GameEvents.projectileWhoosh({
+          position: point,
+          velocity,
+        }),
+      );
+    });
 
     const sky = this.assetManifest.skyboxes[config.skyboxId];
     if (sky) {
@@ -304,17 +331,20 @@ export class MissionManager {
     this.syncDebugStaticMeshes(volumeCenter, playerVehicle.root);
 
     if (config.introCinematicSec) {
-      this.camera.startCinematic(config.introCinematicSec);
+      this.camera.startIntro(config.introCinematicSec);
     }
 
     this.wavesSpawned = 0;
     this.waveSpawnInProgress = false;
     this.waveTimer = missionWaves(config.waves)[0]?.delaySec ?? 0;
 
-    this.events.emit({
-      type: "MissionStarted",
-      payload: { musicId: config.musicId },
-    });
+    this.events.emit(
+      GameEvents.missionStarted({
+        musicId: config.musicId,
+        musicSetId: config.musicSetId,
+        playerShipId: config.player.shipId,
+      }),
+    );
 
     this.loadState = { loading: false, message: "" };
     this.shipLoader.setLodProgressCallback(undefined);
@@ -357,7 +387,7 @@ export class MissionManager {
       laserReady: true,
       torpedoesRemaining: this.combat
         .getPlayerAmmo()
-        .getCount("proton_torpedo"),
+        .getCount(AmmoIds.ProtonTorpedo),
       reticleInner,
       reticleOuter,
       targetLock: player?.targeting.getActiveTarget()?.screenPoint ?? null,
@@ -370,7 +400,10 @@ export class MissionManager {
     sfx: number,
     muted: boolean,
   ): void {
-    this.audioBridge?.applySettings(master, music, sfx, muted);
+    this.host.audio.setMasterVolume(master);
+    this.host.audio.setMusicVolume(music);
+    this.host.audio.setSfxVolume(sfx);
+    this.host.audio.setMuted(muted);
   }
 
   applyFlightAssist(options: Partial<FlightAssistOptions>): void {
@@ -396,7 +429,7 @@ export class MissionManager {
 
   update(dt: number): void {
     const player = this.world.player;
-    if (this.endState !== "playing" || !player) return;
+    if (this.endState !== MissionEndStates.Playing || !player) return;
 
     this.boundInput.update();
     const playerInput = this.boundInput.getPlayerInput();
@@ -419,11 +452,20 @@ export class MissionManager {
       hostileTargets: this.world.collectHostileTargets(player.faction),
     });
 
+    this.combat.updatePassByObserver({
+      position: player.vehicle.position,
+      team: CombatTeams.Player,
+    });
     this.combat.updateWeapons(this.collectWeaponSystems(), dt);
     this.updateNpcs(dt, player, boundary);
+    this.audioBridge?.processInbound(
+      this.world.npcActors,
+      player.vehicle.position,
+      player.faction,
+    );
 
     if (playerInput.vehicle.boost) {
-      this.events.emit({ type: "BoostStarted" });
+      this.events.emit(GameEvents.boostStarted());
     }
 
     this.updateWaves(dt);
@@ -432,18 +474,19 @@ export class MissionManager {
     this.checkMeteorCollisions();
     this.updateLod();
     this.engineVfx.update();
+    this.audioBridge?.update(dt, this.buildAudioContext(player, playerInput, dt));
     this.renderGameDebug(player);
 
     if (!this.debugPreferences.gameplay.invincible && player.health.isDead()) {
-      this.endState = "lost";
+      this.endState = MissionEndStates.Lost;
       ParticleFx.explosion(
         this.host.scene,
         player.vehicle.root.getAbsolutePosition(),
       );
-      this.events.emit({ type: "MissionEnded" });
+      this.events.emit(GameEvents.missionEnded());
     } else if (this.isDestroyAllEnemiesWon()) {
-      this.endState = "won";
-      this.events.emit({ type: "MissionEnded" });
+      this.endState = MissionEndStates.Won;
+      this.events.emit(GameEvents.missionEnded());
     }
   }
 
@@ -467,8 +510,65 @@ export class MissionManager {
     this.events.clear();
   }
 
+  private buildAudioContext(
+    player: PlayerActor,
+    input: PlayerInput,
+    dt: number,
+  ): GameAudioUpdateContext {
+    const playerPos = player.vehicle.position;
+    const camera = this.camera.getCamera();
+    const listenerPos = camera.position.clone();
+    let listenerVelocity = player.vehicle.velocity.clone();
+
+    if (this.prevListenerPosition && dt > 0) {
+      listenerVelocity = listenerPos.subtract(this.prevListenerPosition).scale(1 / dt);
+    }
+    this.prevListenerPosition = listenerPos.clone();
+
+    const radar = this.npcBehaviorConfig.radarRadius;
+    const attack = this.npcBehaviorConfig.attackEnterRange;
+    let enemiesInRadar = 0;
+    let enemiesInAttackRange = 0;
+
+    for (const npc of this.world.npcActors) {
+      if (npc.health.isDead()) continue;
+      const dist = Vector3.Distance(playerPos, npc.vehicle.position);
+      if (dist <= radar) enemiesInRadar++;
+      if (dist <= attack) enemiesInAttackRange++;
+    }
+
+    return {
+      enemyCount: this.world.getNpcCount(),
+      enemiesInRadar,
+      enemiesInAttackRange,
+      playerFiring: input.combat.fire || input.combat.fireSecondaryPressed,
+      playerThrottle: input.vehicle.throttle,
+      listenerPosition: listenerPos,
+      listenerVelocity,
+      playerPosition: playerPos.clone(),
+      playerVelocity: player.vehicle.velocity.clone(),
+      playerSpeedRatio: player.vehicle.getEngineSpeedRatio(),
+      npcEngines: this.buildNpcEngineSources(),
+    };
+  }
+
+  private buildNpcEngineSources(): ShipEngineAudioSource[] {
+    const sources: ShipEngineAudioSource[] = [];
+    for (const npc of this.world.npcActors) {
+      if (npc.health.isDead()) continue;
+      sources.push({
+        id: npc.id,
+        shipId: npc.vehicle.shipId,
+        position: npc.vehicle.position.clone(),
+        velocity: npc.vehicle.velocity.clone(),
+        speedRatio: npc.vehicle.getEngineSpeedRatio(),
+      });
+    }
+    return sources;
+  }
+
   private isDestroyAllEnemiesWon(): boolean {
-    if (this.config.winCondition.type !== "destroy_all_enemies") return false;
+    if (this.config.winCondition.type !== WinConditionTypes.DestroyAllEnemies) return false;
     const total = missionWaveCount(this.config.waves);
     if (total === 0) return false;
     if (this.waveSpawnInProgress) return false;
@@ -755,21 +855,31 @@ export class MissionManager {
   private handleProjectileHit(hit: ProjectileHit): void {
     ParticleFx.hitSpark(this.host.scene, hit.point);
     const hitSfx =
-      this.weaponsManifest.weapons[hit.weaponId]?.audio?.hit ?? "laser_hit";
-    this.events.emit({
-      type: "ProjectileHit",
-      payload: { weaponId: hit.weaponId, behavior: hit.behavior, sfx: hitSfx },
-    });
+      this.hitSfxResolver?.resolve(hit.weaponId, hit.behavior) ??
+      this.weaponsManifest.weapons[hit.weaponId]?.audio?.hit ??
+      SfxClipIds.BulletHit;
+    this.events.emit(
+      GameEvents.projectileHit({
+        weaponId: hit.weaponId,
+        behavior: hit.behavior,
+        sfx: hitSfx,
+        position: hit.point.clone(),
+      }),
+    );
 
     if (!hit.targetId) return;
 
     const actor = this.world.findActor(hit.targetId);
     if (actor) {
-      if (actor.role === "player") {
+      if (actor.role === ActorRoles.Player) {
         if (!this.debugPreferences.gameplay.invincible) {
           const result = actor.health.applyDamage(hit.damage);
-          if (result.shield > 0) this.events.emit({ type: "ShieldHit" });
-          else this.events.emit({ type: "PlayerDamaged" });
+          const playerPos = actor.vehicle.position.clone();
+          if (result.shield > 0) {
+            this.events.emit(GameEvents.shieldHit({ position: playerPos }));
+          } else {
+            this.events.emit(GameEvents.playerDamaged({ position: playerPos }));
+          }
         }
         this.camera.shake();
         return;
@@ -789,14 +899,25 @@ export class MissionManager {
 
   private destroyNpc(npc: NpcActor): void {
     ParticleFx.explosion(this.host.scene, npc.vehicle.position);
-    this.events.emit({ type: "EntityDestroyed" });
+    this.events.emit(
+      GameEvents.entityDestroyed({
+        kind: EntityDestroyKinds.Fighter,
+        shipId: npc.vehicle.shipId,
+        position: npc.vehicle.position.clone(),
+      }),
+    );
     this.world.removeNpc(npc.id);
     npc.dispose();
   }
 
   private destroyMeteor(meteor: MeteorInstance): void {
     ParticleFx.explosion(this.host.scene, meteor.root.position);
-    this.events.emit({ type: "EntityDestroyed" });
+    this.events.emit(
+      GameEvents.entityDestroyed({
+        kind: EntityDestroyKinds.Asteroid,
+        position: meteor.root.position.clone(),
+      }),
+    );
     this.meteorField.remove(meteor.id);
   }
 
@@ -822,10 +943,12 @@ export class MissionManager {
           const result = player.health.applyDamage(
             this.config.meteors.damageOnImpact,
           );
-          if (result.shield > 0) this.events.emit({ type: "ShieldHit" });
-          else {
-            this.events.emit({ type: "PlayerDamaged" });
-            this.events.emit({ type: "MeteorImpact" });
+          const playerPos = player.vehicle.position.clone();
+          if (result.shield > 0) {
+            this.events.emit(GameEvents.shieldHit({ position: playerPos }));
+          } else {
+            this.events.emit(GameEvents.playerDamaged({ position: playerPos }));
+            this.events.emit(GameEvents.meteorImpact({ position: playerPos }));
           }
         }
         this.camera.shake(0.35);

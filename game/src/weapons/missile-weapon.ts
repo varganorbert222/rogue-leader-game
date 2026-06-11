@@ -1,5 +1,5 @@
 import type { TransformNode } from '@babylonjs/core';
-import type { GameEventBus } from '../events/game-events';
+import { GameEvents, type GameEventBus } from '../events/game-events';
 import type { IWeapon } from './i-weapon';
 import type { StubWeaponDefinition } from './core/weapon-definition';
 
@@ -16,7 +16,7 @@ export class MissileWeapon implements IWeapon {
   update(_dt: number): void {}
 
   tryFire(_origin: TransformNode): boolean {
-    this.events.emit({ type: 'MissileLaunched' });
+    this.events.emit(GameEvents.missileLaunched(this.definition.id));
     return false;
   }
 }

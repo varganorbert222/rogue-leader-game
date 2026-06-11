@@ -1,6 +1,20 @@
 export { BabylonHost } from './babylon-host';
 export { createGraphicsEngine, type GraphicsBackend } from './backend';
-export { AudioManager, type AudioManifest } from './audio/audio-manager';
+export {
+  AudioManager,
+  type AudioManifest,
+  type LoopTransformOptions,
+  type PlayOneShotOptions,
+  type StartLoopOptions,
+} from './audio/audio-manager';
+export type {
+  AudioLibraryCategory,
+  AudioLibraryDef,
+  AudioClipDef,
+  MusicSetDef,
+  MusicLayerDef,
+} from './audio/audio-types';
+export { SPEED_OF_SOUND, computeDopplerPitch } from './audio/spatial-audio';
 export { SkyboxLoader } from './render/skybox-loader';
 export { DebugFloor, type DebugFloorOptions } from './render/debug-floor';
 export { DebugAxes, type DebugAxesOptions } from './render/debug-axes';
@@ -24,7 +38,6 @@ export {
 } from './loaders/ship-anchor-detector';
 export {
   ModelAxisCorrection,
-  ShipAxisFrame,
   applyModelAxisCorrection,
   DEFAULT_SHIP_AXIS_CONFIG,
   axisIdToVector,

@@ -161,5 +161,3 @@ export class BoidNpcInput implements NpcInput {
   }
 }
 
-/** @deprecated Use BoidNpcInput */
-export const BoidEnemyAI = BoidNpcInput;

@@ -10,6 +10,12 @@ import { areFactionsHostile } from '../../combat/faction';
 import type { FactionId } from '../../combat/faction';
 import type { CombatTeam } from './combat-team';
 import type { ProjectileConfig } from './projectile-config';
+import { ProjectileBehaviors } from '../../constants/weapon-behaviors';
+import {
+  closestPointOnSegment,
+  detectProjectileNearMiss,
+  type ProjectilePassByObserver,
+} from '../../audio/projectile-pass-by';
 
 export interface ProjectileHit {
   point: Vector3;
@@ -43,6 +49,7 @@ export class Projectile {
   private readonly config: ProjectileConfig;
   private distanceTraveled = 0;
   private disposed = false;
+  private whooshTriggered = false;
 
   constructor(scene: Scene, options: ProjectileSpawnOptions) {
     this.team = options.team;
@@ -81,11 +88,13 @@ export class Projectile {
     dt: number,
     collision: CollisionSystem,
     targets: SphereBody[],
-    onHit: (hit: ProjectileHit) => void
+    onHit: (hit: ProjectileHit) => void,
+    passByObserver?: ProjectilePassByObserver,
+    onPassBy?: (weaponId: string, point: Vector3, velocity: Vector3) => void
   ): boolean {
     if (this.disposed) return false;
 
-    if (this.config.behavior === 'missile_homing' && this.config.homing) {
+    if (this.config.behavior === ProjectileBehaviors.MissileHoming && this.config.homing) {
       this.steerHoming(dt, targets);
     }
 
@@ -95,6 +104,22 @@ export class Projectile {
     const prev = this.mesh.position.clone();
     const next = prev.add(step);
     this.distanceTraveled += stepLen;
+
+    if (
+      passByObserver &&
+      onPassBy &&
+      !this.whooshTriggered &&
+      detectProjectileNearMiss(
+        prev,
+        next,
+        passByObserver,
+        this.team,
+        this.distanceTraveled
+      )
+    ) {
+      this.whooshTriggered = true;
+      onPassBy(this.weaponId, closestPointOnSegment(prev, next, passByObserver.position), velocity);
+    }
 
     const projectileBody: SphereBody = {
       id: `projectile_${this.team}`,

@@ -3,6 +3,7 @@
   "displayName": "Tatooine — T-16 Skyhopper",
   "skyboxId": "asteroid_field_space",
   "musicId": "mission_tatooine",
+  "musicSetId": "mission_tatooine",
   "stub": true,
   "stubMessage": "Coming soon — desert canyon tilemap, obstacles, high-speed flight",
   "player": { "shipId": "t16", "spawn": [0, 0, 0], "heading": [0, 0, -1] },
