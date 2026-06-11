@@ -70,7 +70,7 @@ export class MeteorField {
     config: MeteorConfig,
     playerSpawn: Vector3
   ): Promise<void> {
-    this.templates = await loader.loadMeteorVariantTemplates(config.prefabId, entry);
+    this.templates = await loader.loadPropVariantTemplates(config.prefabId, entry);
     const variantCount = this.templates.length;
     const rand = seededRandom(config.seed);
     const spawnCount = Math.max(config.count, variantCount);

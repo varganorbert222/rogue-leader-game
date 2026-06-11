@@ -53,6 +53,10 @@ export { HealthComponent } from './entities/health-component';
 export { BoidEnemyAI, type EnemyBehavior } from './ai/boid-enemy-ai';
 export { CollisionSystem } from './collision/collision-system';
 export { MeteorField } from './hazards/meteor-field';
-export { MissionManager, type MissionHudState } from './missions/mission-manager';
+export {
+  MissionManager,
+  type MissionHudState,
+  type MissionLoadState,
+} from './missions/mission-manager';
 export type { MissionConfig, MissionEndState } from './missions/mission-types';
 export { GameAudioBridge } from './audio/game-audio-bridge';

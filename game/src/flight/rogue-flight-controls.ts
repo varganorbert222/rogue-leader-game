@@ -1,5 +1,5 @@
-import { Vector3, type Quaternion } from '@babylonjs/core';
-import { getShipForward, getShipRight, getShipUp } from './ship-forward';
+import { Vector3, type Quaternion } from "@babylonjs/core";
+import { getShipForward, getShipRight, getShipUp } from "./ship-forward";
 
 /**
  * Body-local flight axes (engine space: +X right, +Y up, +Z forward).
@@ -22,4 +22,4 @@ export function computeRogueFlightAxes(shipRotation: Quaternion): {
 
 export const ROGUE_PITCH_RATE = 1.8;
 export const ROGUE_YAW_RATE = 1.8;
-export const ROGUE_ROLL_RATE = 1.4;
+export const ROGUE_ROLL_RATE = 3.0;

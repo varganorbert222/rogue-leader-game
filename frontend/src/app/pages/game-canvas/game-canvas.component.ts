@@ -9,7 +9,13 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BabylonHost } from '@rogue-leader/engine';
-import { MissionManager, wakeGamepads, type FlightPreferences, type MissionEndState, type MissionHudState } from '@rogue-leader/game';
+import {
+  MissionManager,
+  wakeGamepads,
+  type FlightPreferences,
+  type MissionEndState,
+  type MissionHudState,
+} from '@rogue-leader/game';
 import { AudioBootstrapService } from '../../services/audio-bootstrap.service';
 import { AudioSettingsService } from '../../services/audio-settings.service';
 import { FlightSettingsService } from '../../services/flight-settings.service';
@@ -54,6 +60,8 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
   showSettings = false;
   endState: MissionEndState | null = null;
   missionName = '';
+  loading = true;
+  loadingMessage = 'Loading mission…';
 
   async ngOnInit(): Promise<void> {
     const missionId = this.route.snapshot.paramMap.get('missionId') ?? 'asteroid_field_space';
@@ -71,13 +79,18 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
     this.mission = new MissionManager(this.host, canvas);
     this.mission.applyAudioSettings(settings.master, settings.music, settings.sfx, settings.muted);
     this.mission.applyFlightPreferences(flight);
+    this.mission.setLoadProgressCallback((progress) => {
+      this.loadingMessage = progress.message;
+    });
 
     try {
       await this.mission.load(missionId);
+      this.loading = false;
       canvas.setAttribute('tabindex', '0');
       canvas.focus();
       canvas.addEventListener('pointerdown', () => wakeGamepads());
     } catch (err) {
+      this.loading = false;
       console.error(err);
       alert(String(err));
       void this.router.navigate(['/mission-select']);

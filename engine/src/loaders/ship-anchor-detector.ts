@@ -100,41 +100,53 @@ function parseWeaponName(
   return null;
 }
 
-function collectNamedNodes(root: TransformNode): {
-  transforms: TransformNode[];
-  meshes: AbstractMesh[];
-} {
-  return {
-    transforms: root.getChildTransformNodes(true),
-    meshes: root.getChildMeshes(true),
-  };
+/** Strip Blender `.001` suffixes and glTF path prefixes from node names. */
+export function normalizeAnchorNodeName(name: string): string {
+  const base = name.includes('/') ? (name.split('/').pop() ?? name) : name;
+  return base.replace(/\.\d+$/, '');
 }
 
-function resolveNodeTransform(
-  node: TransformNode | AbstractMesh,
-  root: TransformNode
-): TransformNode {
+function asAnchorNode(node: TransformNode | AbstractMesh, fallback: TransformNode): TransformNode {
   if (node instanceof Mesh) {
-    return (node.parent as TransformNode | null) ?? root;
+    return (node.parent as TransformNode | null) ?? fallback;
   }
   return node;
+}
+
+function walkSceneNodes(
+  root: TransformNode,
+  visit: (node: TransformNode | AbstractMesh) => void
+): void {
+  const stack: TransformNode[] = [root];
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+    for (const child of current.getChildren()) {
+      if (child instanceof Mesh) {
+        visit(child);
+        stack.push(child);
+      } else if (child instanceof TransformNode) {
+        visit(child);
+        stack.push(child);
+      }
+    }
+  }
 }
 
 export function detectShipAnchors(root: TransformNode): ShipAnchors {
   const engines: EngineAnchor[] = [];
   const weapons: WeaponAnchor[] = [];
   const seen = new Set<string>();
-  const { transforms, meshes } = collectNamedNodes(root);
 
-  const visit = (name: string, node: TransformNode | AbstractMesh): void => {
-    if (seen.has(name)) return;
+  const visit = (rawName: string, node: TransformNode | AbstractMesh): void => {
+    const name = normalizeAnchorNodeName(rawName).toLowerCase();
+    if (!name || seen.has(name)) return;
 
     const engine = parseEngineName(name);
     if (engine) {
       seen.add(name);
       engines.push({
         slotId: engine.slotId,
-        node: resolveNodeTransform(node, root),
+        node: asAnchorNode(node, root),
       });
       return;
     }
@@ -146,13 +158,12 @@ export function detectShipAnchors(root: TransformNode): ShipAnchors {
         slotId: weapon.slotId,
         delivery: weapon.delivery,
         behaviorHint: weapon.behaviorHint,
-        node: resolveNodeTransform(node, root),
+        node: asAnchorNode(node, root),
       });
     }
   };
 
-  for (const node of transforms) visit(node.name, node);
-  for (const mesh of meshes) visit(mesh.name, mesh);
+  walkSceneNodes(root, (node) => visit(node.name, node));
 
   engines.sort((a, b) => compareSlotIds(a.slotId, b.slotId));
   weapons.sort((a, b) => compareSlotIds(a.slotId, b.slotId));

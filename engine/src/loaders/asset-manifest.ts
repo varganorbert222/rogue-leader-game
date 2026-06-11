@@ -6,9 +6,10 @@ export interface ShipAnchorBindings {
 }
 
 import type { ShipAxisConventionConfig } from './ship-axis-convention';
+import type { LodManifestValue } from './lod-config';
 
 export interface ShipManifestEntry {
-  lod: string[];
+  lod?: LodManifestValue;
   scale: number | [number, number, number];
   colliderRadius: number;
   /** Visual-only export axis fix on the model pivot (default +z / +x). */
@@ -21,11 +22,9 @@ export interface ShipManifestEntry {
 }
 
 export interface PropManifestEntry {
-  lod?: string[];
-  /** Folder of numbered GLB variants, e.g. meteor_01.glb in models/props/meteor */
-  variantDir?: string;
-  variantPrefix?: string;
-  variantPad?: number;
+  lod?: LodManifestValue;
+  /** GLB paths for visual variants — each loaded once, then picked at random when spawning. */
+  variants?: string[];
   scale: number | [number, number];
   colliderRadius: number;
 }
