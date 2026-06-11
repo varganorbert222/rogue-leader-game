@@ -16,13 +16,18 @@ import type { ResolvedWeaponDefinition, WeaponFireGroup } from './weapon-definit
 
 export class MountedWeapon {
   private cooldown = 0;
-  private aimDirection: Vector3 | null = null;
-  private smoothedAimDir: Vector3 | null = null;
+  private aimDirection: Vector3;
+  private smoothedAimDir: Vector3;
 
   constructor(
     public readonly mount: DetectedWeaponMount,
     public readonly definition: ResolvedWeaponDefinition
-  ) {}
+  ) {
+    // Initialize aim direction to center (mount forward)
+    const centerAim = getMountForward(mount.node).clone();
+    this.aimDirection = centerAim;
+    this.smoothedAimDir = centerAim;
+  }
 
   get fireGroup(): WeaponFireGroup {
     return this.definition.fireGroup;
@@ -44,23 +49,24 @@ export class MountedWeapon {
     axisOrigin: Vector3,
     axisDirection: Vector3,
     convergenceDistance: number,
-    maxDeflectionRad: number,
+    _maxDeflectionRad: number,
     dt: number,
     aimSpeedRad: number
   ): void {
     const origin = this.mount.node.getAbsolutePosition();
-    const mountForward = getMountForward(this.mount.node);
-    const converged = computeConvergenceDirection(
+    const restAim = computeConvergenceDirection(
       origin,
       axisOrigin,
       axisDirection,
       convergenceDistance
     );
-    const desired = clampToDeflectionCone(mountForward, converged, maxDeflectionRad);
-    this.applySmoothedAim(desired, dt, aimSpeedRad);
+    this.applySmoothedAim(restAim, dt, aimSpeedRad);
   }
 
   updateAutoAim(
+    axisOrigin: Vector3,
+    axisDirection: Vector3,
+    convergenceDistance: number,
     targetPos: Vector3,
     targetVel: Vector3,
     shooterVel: Vector3,
@@ -69,9 +75,15 @@ export class MountedWeapon {
     aimSpeedRad: number
   ): void {
     const origin = this.mount.node.getAbsolutePosition();
-    const mountForward = getMountForward(this.mount.node);
-    if (!isTargetInAimHemisphere(origin, mountForward, targetPos)) {
-      this.applySmoothedAim(mountForward, dt, aimSpeedRad);
+    const restAim = computeConvergenceDirection(
+      origin,
+      axisOrigin,
+      axisDirection,
+      convergenceDistance
+    );
+
+    if (!isTargetInAimHemisphere(origin, restAim, targetPos)) {
+      this.applySmoothedAim(restAim, dt, aimSpeedRad);
       return;
     }
 
@@ -82,14 +94,11 @@ export class MountedWeapon {
       this.projectileSpeed,
       shooterVel
     );
-    const desired = clampToDeflectionCone(mountForward, leadDir, maxDeflectionRad);
+    const desired = clampToDeflectionCone(restAim, leadDir, maxDeflectionRad);
     this.applySmoothedAim(desired, dt, aimSpeedRad);
   }
 
   private getSmoothedAim(): Vector3 {
-    if (!this.smoothedAimDir) {
-      this.smoothedAimDir = getMountForward(this.mount.node).clone();
-    }
     return this.smoothedAimDir;
   }
 
@@ -108,8 +117,8 @@ export class MountedWeapon {
     node.lookAt(lookTarget);
   }
 
-  getAimDirection(fallback: Vector3): Vector3 {
-    return (this.aimDirection ?? fallback).clone().normalize();
+  getAimDirection(_fallback: Vector3): Vector3 {
+    return this.aimDirection.clone().normalize();
   }
 
   tryFire(
