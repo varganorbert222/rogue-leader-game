@@ -113,6 +113,7 @@ export const DEFAULT_CONTROL_BINDINGS: ControlBindingsConfig = {
   roll: {
     keysPositive: ['KeyE'],
     keysNegative: ['KeyQ'],
+    // Map roll to shoulder buttons (L/R shoulder)
     buttonsPositive: [5],
     buttonsNegative: [4],
     curve: { ...DEFAULT_AXIS_CURVE, sensitivity: 0.85 },
@@ -120,8 +121,9 @@ export const DEFAULT_CONTROL_BINDINGS: ControlBindingsConfig = {
   throttle: {
     keysPositive: ['KeyW'],
     keysNegative: ['KeyS'],
-    buttonsPositive: [],
-    buttonsNegative: [],
+    // Map throttle to gamepad triggers (R trigger positive, L trigger negative)
+    buttonsPositive: [7],
+    buttonsNegative: [6],
     curve: { ...DEFAULT_AXIS_CURVE },
   },
   cameraDistance: {
