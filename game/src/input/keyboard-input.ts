@@ -1,11 +1,13 @@
 import type { FlightInput, IInputSource } from './i-input-source';
+import type { IPlayerInputSource } from './i-player-input-source';
+import { playerInputFromFlightInput, type PlayerInput } from './player-input';
 
 /**
  * Rogue Squadron 3D (PC) defaults + Rogue Leader camera keys.
  * Arrows: pitch/yaw · W: thrust · S: brake (min speed) · E+arrows: roll via Q/E
  * Space: fire · Alt: secondary · X: cockpit toggle · F1–F4: camera · Z: drop cam
  */
-export class KeyboardInput implements IInputSource {
+export class KeyboardInput implements IPlayerInputSource {
   private readonly keys = new Set<string>();
   private cameraToggleQueued = false;
   private cameraCycleQueued = 0;
@@ -33,6 +35,10 @@ export class KeyboardInput implements IInputSource {
   private disposeFn: () => void = () => {};
 
   update(): void {}
+
+  getPlayerInput(): PlayerInput {
+    return playerInputFromFlightInput(this.getFlightInput());
+  }
 
   getFlightInput(): FlightInput {
     const pitch =

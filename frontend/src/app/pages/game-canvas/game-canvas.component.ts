@@ -48,12 +48,13 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
     shield: 50,
     maxShield: 50,
     wave: 1,
-    totalWaves: 2,
+    totalWaves: 1,
     enemiesRemaining: 0,
     backend: '…',
     laserReady: true,
     reticleInner: { xPct: 50, yPct: 50, visible: false },
     reticleOuter: { xPct: 50, yPct: 50, visible: false },
+    targetLock: null,
   };
 
   paused = false;

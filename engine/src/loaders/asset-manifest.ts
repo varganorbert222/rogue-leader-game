@@ -8,6 +8,18 @@ export interface ShipAnchorBindings {
 import type { ShipAxisConventionConfig } from './ship-axis-convention';
 import type { LodManifestValue } from './lod-config';
 
+export interface ShipFlightStatsManifest {
+  maxSpeed?: number;
+  minSpeed?: number;
+  boostMultiplier?: number;
+  pitchRate?: number;
+  yawRate?: number;
+  rollRate?: number;
+  thrustRate?: number;
+  brakeRate?: number;
+  cruiseSpeed?: number;
+}
+
 export interface ShipManifestEntry {
   lod?: LodManifestValue;
   scale: number | [number, number, number];
@@ -15,6 +27,7 @@ export interface ShipManifestEntry {
   /** Visual-only export axis fix on the model pivot (default +z / +x). */
   axes?: Partial<ShipAxisConventionConfig>;
   faction?: 'rebel' | 'imperial' | 'neutral';
+  flight?: ShipFlightStatsManifest;
   /** Per-slot overrides; missing slots use defaultWeapons by delivery kind. */
   anchors?: ShipAnchorBindings;
   /** Fallback weapon ids keyed by delivery (laser / projectile). */

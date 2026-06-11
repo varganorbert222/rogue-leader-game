@@ -6,6 +6,8 @@ import {
   type Scene,
 } from '@babylonjs/core';
 import type { CollisionSystem, SphereBody } from '../../collision/collision-system';
+import { areFactionsHostile } from '../../combat/faction';
+import type { FactionId } from '../../combat/faction';
 import type { CombatTeam } from './combat-team';
 import type { ProjectileConfig } from './projectile-config';
 
@@ -22,6 +24,8 @@ export interface ProjectileSpawnOptions {
   origin: Vector3;
   direction: Vector3;
   team: CombatTeam;
+  faction: FactionId;
+  shooterId: string;
   config: ProjectileConfig;
   damage: number;
   weaponId: string;
@@ -29,6 +33,8 @@ export interface ProjectileSpawnOptions {
 
 export class Projectile {
   readonly team: CombatTeam;
+  readonly faction: FactionId;
+  readonly shooterId: string;
   readonly damage: number;
   readonly weaponId: string;
   readonly behavior?: string;
@@ -40,6 +46,8 @@ export class Projectile {
 
   constructor(scene: Scene, options: ProjectileSpawnOptions) {
     this.team = options.team;
+    this.faction = options.faction;
+    this.shooterId = options.shooterId;
     this.damage = options.damage;
     this.weaponId = options.weaponId;
     this.behavior = options.config.behavior;
@@ -100,7 +108,7 @@ export class Projectile {
     let hitPoint = next;
 
     for (const target of targets) {
-      if (target.team === this.team) continue;
+      if (!this.isHittableTarget(target)) continue;
 
       const swept = collision.raycastSphere(prev.clone(), this.direction, target, stepLen);
       if (swept.hit && swept.distance < closest) {
@@ -150,7 +158,7 @@ export class Projectile {
     let bestDist = homing.acquireRange;
 
     for (const target of targets) {
-      if (target.team === this.team) continue;
+      if (!this.isHomingTarget(target)) continue;
       const dist = Vector3.Distance(origin, target.position);
       if (dist < bestDist) {
         bestDist = dist;
@@ -163,6 +171,20 @@ export class Projectile {
     const desired = best.position.subtract(origin).normalize();
     const turn = Math.min(1, homing.turnRate * dt);
     this.direction = Vector3.Lerp(this.direction, desired, turn).normalize();
+  }
+
+  /** Friendly fire allowed — any entity except the shooter. */
+  private isHittableTarget(target: SphereBody): boolean {
+    return target.id !== this.shooterId;
+  }
+
+  /** Homing missiles only steer toward hostile factions. */
+  private isHomingTarget(target: SphereBody): boolean {
+    if (target.id === this.shooterId) return false;
+    if (target.faction) {
+      return areFactionsHostile(this.faction, target.faction);
+    }
+    return target.team !== this.team && target.team !== 'neutral';
   }
 
   dispose(): void {
