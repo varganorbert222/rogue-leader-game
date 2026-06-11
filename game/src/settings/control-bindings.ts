@@ -113,7 +113,7 @@ export const DEFAULT_CONTROL_BINDINGS: ControlBindingsConfig = {
   roll: {
     keysPositive: ["KeyE"],
     keysNegative: ["KeyQ"],
-    // Map roll to shoulder buttons (L/R shoulder)
+    // L1 / R1 shoulders (standard indices 4 / 5) — not L2/R2 triggers.
     buttonsPositive: [5],
     buttonsNegative: [4],
     curve: { ...DEFAULT_AXIS_CURVE, sensitivity: 0.85 },
@@ -121,9 +121,9 @@ export const DEFAULT_CONTROL_BINDINGS: ControlBindingsConfig = {
   throttle: {
     keysPositive: ["KeyW"],
     keysNegative: ["KeyS"],
-    // Map throttle to gamepad triggers (R trigger positive, L trigger negative)
-    buttonsPositive: [7],
-    buttonsNegative: [6],
+    // Analog L2/R2 only (readGamepadTriggers) — no digital trigger buttons here.
+    buttonsPositive: [],
+    buttonsNegative: [],
     curve: { ...DEFAULT_AXIS_CURVE },
   },
   cameraDistance: {
@@ -244,6 +244,33 @@ function mergeButtonAction(
   };
 }
 
+/** Fix pre-DualSense roll/throttle maps that collided L2/R2 with shoulders. */
+function repairLegacyGamepadAxisBindings(
+  config: ControlBindingsConfig,
+): ControlBindingsConfig {
+  const roll = { ...config.roll, curve: { ...config.roll.curve } };
+  if (roll.buttonsNegative.includes(6)) {
+    const withoutL2 = roll.buttonsNegative.filter((index) => index !== 6);
+    roll.buttonsNegative = withoutL2.includes(4) ? withoutL2 : [...withoutL2, 4];
+  }
+
+  const throttle = { ...config.throttle, curve: { ...config.throttle.curve } };
+  const triggerButtonIndices = new Set([6, 7, 8]);
+  if (
+    throttle.buttonsPositive.some((index) => triggerButtonIndices.has(index)) ||
+    throttle.buttonsNegative.some((index) => triggerButtonIndices.has(index))
+  ) {
+    throttle.buttonsPositive = throttle.buttonsPositive.filter(
+      (index) => !triggerButtonIndices.has(index),
+    );
+    throttle.buttonsNegative = throttle.buttonsNegative.filter(
+      (index) => !triggerButtonIndices.has(index),
+    );
+  }
+
+  return { ...config, roll, throttle };
+}
+
 export function cloneControlBindings(
   config: ControlBindingsConfig,
 ): ControlBindingsConfig {
@@ -261,7 +288,9 @@ export function loadControlBindings(): ControlBindingsConfig {
       return cloneControlBindings(DEFAULT_CONTROL_BINDINGS);
     }
     const parsed = JSON.parse(raw) as Partial<ControlBindingsConfig>;
-    return mergeControlBindings(DEFAULT_CONTROL_BINDINGS, parsed);
+    return repairLegacyGamepadAxisBindings(
+      mergeControlBindings(DEFAULT_CONTROL_BINDINGS, parsed),
+    );
   } catch {
     return cloneControlBindings(DEFAULT_CONTROL_BINDINGS);
   }
@@ -271,7 +300,7 @@ export function mergeControlBindings(
   defaults: ControlBindingsConfig,
   patch: Partial<ControlBindingsConfig>,
 ): ControlBindingsConfig {
-  return {
+  return repairLegacyGamepadAxisBindings({
     version: 1,
     pitch: mergeAxisAction(defaults.pitch, patch.pitch),
     yaw: mergeAxisAction(defaults.yaw, patch.yaw),
@@ -303,7 +332,7 @@ export function mergeControlBindings(
       },
       triggers: { ...defaults.gamepad.triggers, ...patch.gamepad?.triggers },
     },
-  };
+  });
 }
 
 export function saveControlBindings(
