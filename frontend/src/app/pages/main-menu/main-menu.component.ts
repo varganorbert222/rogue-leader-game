@@ -29,4 +29,9 @@ export class MainMenuComponent implements OnInit {
     this.audio.playUiClick();
     void this.router.navigate(['/settings']);
   }
+
+  controls(): void {
+    this.audio.playUiClick();
+    void this.router.navigate(['/controls']);
+  }
 }

@@ -60,51 +60,65 @@ export function computeLeadDirection(
   shooterVel: Vector3 = Vector3.Zero()
 ): Vector3 {
   const relPos = targetPos.subtract(origin);
-  if (relPos.lengthSquared() < 1e-6) {
-    return new Vector3(0, 0, 1);
+  const distSq = relPos.lengthSquared();
+  if (distSq < 1e-6) {
+    return relPos.normalize();
+  }
+
+  if (projectileSpeed < 1e-4) {
+    return relPos.normalize();
   }
 
   const relVel = targetVel.subtract(shooterVel);
   const speedSq = projectileSpeed * projectileSpeed;
   const a = Vector3.Dot(relVel, relVel) - speedSq;
   const b = 2 * Vector3.Dot(relPos, relVel);
-  const c = Vector3.Dot(relPos, relPos);
+  const c = distSq;
 
-  let t: number;
+  let interceptTime: number | null = null;
+
   if (Math.abs(a) < 1e-6) {
-    t = -c / Math.max(b, 1e-4);
+    if (Math.abs(b) > 1e-6) {
+      const tLin = -c / b;
+      if (tLin > 1e-4) {
+        interceptTime = tLin;
+      }
+    }
   } else {
     const disc = b * b - 4 * a * c;
-    if (disc < 0) {
-      return relPos.normalize();
+    if (disc >= 0) {
+      const sqrtDisc = Math.sqrt(disc);
+      const t1 = (-b - sqrtDisc) / (2 * a);
+      const t2 = (-b + sqrtDisc) / (2 * a);
+      const positive = [t1, t2].filter((t) => t > 1e-4 && Number.isFinite(t));
+      if (positive.length > 0) {
+        interceptTime = Math.min(...positive);
+      }
     }
-    const sqrtDisc = Math.sqrt(disc);
-    const t1 = (-b - sqrtDisc) / (2 * a);
-    const t2 = (-b + sqrtDisc) / (2 * a);
-    if (t1 > 0) t = t1;
-    else if (t2 > 0) t = t2;
-    else t = Math.max(t1, t2);
   }
 
-  if (!Number.isFinite(t) || t <= 0) {
+  if (interceptTime == null) {
     return relPos.normalize();
   }
 
-  const aimPoint = targetPos.add(targetVel.scale(t));
-  return aimPoint.subtract(origin).normalize();
+  const intercept = relPos.add(relVel.scale(interceptTime));
+  if (intercept.lengthSquared() < 1e-6) {
+    return relPos.normalize();
+  }
+  return intercept.normalize();
 }
 
-/** Clamp desired aim to a cone around mount rest forward (radians). */
+/** Clamp desired aim to a cone around a fixed rest axis (radians). */
 export function clampToDeflectionCone(
-  mountForward: Vector3,
+  restForward: Vector3,
   desiredDir: Vector3,
   maxDeflectionRad: number
 ): Vector3 {
-  const forward = mountForward.normalize();
+  const forward = restForward.normalize();
   const desired = desiredDir.normalize();
   const dot = Scalar.Clamp(Vector3.Dot(forward, desired), -1, 1);
 
-  if (dot < 0) {
+  if (dot <= 0) {
     return forward.clone();
   }
 

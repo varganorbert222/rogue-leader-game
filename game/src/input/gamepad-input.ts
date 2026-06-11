@@ -30,6 +30,7 @@ export class GamepadInput implements IPlayerInputSource {
     loadFlightPreferences().selectedGamepadId
   );
   private cameraToggleQueued = false;
+  private fireSecondaryQueued = false;
   private prevButtons: boolean[] = [];
   private activationListenerAttached = false;
 
@@ -87,6 +88,7 @@ export class GamepadInput implements IPlayerInputSource {
       return;
     }
 
+    this.trackSecondaryFire(pad);
     this.trackCameraToggle(pad);
   }
 
@@ -119,7 +121,9 @@ export class GamepadInput implements IPlayerInputSource {
     const throttle = ScalarClamp(rTrigger - lTrigger, -1, 1);
 
     const toggle = this.cameraToggleQueued;
+    const fireSecondaryPressed = this.fireSecondaryQueued;
     this.cameraToggleQueued = false;
+    this.fireSecondaryQueued = false;
 
     return {
       throttle,
@@ -128,12 +132,13 @@ export class GamepadInput implements IPlayerInputSource {
       roll,
       boost: rTrigger > 0.95,
       fire: btn(0),
-      fireSecondary: btn(1),
+      fireSecondaryPressed,
       cameraToggle: toggle,
       cameraCycle: 0,
       cameraDistance: -cStickY,
       cameraOrbit: cStickX,
       cameraDrop: btn(13) || btn(14),
+      cameraProfileCycle: false,
       lookAround: cStickY !== 0 || cStickX !== 0,
     };
   }
@@ -152,6 +157,16 @@ export class GamepadInput implements IPlayerInputSource {
     window.addEventListener('pointerdown', this.onUserActivate);
     window.addEventListener('keydown', this.onUserActivate);
     this.activationListenerAttached = true;
+  }
+
+  /** Triangle/Y — secondary weapons (one shot per press, Rogue Leader style). */
+  private trackSecondaryFire(pad: Gamepad): void {
+    const secondaryIndex = 3;
+    const pressed = pad.buttons[secondaryIndex]?.pressed ?? false;
+    const wasPressed = this.prevButtons[secondaryIndex] ?? false;
+    if (pressed && !wasPressed) {
+      this.fireSecondaryQueued = true;
+    }
   }
 
   private trackCameraToggle(pad: Gamepad): void {

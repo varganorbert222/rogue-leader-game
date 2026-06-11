@@ -1,0 +1,24 @@
+.page {
+  min-height: 100vh;
+  padding: 2rem 1.5rem 3rem;
+  background: #02060f;
+  color: #e8f4ff;
+  font-family: system-ui, sans-serif;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+a {
+  display: inline-block;
+  margin-top: 1.5rem;
+  color: #8ec8ff;
+  text-decoration: none;
+  padding: 0.55rem 1rem;
+  border: 1px solid #2a4a6a;
+  border-radius: 6px;
+  background: rgba(10, 24, 40, 0.6);
+
+  &:hover {
+    border-color: #4a8ec0;
+  }
+}

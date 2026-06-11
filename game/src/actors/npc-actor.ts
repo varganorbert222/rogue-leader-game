@@ -1,6 +1,10 @@
 import { Vector3 } from '@babylonjs/core';
 import type { FactionId } from '../combat/faction';
-import type { TargetEntity } from '../combat/targeting-system';
+import { TargetingSystem, type TargetEntity } from '../combat/targeting-system';
+import {
+  BehaviorNpcInput,
+  type NpcSteeringDebugInfo,
+} from '../ai/behavior-npc-input';
 import { resolveFlockOverlap } from '../ai/boid-forces';
 import type { FlockMate } from '../ai/flock-types';
 import type { SphereBody } from '../collision/collision-system';
@@ -21,6 +25,7 @@ export interface NpcActorUpdateContext {
 
 export class NpcActor implements Actor {
   readonly role: ActorRole = 'npc';
+  readonly targeting = new TargetingSystem();
 
   constructor(
     readonly id: string,
@@ -41,6 +46,13 @@ export class NpcActor implements Actor {
 
   getVelocity(): Vector3 {
     return this.vehicle.velocity;
+  }
+
+  getSteeringDebug(): NpcSteeringDebugInfo | null {
+    if (this.input instanceof BehaviorNpcInput) {
+      return this.input.getDebugInfo();
+    }
+    return null;
   }
 
   toTargetEntity(): TargetEntity {

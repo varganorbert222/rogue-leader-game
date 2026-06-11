@@ -222,7 +222,30 @@ canvas {
   }
 }
 
-.overlay.settings {
+.hud-debug-btn {
+  position: absolute;
+  right: 1rem;
+  bottom: 3.5rem;
+  z-index: 5;
+  pointer-events: auto;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ad8ff;
+  background: rgba(10, 24, 40, 0.75);
+  border: 1px solid rgba(100, 190, 255, 0.45);
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(20, 50, 80, 0.85);
+  }
+}
+
+.overlay.debug,
+.overlay.settings,
+.overlay.controls {
   justify-content: flex-start;
   overflow-y: auto;
   padding: 1.5rem 1rem;
@@ -243,9 +266,48 @@ canvas {
   font-size: 1.35rem;
 }
 
-.settings-panel-wrap button {
+.settings-panel-wrap button,
+.controls-panel-wrap button,
+.debug-panel-wrap button {
   margin-top: 1rem;
   width: 100%;
+}
+
+.controls-panel-wrap {
+  width: min(100%, 920px);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 1rem 1.25rem 1.5rem;
+  background: rgba(4, 12, 24, 0.92);
+  border: 1px solid rgba(100, 200, 160, 0.35);
+  border-radius: 8px;
+}
+
+.controls-panel-wrap h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+}
+
+.debug-panel-wrap {
+  width: min(100%, 720px);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 1rem 1.25rem 1.5rem;
+  background: rgba(4, 12, 24, 0.92);
+  border: 1px solid rgba(180, 120, 255, 0.35);
+  border-radius: 8px;
+}
+
+.debug-panel-wrap h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+}
+
+.debug-intro {
+  margin: 0 0 1rem;
+  font-size: 0.88rem;
+  color: #9ab8d0;
+  line-height: 1.4;
 }
 
 button,

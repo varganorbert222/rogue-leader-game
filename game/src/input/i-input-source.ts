@@ -6,11 +6,14 @@ export interface FlightInput {
   roll: number;
   boost: boolean;
   fire: boolean;
-  fireSecondary: boolean;
+  /** One-frame pulse for secondary weapons (torpedoes / rockets). */
+  fireSecondaryPressed: boolean;
   /** X — toggle chase / cockpit (Rogue Leader) */
   cameraToggle: boolean;
   /** ~ / F1–F4 — cycle outside camera presets */
   cameraCycle: number;
+  /** F6 — cycle camera spring profile */
+  cameraProfileCycle: boolean;
   /** C-stick vertical / Z — adjust chase distance (-1..1) */
   cameraDistance: number;
   /** C-stick horizontal — orbit camera around ship */
@@ -34,9 +37,10 @@ export const ZERO_FLIGHT_INPUT: FlightInput = {
   roll: 0,
   boost: false,
   fire: false,
-  fireSecondary: false,
+  fireSecondaryPressed: false,
   cameraToggle: false,
   cameraCycle: 0,
+  cameraProfileCycle: false,
   cameraDistance: 0,
   cameraOrbit: 0,
   cameraDrop: false,
@@ -52,9 +56,10 @@ export function mergeFlightInputs(inputs: FlightInput[]): FlightInput {
     if (Math.abs(input.roll) > Math.abs(out.roll)) out.roll = input.roll;
     if (input.boost) out.boost = true;
     if (input.fire) out.fire = true;
-    if (input.fireSecondary) out.fireSecondary = true;
+    if (input.fireSecondaryPressed) out.fireSecondaryPressed = true;
     if (input.cameraToggle) out.cameraToggle = true;
     out.cameraCycle += input.cameraCycle;
+    if (input.cameraProfileCycle) out.cameraProfileCycle = true;
     if (Math.abs(input.cameraDistance) > Math.abs(out.cameraDistance)) {
       out.cameraDistance = input.cameraDistance;
     }

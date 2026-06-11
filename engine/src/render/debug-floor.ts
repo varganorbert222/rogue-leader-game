@@ -76,6 +76,12 @@ export class DebugFloor {
     }
   }
 
+  setEnabled(enabled: boolean): void {
+    for (const mesh of this.meshes) {
+      mesh.setEnabled(enabled);
+    }
+  }
+
   dispose(): void {
     for (const mesh of this.meshes) {
       mesh.dispose();

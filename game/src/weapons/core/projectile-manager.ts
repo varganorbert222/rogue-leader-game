@@ -38,6 +38,12 @@ export class ProjectileManager {
     }
   }
 
+  getDebugSnapshots(): ReturnType<Projectile['getDebugSnapshot']>[] {
+    return this.projectiles.map((projectile, index) =>
+      projectile.getDebugSnapshot(`proj_${index}_${projectile.weaponId}`)
+    );
+  }
+
   dispose(): void {
     for (const projectile of this.projectiles) {
       projectile.dispose();

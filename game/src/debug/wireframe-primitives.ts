@@ -1,0 +1,91 @@
+import { Color3, MeshBuilder, Vector3, type LinesMesh, type Scene } from '@babylonjs/core';
+
+export function buildSphereWireframeLines(
+  center: Vector3,
+  radius: number,
+  segments = 24
+): Vector3[][] {
+  const lines: Vector3[][] = [];
+
+  for (let ring = 0; ring < 3; ring++) {
+    const points: Vector3[] = [];
+    for (let i = 0; i <= segments; i++) {
+      const t = (i / segments) * Math.PI * 2;
+      const c = Math.cos(t);
+      const s = Math.sin(t);
+      if (ring === 0) {
+        points.push(center.add(new Vector3(c * radius, 0, s * radius)));
+      } else if (ring === 1) {
+        points.push(center.add(new Vector3(c * radius, s * radius, 0)));
+      } else {
+        points.push(center.add(new Vector3(0, c * radius, s * radius)));
+      }
+    }
+    for (let i = 0; i < points.length - 1; i++) {
+      lines.push([points[i], points[i + 1]]);
+    }
+  }
+
+  for (const lat of [-0.45, 0, 0.45]) {
+    const y = center.y + lat * radius;
+    const latRadius = Math.sqrt(Math.max(0, radius * radius - (lat * radius) ** 2));
+    const points: Vector3[] = [];
+    for (let i = 0; i <= segments; i++) {
+      const t = (i / segments) * Math.PI * 2;
+      points.push(
+        new Vector3(center.x + Math.cos(t) * latRadius, y, center.z + Math.sin(t) * latRadius)
+      );
+    }
+    for (let i = 0; i < points.length - 1; i++) {
+      lines.push([points[i], points[i + 1]]);
+    }
+  }
+
+  return lines;
+}
+
+export function buildCubeWireframeLines(
+  center: Vector3,
+  halfExtents: Vector3
+): Vector3[][] {
+  const min = new Vector3(
+    center.x - halfExtents.x,
+    center.y - halfExtents.y,
+    center.z - halfExtents.z
+  );
+  const max = new Vector3(
+    center.x + halfExtents.x,
+    center.y + halfExtents.y,
+    center.z + halfExtents.z
+  );
+  const corners = [
+    new Vector3(min.x, min.y, min.z),
+    new Vector3(max.x, min.y, min.z),
+    new Vector3(max.x, min.y, max.z),
+    new Vector3(min.x, min.y, max.z),
+    new Vector3(min.x, max.y, min.z),
+    new Vector3(max.x, max.y, min.z),
+    new Vector3(max.x, max.y, max.z),
+    new Vector3(min.x, max.y, max.z),
+  ];
+  const edges: [number, number][] = [
+    [0, 1], [1, 2], [2, 3], [3, 0],
+    [4, 5], [5, 6], [6, 7], [7, 4],
+    [0, 4], [1, 5], [2, 6], [3, 7],
+  ];
+  return edges.map(([a, b]) => [corners[a], corners[b]]);
+}
+
+export function addLineSystem(
+  scene: Scene,
+  name: string,
+  lines: Vector3[][],
+  color: Color3,
+  meshes: LinesMesh[]
+): void {
+  if (lines.length === 0) return;
+  const mesh = MeshBuilder.CreateLineSystem(name, { lines }, scene);
+  mesh.color = color;
+  mesh.isPickable = false;
+  meshes.push(mesh);
+}
