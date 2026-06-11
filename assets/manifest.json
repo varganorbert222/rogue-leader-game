@@ -13,6 +13,12 @@
         "mirror": "+x"
       },
       "faction": "rebel",
+      "flight": {
+        "maxSpeed": 85,
+        "cruiseSpeed": 60,
+        "pitchRate": 1.9,
+        "yawRate": 1.9
+      },
       "defaultWeapons": {
         "laser": "rebel_laser",
         "projectile": "proton_torpedo"
@@ -35,6 +41,12 @@
         "mirror": "+x"
       },
       "faction": "imperial",
+      "flight": {
+        "maxSpeed": 95,
+        "cruiseSpeed": 65,
+        "pitchRate": 2.1,
+        "yawRate": 2.0
+      },
       "defaultWeapons": {
         "laser": "imperial_laser"
       },

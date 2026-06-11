@@ -14,6 +14,8 @@ import {
 } from '../settings/flight-preferences';
 import type { FlightInput, IInputSource } from './i-input-source';
 import { ZERO_FLIGHT_INPUT } from './i-input-source';
+import type { IPlayerInputSource } from './i-player-input-source';
+import { playerInputFromFlightInput, type PlayerInput } from './player-input';
 
 const DEADZONE = 0.12;
 
@@ -22,7 +24,7 @@ const DEADZONE = 0.12;
  * Left stick: fly · R2: accelerate · L2: brake · L1+stick: roll · Cross/A: fire
  * Right stick: camera · Options/Share: cockpit toggle
  */
-export class GamepadInput implements IInputSource {
+export class GamepadInput implements IPlayerInputSource {
   private padIndex: number | null = null;
   private preferredGamepadId: string | null = normalizeSelectedGamepadId(
     loadFlightPreferences().selectedGamepadId
@@ -86,6 +88,10 @@ export class GamepadInput implements IInputSource {
     }
 
     this.trackCameraToggle(pad);
+  }
+
+  getPlayerInput(): PlayerInput {
+    return playerInputFromFlightInput(this.getFlightInput());
   }
 
   getFlightInput(): FlightInput {

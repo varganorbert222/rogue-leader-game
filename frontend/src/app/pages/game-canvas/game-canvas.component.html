@@ -38,6 +38,15 @@
     ></div>
   }
 
+  @if (hud.targetLock?.visible) {
+    <div
+      class="target-lock"
+      [style.left.%]="hud.targetLock!.xPct"
+      [style.top.%]="hud.targetLock!.yPct"
+      aria-hidden="true"
+    ></div>
+  }
+
   <div class="hud">
     <div class="bars">
       <div class="bar health">

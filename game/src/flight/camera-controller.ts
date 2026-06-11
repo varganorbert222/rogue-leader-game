@@ -6,6 +6,7 @@ import {
   type Scene,
   type TransformNode,
 } from '@babylonjs/core';
+import type { CameraInput } from '../input/camera-input';
 import type { FlightInput } from '../input/i-input-source';
 import { getShipForward, getShipRight, getShipUp } from './ship-forward';
 
@@ -99,7 +100,7 @@ export class CameraController {
     this.shakeTime = duration;
   }
 
-  update(dt: number, target: TransformNode, input?: FlightInput): void {
+  update(dt: number, target: TransformNode, input?: CameraInput | FlightInput): void {
     if (input?.cameraToggle) this.toggleCockpit();
     if (input?.cameraCycle) {
       for (let i = 0; i < input.cameraCycle; i++) this.cycleOutsideView();

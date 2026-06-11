@@ -1,0 +1,24 @@
+{
+  "targeting": {
+    "autoAimRange": 500,
+    "targetScreenRadiusPct": 12,
+    "convergenceDistance": 1000,
+    "maxDeflectionDeg": 35,
+    "weaponAimSpeedDeg": 120,
+    "screenDistanceWeight": 1,
+    "worldDistanceWeight": 0.08
+  },
+  "defaults": {
+    "flight": {
+      "maxSpeed": 80,
+      "minSpeed": 25,
+      "boostMultiplier": 1.6,
+      "pitchRate": 1.8,
+      "yawRate": 1.8,
+      "rollRate": 3.0,
+      "thrustRate": 35,
+      "brakeRate": 45,
+      "cruiseSpeed": 55
+    }
+  }
+}

@@ -5,6 +5,8 @@ export interface SphereBody {
   position: Vector3;
   radius: number;
   team?: 'player' | 'enemy' | 'neutral';
+  faction?: 'rebel' | 'imperial' | 'neutral';
+  velocity?: Vector3;
 }
 
 export class CollisionSystem {

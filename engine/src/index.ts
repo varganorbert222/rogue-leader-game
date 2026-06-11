@@ -9,6 +9,7 @@ export {
   loadAssetManifest,
   type AssetManifest,
   type ShipManifestEntry,
+  type ShipFlightStatsManifest,
   type ShipAnchorBindings,
   type PropManifestEntry,
   type SkyboxManifestEntry,

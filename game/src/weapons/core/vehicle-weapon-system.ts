@@ -3,11 +3,20 @@ import { detectWeaponMounts } from '@rogue-leader/engine';
 import type { ShipAnchors, ShipManifestEntry } from '@rogue-leader/engine';
 import type { GameEventBus } from '../../events/game-events';
 import type { WeaponsManifest } from '../../config/weapons-manifest';
+import type { TargetingConfig } from '../../config/combat-config';
+import { isTargetInAimHemisphere } from '../aim-solver';
+import type { FactionId } from '../../combat/faction';
 import type { CombatTeam } from './combat-team';
 import { createMountedWeapons, MountedWeapon } from './mounted-weapon';
 import type { ProjectileManager } from './projectile-manager';
 import { createMountWeaponBindings } from './weapon-registry';
 import type { WeaponFireGroup } from './weapon-definition';
+
+export interface WeaponAimTarget {
+  position: Vector3;
+  velocity: Vector3;
+  distance: number;
+}
 
 export class VehicleWeaponSystem {
   private readonly weapons: MountedWeapon[];
@@ -39,9 +48,49 @@ export class VehicleWeaponSystem {
     }
   }
 
+  updateWeaponAim(
+    axisOrigin: Vector3,
+    axisDirection: Vector3,
+    target: WeaponAimTarget | null,
+    shooterVel: Vector3,
+    targeting: TargetingConfig,
+    dt: number
+  ): void {
+    const maxRad = (targeting.maxDeflectionDeg * Math.PI) / 180;
+    const aimSpeedRad = (targeting.weaponAimSpeedDeg * Math.PI) / 180;
+    const useAutoAim =
+      target != null &&
+      target.distance <= targeting.autoAimRange &&
+      isTargetInAimHemisphere(axisOrigin, axisDirection, target.position);
+
+    for (const weapon of this.weapons) {
+      if (useAutoAim && target) {
+        weapon.updateAutoAim(
+          target.position,
+          target.velocity,
+          shooterVel,
+          maxRad,
+          dt,
+          aimSpeedRad
+        );
+      } else {
+        weapon.updateConvergence(
+          axisOrigin,
+          axisDirection,
+          targeting.convergenceDistance,
+          maxRad,
+          dt,
+          aimSpeedRad
+        );
+      }
+    }
+  }
+
   tryFire(
     projectiles: ProjectileManager,
     team: CombatTeam,
+    faction: FactionId,
+    shooterId: string,
     aimDirection: Vector3,
     events: GameEventBus,
     group: WeaponFireGroup
@@ -50,7 +99,7 @@ export class VehicleWeaponSystem {
     const dir = aimDirection.clone().normalize();
     for (const weapon of this.weapons) {
       if (!matchesFireGroup(weapon.fireGroup, group)) continue;
-      if (weapon.tryFire(projectiles, team, dir, events)) {
+      if (weapon.tryFire(projectiles, team, faction, shooterId, dir, events)) {
         fired = true;
       }
     }
@@ -60,36 +109,51 @@ export class VehicleWeaponSystem {
   tryFirePrimary(
     projectiles: ProjectileManager,
     team: CombatTeam,
+    faction: FactionId,
+    shooterId: string,
     aimDirection: Vector3,
     events: GameEventBus
   ): boolean {
-    return this.tryFire(projectiles, team, aimDirection, events, 'primary');
+    return this.tryFire(projectiles, team, faction, shooterId, aimDirection, events, 'primary');
   }
 
   tryFireSecondary(
     projectiles: ProjectileManager,
     team: CombatTeam,
+    faction: FactionId,
+    shooterId: string,
     aimDirection: Vector3,
     events: GameEventBus
   ): boolean {
-    return this.tryFire(projectiles, team, aimDirection, events, 'secondary');
+    return this.tryFire(projectiles, team, faction, shooterId, aimDirection, events, 'secondary');
+  }
+
+  getPrimaryAimDirection(fallback: Vector3): Vector3 {
+    const primary = this.weapons.find((w) => matchesFireGroup(w.fireGroup, 'primary'));
+    return primary?.getAimDirection(fallback) ?? fallback.clone().normalize();
   }
 
   tryFireAtTarget(
     projectiles: ProjectileManager,
     team: CombatTeam,
+    faction: FactionId,
+    shooterId: string,
     targetPosition: Vector3,
+    targetVelocity: Vector3,
+    shooterVelocity: Vector3,
     events: GameEventBus,
+    targeting: TargetingConfig,
     maxRange = Infinity
   ): boolean {
     const origin = this.weapons[0]?.mount.node.getAbsolutePosition();
     if (!origin) return false;
     if (Vector3.Distance(origin, targetPosition) > maxRange) return false;
 
+    const toTarget = targetPosition.subtract(origin).normalize();
     let fired = false;
     for (const weapon of this.weapons) {
       if (!matchesFireGroup(weapon.fireGroup, 'primary')) continue;
-      if (weapon.tryFireAtTarget(projectiles, team, targetPosition, events)) {
+      if (weapon.tryFireAtTarget(projectiles, team, faction, shooterId, toTarget, events)) {
         fired = true;
       }
     }
