@@ -17,15 +17,26 @@ import {
   loadWeaponsManifest,
   type WeaponsManifest,
 } from "../config/weapons-manifest";
-import { resolveFaction } from "../combat/faction";
 import { ActorWorld } from "../actors/actor-world";
 import { NpcActor } from "../actors/npc-actor";
 import { PlayerActor } from "../actors/player-actor";
-import { BoidNpcInput } from "../ai/boid-npc-input";
+import { BehaviorNpcInput } from "../ai/behavior-npc-input";
 import { computeFlockCenter } from "../ai/boid-forces";
+import { MissionNavigation } from "../ai/navigation/mission-navigation";
+import { resolveFaction } from "../combat/faction";
+import { updateWeaponAimForObserver } from "../combat/weapon-aim-controller";
+import {
+  loadNpcBehaviorConfig,
+  type NpcBehaviorConfig,
+} from "../config/npc-behavior-config";
+import {
+  cloneDebugPreferences,
+  loadDebugPreferences,
+  type DebugPreferences,
+} from "../debug/debug-preferences";
+import { GameDebugOverlay } from "../debug/game-debug-overlay";
 import { EngineVfxController } from "../vfx/engine-vfx-controller";
 import { Vehicle } from "../vehicles/vehicle";
-import { DEBUG_INVINCIBLE, DEBUG_SHOW_AXES } from "../debug-flags";
 import { GameAudioBridge } from "../audio/game-audio-bridge";
 import {
   CollisionSystem,
@@ -82,6 +93,7 @@ export interface MissionHudState {
   enemiesRemaining: number;
   backend: string;
   laserReady: boolean;
+  torpedoesRemaining: number;
   reticleInner: HudScreenPoint;
   reticleOuter: HudScreenPoint;
   targetLock: HudScreenPoint | null;
@@ -114,6 +126,10 @@ export class MissionManager {
   private endState: MissionEndState = "playing";
   private weaponsManifest!: WeaponsManifest;
   private combatConfig!: CombatConfig;
+  private npcBehaviorConfig!: NpcBehaviorConfig;
+  private missionNavigation!: MissionNavigation;
+  private debugPreferences: DebugPreferences = loadDebugPreferences();
+  private readonly gameDebugOverlay = new GameDebugOverlay();
   private readonly engineVfx = new EngineVfxController();
   private meteorHitCooldown = 0;
   private debugFloor?: DebugFloor;
@@ -160,6 +176,15 @@ export class MissionManager {
     return this.world.player;
   }
 
+  getDebugPreferences(): DebugPreferences {
+    return cloneDebugPreferences(this.debugPreferences);
+  }
+
+  applyDebugPreferences(prefs: DebugPreferences): void {
+    this.debugPreferences = cloneDebugPreferences(prefs);
+    this.syncDebugStaticMeshes();
+  }
+
   /** Move the player role into another vehicle (e.g. dock / hijack). */
   enterPlayerVehicle(vehicle: Vehicle): void {
     this.world.player?.enterVehicle(vehicle);
@@ -177,6 +202,10 @@ export class MissionManager {
       "/assets/weapons/manifest.json",
     );
     this.combatConfig = await loadCombatConfig("/assets/combat.json");
+    this.npcBehaviorConfig = await loadNpcBehaviorConfig(
+      "/assets/npc-behavior.json",
+    );
+    this.missionNavigation = new MissionNavigation(config.navigation);
     this.loadState = { loading: true, message: "Loading mission…" };
     const lodLoader = new LodShipLoader(this.host.scene, "/assets");
     this.shipLoader = new GltfShipLoader(this.host.scene, "/assets", lodLoader);
@@ -187,6 +216,15 @@ export class MissionManager {
     this.input = new CombinedInput([new KeyboardInput(), this.gamepadInput]);
     this.applyFlightPreferences(loadFlightPreferences());
     this.audioBridge = new GameAudioBridge(this.host.audio, this.events);
+
+    // Initialize combat system and load player ammo
+    this.combat = new CombatSystem(this.host.scene, this.events);
+    this.combat.setWeaponsManifest(this.weaponsManifest);
+    this.combat.initPlayerAmmo(this.combatConfig.playerAmmo);
+    this.combat.initTargets(
+      () => this.getProjectileTargets(),
+      (hit) => this.handleProjectileHit(hit),
+    );
 
     const sky = this.assetManifest.skyboxes[config.skyboxId];
     if (sky) {
@@ -205,13 +243,6 @@ export class MissionManager {
     playerLoaded.root.position = Vector3.FromArray(config.player.spawn);
     const heading = Vector3.FromArray(config.player.heading).normalize();
     playerLoaded.root.rotationQuaternion = shipRotationFromHeading(heading);
-
-    this.combat = new CombatSystem(this.host.scene, this.events);
-    this.combat.setWeaponsManifest(this.weaponsManifest);
-    this.combat.initTargets(
-      () => this.getProjectileTargets(),
-      (hit) => this.handleProjectileHit(hit),
-    );
 
     const playerFaction = resolveFaction(shipEntry.faction);
     const playerWeapons = this.combat.attachWeapons(
@@ -265,19 +296,7 @@ export class MissionManager {
         : undefined,
     });
 
-    this.debugWorldAxes?.dispose();
-    this.debugShipAxes?.dispose();
-    if (DEBUG_SHOW_AXES) {
-      this.debugWorldAxes = DebugAxes.world(this.host.scene, {
-        origin: volumeCenter,
-        length: 60,
-      });
-      this.debugShipAxes = DebugAxes.local(
-        this.host.scene,
-        playerVehicle.root,
-        14,
-      );
-    }
+    this.syncDebugStaticMeshes(volumeCenter, playerVehicle.root);
 
     if (config.introCinematicSec) {
       this.camera.startCinematic(config.introCinematicSec);
@@ -331,6 +350,7 @@ export class MissionManager {
       enemiesRemaining: this.world.getNpcCount(),
       backend: this.host.backend,
       laserReady: true,
+      torpedoesRemaining: this.combat.getPlayerAmmo().getCount("proton_torpedo"),
       reticleInner,
       reticleOuter,
       targetLock: player?.targeting.getActiveTarget()?.screenPoint ?? null,
@@ -381,6 +401,7 @@ export class MissionManager {
       camera: this.camera,
       combat: this.combat,
       targetingConfig: this.combatConfig.targeting,
+      radarRadius: this.combatConfig.radar.radius,
       hostileTargets: this.world.collectHostileTargets(player.faction),
     });
 
@@ -397,8 +418,9 @@ export class MissionManager {
     this.checkMeteorCollisions();
     this.updateLod();
     this.engineVfx.update();
+    this.renderGameDebug(player);
 
-    if (!DEBUG_INVINCIBLE && player.health.isDead()) {
+    if (!this.debugPreferences.gameplay.invincible && player.health.isDead()) {
       this.endState = "lost";
       ParticleFx.explosion(
         this.host.scene,
@@ -427,6 +449,7 @@ export class MissionManager {
     this.world.player?.dispose();
     this.world.clear();
     this.engineVfx.dispose();
+    this.gameDebugOverlay.dispose();
     this.events.clear();
   }
 
@@ -445,7 +468,7 @@ export class MissionManager {
     const nextWave = waves[this.wavesSpawned];
     if (!nextWave) return;
 
-    const clearanceGated = nextWave.trigger === "wave_1_cleared";
+    const clearanceGated = nextWave.trigger?.endsWith("_cleared") ?? false;
     if (clearanceGated && this.world.getNpcCount() > 0) {
       return;
     }
@@ -493,13 +516,27 @@ export class MissionManager {
         weapons,
         flightDefaults: this.combatConfig.defaults.flight,
       });
+      const navKit = this.missionNavigation.createFlockKit(
+        wave.id,
+        this.npcBehaviorConfig.pathArriveRadius,
+        this.npcBehaviorConfig.wanderRetargetRadius,
+      );
+      const combatRole =
+        navKit.combatRole ??
+        this.missionNavigation.getFlockAssignment(wave.id)?.combatRole ??
+        "hunter";
       this.world.addNpc(
         new NpcActor(
           npcId,
           wave.id,
           new HealthComponent(40, 40, 0, 0),
           vehicle,
-          new BoidNpcInput(spec.behavior),
+          new BehaviorNpcInput(
+            this.npcBehaviorConfig,
+            navKit,
+            spec.behavior,
+            combatRole,
+          ),
           faction,
         ),
       );
@@ -548,20 +585,6 @@ export class MissionManager {
           radius: mate.vehicle.colliderRadius,
         }));
 
-      const playerDist = Vector3.Distance(playerPos, npc.vehicle.position);
-      const enemyForward = getShipForward(npc.vehicle.rotationQuaternion);
-      this.combat.updateWeaponAim(
-        npc.vehicle.weapons,
-        npc.vehicle.root.getAbsolutePosition(),
-        enemyForward,
-        playerDist <= this.combatConfig.targeting.autoAimRange
-          ? { position: playerPos, velocity: playerVel, distance: playerDist }
-          : null,
-        npc.vehicle.velocity,
-        this.combatConfig.targeting,
-        dt,
-      );
-
       const wantsFire = npc.updateSteering({
         dt,
         playerPosition: playerPos,
@@ -569,6 +592,24 @@ export class MissionManager {
         flockMates,
         flockCenter: flockCenters.get(npc.flockId) ?? npc.vehicle.position,
         boundary,
+      });
+
+      const enemyForward = getShipForward(npc.vehicle.rotationQuaternion);
+      updateWeaponAimForObserver({
+        scene: this.host.scene,
+        combat: this.combat,
+        weapons: npc.vehicle.weapons,
+        observerId: npc.id,
+        observerFaction: npc.faction,
+        observerPos: npc.vehicle.position,
+        observerVel: npc.vehicle.velocity,
+        aimAxis: enemyForward,
+        candidates: [player.toTargetEntity()],
+        targeting: this.combatConfig.targeting,
+        radarRadius: this.npcBehaviorConfig.radarRadius,
+        dt,
+        mode: "radar",
+        targetingSystem: npc.targeting,
       });
 
       if (wantsFire) {
@@ -581,9 +622,102 @@ export class MissionManager {
           playerVel,
           npc.vehicle.velocity,
           this.combatConfig.targeting,
-          140,
+          this.npcBehaviorConfig.fireRange,
         );
       }
+    }
+  }
+
+  private renderGameDebug(player: PlayerActor): void {
+    this.gameDebugOverlay.render(
+      this.host.scene,
+      this.collectDebugFrame(player),
+      this.debugPreferences,
+    );
+  }
+
+  private collectDebugFrame(player: PlayerActor) {
+    const vehicles = [];
+    if (this.world.player) {
+      vehicles.push({
+        id: this.world.player.id,
+        position: this.world.player.vehicle.position.clone(),
+        radius: this.world.player.vehicle.colliderRadius,
+        label: this.world.player.vehicle.shipId,
+        isPlayer: true,
+      });
+    }
+    for (const npc of this.world.npcActors) {
+      vehicles.push({
+        id: npc.id,
+        position: npc.vehicle.position.clone(),
+        radius: npc.vehicle.colliderRadius,
+        label: npc.vehicle.shipId,
+        isPlayer: false,
+      });
+    }
+
+    const npcSnapshots = this.world.npcActors
+      .map((npc) => {
+        const steering = npc.getSteeringDebug();
+        if (!steering) return null;
+        return {
+          id: npc.id,
+          flockId: npc.flockId,
+          position: npc.vehicle.position.clone(),
+          state: steering.state,
+          steering,
+          radarRadius: this.npcBehaviorConfig.radarRadius,
+        };
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => entry != null);
+
+    return {
+      playerAim: player.lastAimDebug ?? undefined,
+      paths: this.missionNavigation.listPathPolylines(),
+      zones: this.missionNavigation.listZones(),
+      npcs: npcSnapshots,
+      vehicles,
+      projectiles: this.combat.projectiles.getDebugSnapshots(),
+      meteors: this.meteorField.meteors.map((meteor) => ({
+        id: meteor.id,
+        position: meteor.root.position.clone(),
+        radius: meteor.colliderRadius,
+      })),
+    };
+  }
+
+  private syncDebugStaticMeshes(
+    volumeCenter?: Vector3,
+    shipRoot?: import("@babylonjs/core").TransformNode,
+  ): void {
+    const prefs = this.debugPreferences;
+    const enabled = prefs.masterEnabled;
+    const center =
+      volumeCenter ?? Vector3.FromArray(this.config?.playVolume.center ?? [0, 0, 0]);
+
+    this.debugFloor?.setEnabled(enabled && prefs.overlays.playVolumeGrid);
+
+    if (enabled && prefs.overlays.worldAxes) {
+      if (!this.debugWorldAxes) {
+        this.debugWorldAxes = DebugAxes.world(this.host.scene, {
+          origin: center,
+          length: 60,
+        });
+      }
+      this.debugWorldAxes.setEnabled(true);
+    } else {
+      this.debugWorldAxes?.setEnabled(false);
+    }
+
+    const playerRoot = shipRoot ?? this.world.player?.vehicle.root;
+    if (enabled && prefs.overlays.shipAxes && playerRoot) {
+      if (!this.debugShipAxes) {
+        this.debugShipAxes = DebugAxes.local(this.host.scene, playerRoot, 14);
+      }
+      this.debugShipAxes.setEnabled(true);
+    } else {
+      this.debugShipAxes?.setEnabled(false);
     }
   }
 
@@ -617,7 +751,7 @@ export class MissionManager {
     const actor = this.world.findActor(hit.targetId);
     if (actor) {
       if (actor.role === "player") {
-        if (!DEBUG_INVINCIBLE) {
+        if (!this.debugPreferences.gameplay.invincible) {
           const result = actor.health.applyDamage(hit.damage);
           if (result.shield > 0) this.events.emit({ type: "ShieldHit" });
           else this.events.emit({ type: "PlayerDamaged" });
@@ -669,7 +803,7 @@ export class MissionManager {
       };
       if (this.collision.sphereOverlap(playerBody, mBody)) {
         this.meteorHitCooldown = 1.0;
-        if (!DEBUG_INVINCIBLE) {
+        if (!this.debugPreferences.gameplay.invincible) {
           const result = player.health.applyDamage(
             this.config.meteors.damageOnImpact,
           );
