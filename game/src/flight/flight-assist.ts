@@ -18,7 +18,7 @@ export const DEFAULT_FLIGHT_ASSIST: FlightAssistOptions = {
 export const INPUT_DEADZONE = 0.06;
 
 /** Seconds without pitch/roll/yaw input before auto-roll begins. */
-export const ROLL_IDLE_DELAY_SEC = 3;
+export const ROLL_IDLE_DELAY_SEC = 1;
 
 export function hasFlightControlInput(input: {
   pitch: number;
@@ -32,8 +32,8 @@ export function hasFlightControlInput(input: {
   );
 }
 
-/** Slerp speed toward wings-level orientation. */
-export const AUTO_ROLL_RATE = 4;
+/** Max angular speed (radians/sec) for auto-roll correction. */
+export const AUTO_ROLL_RATE = 1.5;
 
 /**
  * When |forward.y| exceeds this, roll vs yaw is undefined (nose near vertical).
@@ -87,7 +87,10 @@ export function applyAutoRoll(rotation: Quaternion, dt: number): Quaternion {
   }
 
   const fwd = getShipForward(rotation);
-  const t = 1 - Math.exp(-AUTO_ROLL_RATE * dt);
-  const correction = Quaternion.RotationAxis(fwd, rollAngle * t);
+  // Apply a capped angular step towards level to make the correction
+  // feel smooth and uniform regardless of how large the initial bank is.
+  const maxStep = AUTO_ROLL_RATE * dt; // radians per frame cap
+  const step = Math.abs(rollAngle) <= maxStep ? rollAngle : Math.sign(rollAngle) * maxStep;
+  const correction = Quaternion.RotationAxis(fwd, step);
   return correction.multiply(rotation).normalize();
 }
