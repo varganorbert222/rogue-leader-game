@@ -154,6 +154,50 @@ canvas {
   z-index: 10;
 }
 
+.overlay.loading {
+  background: rgba(0, 8, 20, 0.92);
+  pointer-events: none;
+}
+
+.overlay.loading h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.loading-status {
+  margin: 0;
+  opacity: 0.85;
+  font-size: 0.95rem;
+  min-height: 1.4em;
+}
+
+.loading-bar {
+  width: min(320px, 70vw);
+  height: 4px;
+  margin-top: 0.5rem;
+  background: rgba(120, 200, 255, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loading-bar-pulse {
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(100, 200, 255, 0.9), transparent);
+  animation: loading-sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes loading-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
 .overlay.settings {
   justify-content: flex-start;
   overflow-y: auto;

@@ -2,9 +2,7 @@
   "ships": {
     "xwing": {
       "lod": [
-        "models/ships/xwing/x-wing_LOD0.glb",
-        "models/ships/xwing/x-wing_LOD1.glb",
-        "models/ships/xwing/x-wing_LOD2.glb"
+        "models/ships/xwing/x-wing_LOD0.glb"
       ],
       "scale": 1.0,
       "colliderRadius": 2.5,
@@ -26,9 +24,7 @@
     },
     "tie_fighter": {
       "lod": [
-        "models/ships/tie_fighter/tie_fighter_LOD0.glb",
-        "models/ships/tie_fighter/tie_fighter_LOD1.glb",
-        "models/ships/tie_fighter/tie_fighter_LOD2.glb"
+        "models/ships/tie_fighter/tie_fighter_LOD0.glb"
       ],
       "scale": 1.0,
       "colliderRadius": 2.0,
@@ -49,9 +45,13 @@
   },
   "props": {
     "meteor": {
-      "variantDir": "models/props/meteor",
-      "variantPrefix": "meteor",
-      "variantPad": 2,
+      "variants": [
+        "models/props/meteor/meteor_01.glb",
+        "models/props/meteor/meteor_02.glb",
+        "models/props/meteor/meteor_03.glb",
+        "models/props/meteor/meteor_04.glb",
+        "models/props/meteor/meteor_05.glb"
+      ],
       "scale": [
         0.8,
         2.5

@@ -1,4 +1,4 @@
-import { Quaternion, Vector3, type AbstractMesh } from '@babylonjs/core';
+import { Quaternion, Vector3 } from '@babylonjs/core';
 import {
   GltfShipLoader,
   LodShipLoader,
@@ -9,6 +9,9 @@ import {
   DebugFloor,
   DebugAxes,
   type BabylonHost,
+  type LodLoadProgress,
+  type LodRuntimeState,
+  updateLodByScreenCoverage,
 } from '@rogue-leader/engine';
 import { loadWeaponsManifest, type WeaponsManifest } from '../config/weapons-manifest';
 import { EngineVfxController } from '../vfx/engine-vfx-controller';
@@ -41,6 +44,11 @@ import asteroidFieldSpace from './configs/asteroid-field-space.json';
 import mission02 from './configs/mission-02-hoth-surface.json';
 import mission03 from './configs/mission-03-tatooine.json';
 
+export interface MissionLoadState {
+  loading: boolean;
+  message: string;
+}
+
 export interface MissionHudState {
   health: number;
   maxHealth: number;
@@ -61,7 +69,7 @@ interface EnemyInstance {
   ai: BoidEnemyAI;
   health: HealthComponent;
   radius: number;
-  lodMeshes: AbstractMesh[][];
+  lodRuntime: LodRuntimeState;
   weapons: VehicleWeaponSystem;
 }
 
@@ -77,12 +85,13 @@ export class MissionManager {
   private config!: MissionConfig;
   private assetManifest!: AssetManifest;
   private shipLoader!: GltfShipLoader;
-  private lodLoader!: LodShipLoader;
   private input!: CombinedInput;
   private readonly gamepadInput = new GamepadInput();
   private playerController?: PlayerShipController;
   private playerHealth?: HealthComponent;
-  private playerLodMeshes: AbstractMesh[][] = [];
+  private playerLodRuntime?: LodRuntimeState;
+  private loadState: MissionLoadState = { loading: false, message: '' };
+  private loadProgressCallback?: (progress: LodLoadProgress) => void;
   private camera!: CameraController;
   private combat!: CombatSystem;
   private collision = new CollisionSystem();
@@ -119,6 +128,14 @@ export class MissionManager {
     return MISSIONS[id];
   }
 
+  setLoadProgressCallback(callback?: (progress: LodLoadProgress) => void): void {
+    this.loadProgressCallback = callback;
+  }
+
+  getLoadState(): MissionLoadState {
+    return this.loadState;
+  }
+
   async load(missionId: string): Promise<void> {
     const config = MISSIONS[missionId];
     if (!config) throw new Error(`Unknown mission: ${missionId}`);
@@ -127,8 +144,13 @@ export class MissionManager {
     this.config = config;
     this.assetManifest = await loadAssetManifest('/assets/manifest.json');
     this.weaponsManifest = await loadWeaponsManifest('/assets/weapons/manifest.json');
-    this.lodLoader = new LodShipLoader(this.host.scene, '/assets');
-    this.shipLoader = new GltfShipLoader(this.host.scene, '/assets', this.lodLoader);
+    this.loadState = { loading: true, message: 'Loading mission…' };
+    const lodLoader = new LodShipLoader(this.host.scene, '/assets');
+    this.shipLoader = new GltfShipLoader(this.host.scene, '/assets', lodLoader);
+    this.shipLoader.setLodProgressCallback((progress) => {
+      this.loadState = { loading: true, message: progress.message };
+      this.loadProgressCallback?.(progress);
+    });
     this.input = new CombinedInput([new KeyboardInput(), this.gamepadInput]);
     this.applyFlightPreferences(loadFlightPreferences());
     this.audioBridge = new GameAudioBridge(this.host.audio, this.events);
@@ -154,7 +176,7 @@ export class MissionManager {
       playerLoaded.visual.invertForwardRoll
     );
     this.playerHealth = new HealthComponent(100, 100, 50, 50);
-    this.playerLodMeshes = playerLoaded.lodMeshes;
+    this.playerLodRuntime = playerLoaded.lodRuntime;
 
     this.combat = new CombatSystem(this.host.scene, this.events);
     this.combat.setWeaponsManifest(this.weaponsManifest);
@@ -211,6 +233,9 @@ export class MissionManager {
       type: 'MissionStarted',
       payload: { musicId: config.musicId },
     });
+
+    this.loadState = { loading: false, message: '' };
+    this.shipLoader.setLodProgressCallback(undefined);
   }
 
   getEndState(): MissionEndState {
@@ -373,7 +398,7 @@ export class MissionManager {
         ai: new BoidEnemyAI(loaded.root, spec.behavior, entry.colliderRadius),
         health: new HealthComponent(40, 40, 0, 0),
         radius: entry.colliderRadius,
-        lodMeshes: loaded.lodMeshes,
+        lodRuntime: loaded.lodRuntime,
         weapons: this.combat.attachEnemy(loaded.root, entry, loaded.anchors),
       });
     }
@@ -534,16 +559,11 @@ export class MissionManager {
   }
 
   private updateLod(): void {
-    const camPos = this.camera.getCamera().position;
-    if (this.playerController && this.playerLodMeshes.length) {
-      const d = Vector3.Distance(camPos, this.playerController.root.position);
-      this.lodLoader.updateLod(this.playerLodMeshes, d);
+    if (this.playerLodRuntime) {
+      updateLodByScreenCoverage(this.host.scene, this.playerLodRuntime);
     }
     for (const e of this.enemies) {
-      if (e.lodMeshes.length) {
-        const d = Vector3.Distance(camPos, e.ai.root.position);
-        this.lodLoader.updateLod(e.lodMeshes, d);
-      }
+      updateLodByScreenCoverage(this.host.scene, e.lodRuntime);
     }
   }
 

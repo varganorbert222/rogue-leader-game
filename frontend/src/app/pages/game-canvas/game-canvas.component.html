@@ -1,6 +1,16 @@
 <div class="game-root">
   <canvas #gameCanvas></canvas>
 
+  @if (loading) {
+    <div class="overlay loading" aria-live="polite">
+      <h2>{{ missionName }}</h2>
+      <p class="loading-status">{{ loadingMessage }}</p>
+      <div class="loading-bar" aria-hidden="true">
+        <div class="loading-bar-pulse"></div>
+      </div>
+    </div>
+  }
+
   @if (hud.reticleInner.visible && hud.reticleOuter.visible) {
     <svg class="reticle-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
       <line

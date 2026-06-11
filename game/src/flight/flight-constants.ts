@@ -11,4 +11,4 @@ export const RETICLE_INNER_DISTANCE = 50;
 export const RETICLE_OUTER_DISTANCE = 100;
 
 /** Cosmetic yaw-bank on visual mesh (degrees). */
-export const YAW_VISUAL_BANK_DEG = 15;
+export const YAW_VISUAL_BANK_DEG = 30;

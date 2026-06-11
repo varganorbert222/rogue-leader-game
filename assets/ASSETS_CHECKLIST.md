@@ -31,6 +31,43 @@ Place files exactly as listed. Restart `npm run start` after adding assets.
 
 Axis values: `+x`, `-x`, `+y`, `-y`, `+z`, `-z`. Visual pivot only — no re-export needed.
 
+**LOD** — per ship/prop in `assets/manifest.json` (Unity-style screen %, defaults applied when omitted):
+
+```json
+"lod": [
+  "models/ships/xwing/x-wing_LOD0.glb",
+  "models/ships/xwing/x-wing_LOD1.glb",
+  "models/ships/xwing/x-wing_LOD2.glb"
+]
+```
+
+Shorthand above = all-manual. Full config (manual + auto mix, per-level):
+
+```json
+"lod": {
+  "mode": "mixed",
+  "levels": [
+    "models/ships/xwing/x-wing_LOD0.glb",
+    "models/ships/xwing/x-wing_LOD1.glb",
+    { "auto": 0.35 }
+  ],
+  "screenThresholds": [50, 20],
+  "cullScreenPercent": 2
+}
+```
+
+| Field | Role |
+|-------|------|
+| `mode` | `manual` / `auto` / `mixed` / `none` (default: infer from `levels` or `paths`) |
+| `levels` | Per-level manual path string or `{ "auto": 0.5 }` quality (0–1) |
+| `paths` | Legacy ordered manual GLB list |
+| `screenThresholds` | Switch to lower LOD when screen coverage drops below each % (default: 60, 27, 12… for N levels) |
+| `cullScreenPercent` | Hide mesh below this screen % (default `2`) |
+| `basePath` | Single GLB for `none` or full-auto base |
+| `autoQualities` | Qualities for full-auto extra levels (default `0.55, 0.3, 0.12`) |
+
+Missing manual LOD files fall back to the last successfully loaded level. Auto LOD is generated from the last available source at mission load (preload screen shows status). `mode: "none"` loads one GLB (`basePath` / first `paths` entry) with cull only.
+
 **Blender transform anchors** (empty objects; local +Z = muzzle / exhaust):
 
 | Kind | Naming | Example |
@@ -48,7 +85,20 @@ Weapon behavior (bomb, homing missile, disabling laser, rebel/imperial visuals) 
 
 ## Props
 
-- [ ] `models/props/meteor/meteor_01.glb` … `meteor_XX.glb` (numbered variants)
+- [ ] `models/props/meteor/meteor_01.glb` … `meteor_05.glb` (list every variant in manifest)
+
+```json
+"meteor": {
+  "variants": [
+    "models/props/meteor/meteor_01.glb",
+    "models/props/meteor/meteor_02.glb"
+  ],
+  "scale": [0.8, 2.5],
+  "colliderRadius": 3.0
+}
+```
+
+`variants` — explicit GLB paths; each is preloaded once, spawn picks randomly (every variant at least once per field). Omit `variants` for a single-model prop (`lod` or placeholder).
 
 ## Skybox (Asteroid Field — space)
 

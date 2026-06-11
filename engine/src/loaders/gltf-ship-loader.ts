@@ -10,10 +10,18 @@ import {
 import '@babylonjs/loaders/glTF';
 import type { ShipManifestEntry, PropManifestEntry } from './asset-manifest';
 import { warnMissingOnce } from './asset-manifest';
-import { discoverNumberedGlbVariants } from './meteor-variant-discovery';
 import { detectFirePoints } from './firepoint-detector';
 import { detectShipAnchors, type ShipAnchors } from './ship-anchor-detector';
-import { LodShipLoader } from './lod-ship-loader';
+import { LodShipLoader, type LodProgressCallback } from './lod-ship-loader';
+import { createLodRuntimeState, type LodRuntimeState } from './lod-runtime';
+import { DEFAULT_CULL_SCREEN_PERCENT } from './lod-config';
+
+function createPlaceholderLodRuntime(
+  root: TransformNode,
+  lodMeshes: AbstractMesh[][]
+): LodRuntimeState {
+  return createLodRuntimeState(root, lodMeshes, [], DEFAULT_CULL_SCREEN_PERCENT);
+}
 import { attachVisualPivot } from './visual-pivot';
 import { disableMeshBackfaceCulling } from '../render/mesh-material-utils';
 import { applyModelAxisCorrection, resolveShipVisualOptions } from './ship-axis-convention';
@@ -29,31 +37,44 @@ export interface LoadedEntity {
   firePoints: ReturnType<typeof detectFirePoints>;
   anchors: ShipAnchors;
   visual: ShipVisualOptions;
+  lodRuntime: LodRuntimeState;
   isPlaceholder: boolean;
 }
 
 export class GltfShipLoader {
+  private lodProgressCallback?: LodProgressCallback;
+
   constructor(
     private readonly scene: Scene,
     private readonly baseUrl: string,
     private readonly lodLoader: LodShipLoader
   ) {}
 
+  setLodProgressCallback(callback?: LodProgressCallback): void {
+    this.lodProgressCallback = callback;
+  }
+
   async loadShip(id: string, entry: ShipManifestEntry): Promise<LoadedEntity> {
-    const result = await this.lodLoader.loadWithLod(id, entry.lod, entry.scale);
+    const result = await this.lodLoader.loadWithLod(
+      id,
+      entry.lod,
+      entry.scale,
+      this.lodProgressCallback
+    );
     if (result) {
       const visualRoot = attachVisualPivot(result.root, this.scene);
       applyModelAxisCorrection(visualRoot, entry.axes);
-      const anchors = detectShipAnchors(result.root);
+      const anchors = detectShipAnchors(visualRoot);
       return {
         root: result.root,
         visualRoot,
         meshes: result.meshes,
         lodMeshes: result.lodMeshes,
         colliderRadius: entry.colliderRadius,
-        firePoints: detectFirePoints(result.root),
+        firePoints: detectFirePoints(visualRoot),
         anchors,
         visual: resolveShipVisualOptions(entry.axes),
+        lodRuntime: result.lodRuntime,
         isPlaceholder: false,
       };
     }
@@ -64,8 +85,12 @@ export class GltfShipLoader {
 
   async loadProp(id: string, entry: PropManifestEntry): Promise<LoadedEntity> {
     const scale = Array.isArray(entry.scale) ? entry.scale[1] : entry.scale;
-    const lodPaths = entry.lod ?? [];
-    const result = await this.lodLoader.loadWithLod(id, lodPaths, scale);
+    const result = await this.lodLoader.loadWithLod(
+      id,
+      entry.lod,
+      scale,
+      this.lodProgressCallback
+    );
     if (result) {
       const visualRoot = attachVisualPivot(result.root, this.scene);
       return {
@@ -77,6 +102,7 @@ export class GltfShipLoader {
         firePoints: { fires: [], engines: [] },
         anchors: { engines: [], weapons: [] },
         visual: resolveShipVisualOptions(),
+        lodRuntime: result.lodRuntime,
         isPlaceholder: false,
       };
     }
@@ -85,36 +111,26 @@ export class GltfShipLoader {
     return this.createPlaceholderMeteor(entry.colliderRadius);
   }
 
-  /** Discover and preload every numbered meteor GLB once (meteor_01, meteor_02, …). */
-  async loadMeteorVariantTemplates(
+  /** Preload every configured variant GLB once for randomized spawning. */
+  async loadPropVariantTemplates(
     id: string,
     entry: PropManifestEntry
   ): Promise<LoadedEntity[]> {
-    const dir = entry.variantDir;
-    const prefix = entry.variantPrefix;
-    if (!dir || !prefix) {
-      const single = await this.loadProp(id, entry);
-      return [single];
-    }
-
-    const paths = await discoverNumberedGlbVariants(
-      this.baseUrl,
-      dir,
-      prefix,
-      entry.variantPad ?? 2
-    );
-
-    if (paths.length === 0) {
-      warnMissingOnce(`prop:${id}:variants`);
-      return [this.createPlaceholderMeteor(entry.colliderRadius)];
+    const paths = entry.variants;
+    if (!paths?.length) {
+      return [await this.loadProp(id, entry)];
     }
 
     const templates: LoadedEntity[] = [];
     for (const path of paths) {
       const variantId = path.split('/').pop()?.replace(/\.glb$/i, '') ?? id;
-      const loaded = await this.loadPropMesh(variantId, path, entry);
-      templates.push(loaded);
+      templates.push(await this.loadPropMesh(variantId, path, entry));
     }
+
+    if (templates.every((t) => t.isPlaceholder)) {
+      warnMissingOnce(`prop:${id}:variants`);
+    }
+
     return templates;
   }
 
@@ -125,15 +141,22 @@ export class GltfShipLoader {
         | TransformNode
         | undefined) ?? root;
     const meshes = root.getChildMeshes(false) as AbstractMesh[];
+    const lodMeshes = template.lodMeshes.length > 1 ? template.lodMeshes : [meshes];
     return {
       root,
       visualRoot,
       meshes,
-      lodMeshes: [meshes],
+      lodMeshes,
       colliderRadius: template.colliderRadius,
       firePoints: { fires: [], engines: [] },
       anchors: { engines: [], weapons: [] },
       visual: template.visual,
+      lodRuntime: createLodRuntimeState(
+        root,
+        lodMeshes,
+        template.lodRuntime.screenThresholds,
+        template.lodRuntime.cullScreenPercent
+      ),
       isPlaceholder: template.isPlaceholder,
     };
   }
@@ -166,6 +189,7 @@ export class GltfShipLoader {
         firePoints: { fires: [], engines: [] },
         anchors: { engines: [], weapons: [] },
         visual: resolveShipVisualOptions(),
+        lodRuntime: createPlaceholderLodRuntime(root, [meshes]),
         isPlaceholder: false,
       };
     } catch {
@@ -196,6 +220,7 @@ export class GltfShipLoader {
       firePoints: detectFirePoints(root),
       anchors: detectShipAnchors(root),
       visual: resolveShipVisualOptions(entry.axes),
+      lodRuntime: createPlaceholderLodRuntime(root, [[body, nose]]),
       isPlaceholder: true,
     };
   }
@@ -214,6 +239,7 @@ export class GltfShipLoader {
       firePoints: { fires: [], engines: [] },
       anchors: { engines: [], weapons: [] },
       visual: resolveShipVisualOptions(),
+      lodRuntime: createPlaceholderLodRuntime(root, [[mesh]]),
       isPlaceholder: true,
     };
   }

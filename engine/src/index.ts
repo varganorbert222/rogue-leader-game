@@ -40,8 +40,26 @@ export {
   type EngineVfxProfile,
 } from './vfx/engine-vfx';
 export { GltfShipLoader, type LoadedEntity } from './loaders/gltf-ship-loader';
-export { discoverNumberedGlbVariants } from './loaders/meteor-variant-discovery';
-export { LodShipLoader } from './loaders/lod-ship-loader';
+export {
+  LodShipLoader,
+  type LodLoadProgress,
+  type LodProgressCallback,
+} from './loaders/lod-ship-loader';
+export {
+  resolveLodPlan,
+  defaultScreenThresholds,
+  DEFAULT_CULL_SCREEN_PERCENT,
+  type LodConfig,
+  type LodLevelDef,
+  type LodManifestValue,
+  type ResolvedLodPlan,
+} from './loaders/lod-config';
+export {
+  createLodRuntimeState,
+  updateLodByScreenCoverage,
+  type LodRuntimeState,
+} from './loaders/lod-runtime';
+export { computeScreenCoveragePercent } from './render/screen-coverage';
 export { detectFirePoints, refreshFirePoints, type FirePoints } from './loaders/firepoint-detector';
 export {
   detectWeaponMounts,
