@@ -1,8 +1,8 @@
 import type { AssetManifest, ShipManifestEntry } from "@rogue-leader/engine";
-import type { WeaponsManifest } from "../config/weapons-manifest";
+import type { WeaponsManifest } from "../data/config/weapons-manifest";
 import type { MissionConfig } from "../mission/mission-types";
 import { ShipAudioCatalog } from "../audio/ship-audio-map";
-import { SfxClipIds } from "../constants/audio-clips";
+import { SfxClipIds } from "../data/constants/audio-clips";
 import { resolveShipSfoilSfx } from "../audio/sfoil-sfx";
 import { resolveFaction } from "../combat/faction";
 

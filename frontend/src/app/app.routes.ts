@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
-import { GameCanvasComponent } from './pages/game-canvas/game-canvas.component';
-import { MainMenuComponent } from './pages/main-menu/main-menu.component';
-import { MissionSelectComponent } from './pages/mission-select/mission-select.component';
-import { ControlsComponent } from './pages/controls/controls.component';
-import { SettingsComponent } from './pages/settings/settings.component';
+import { GameCanvasComponent } from './features/game-canvas/game-canvas.component';
+import { MainMenuComponent } from './features/main-menu/main-menu.component';
+import { MissionSelectComponent } from './features/mission-select/mission-select.component';
+import { ControlsComponent } from './features/controls/controls.component';
+import { SettingsComponent } from './features/settings/settings.component';
 
 export const routes: Routes = [
   { path: '', component: MainMenuComponent },

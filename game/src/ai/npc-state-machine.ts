@@ -2,7 +2,7 @@ import type {
   NpcBehaviorConfig,
   NpcStateId,
   NpcTransitionWhen,
-} from '../config/npc-behavior-config';
+} from '../data/config/npc-behavior-config';
 
 export interface NpcRadarContext {
   hostileDistance: number;

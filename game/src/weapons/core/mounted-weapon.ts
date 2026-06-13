@@ -2,7 +2,7 @@ import { Vector3 } from "@babylonjs/core";
 import type { DetectedWeaponMount } from "@rogue-leader/engine";
 import { getMountForward } from "@rogue-leader/engine";
 import { GameEvents, type GameEventBus } from '../../events/game-events';
-import { ProjectileBehaviors } from '../../constants/weapon-behaviors';
+import { ProjectileBehaviors } from '../../data/constants/weapon-behaviors';
 import {
   clampToDeflectionCone,
   computeConvergenceDirection,

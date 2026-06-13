@@ -1,9 +1,8 @@
-import type { ParticleSystem, Scene, TransformNode } from '@babylonjs/core';
+import type { Scene, TrailMesh, TransformNode } from '@babylonjs/core';
 import {
   createEngineTrail,
   DEFAULT_ENGINE_VFX,
   detectShipAnchors,
-  updateEngineTrailEmitter,
   type EngineVfxProfile,
 } from '@rogue-leader/engine';
 import type { ShipAnchors, ShipManifestEntry } from '@rogue-leader/engine';
@@ -11,10 +10,10 @@ import {
   loadWeaponsManifest,
   resolveEngineVfxProfile,
   type WeaponsManifest,
-} from '../config/weapons-manifest';
+} from '../data/config/weapons-manifest';
 
 interface EngineTrailSlot {
-  trail: ParticleSystem;
+  trail: TrailMesh;
   anchor: TransformNode;
 }
 
@@ -51,13 +50,12 @@ export class EngineVfxController {
   }
 
   update(): void {
-    for (const slot of this.trails) {
-      updateEngineTrailEmitter(slot.trail, slot.anchor);
-    }
+    // TrailMesh updates from its generator mesh each frame.
   }
 
   dispose(): void {
     for (const slot of this.trails) {
+      slot.trail.material?.dispose();
       slot.trail.dispose();
     }
     this.trails = [];

@@ -1,4 +1,4 @@
-import { Quaternion, Vector3 } from "@babylonjs/core";
+import { Vector3 } from "@babylonjs/core";
 import {
   GltfShipLoader,
   LodShipLoader,
@@ -10,25 +10,20 @@ import {
   DebugAxes,
   type BabylonHost,
   type LodLoadProgress,
-  updateLodByScreenCoverage,
 } from "@rogue-leader/engine";
-import { loadCombatConfig, type CombatConfig } from "../config/combat-config";
+import { loadCombatConfig, type CombatConfig } from "../data/config/combat-config";
 import {
   loadWeaponsManifest,
   type WeaponsManifest,
-} from "../config/weapons-manifest";
+} from "../data/config/weapons-manifest";
 import { ActorWorld } from "../actors/actor-world";
-import { NpcActor } from "../actors/npc-actor";
 import { PlayerActor } from "../actors/player-actor";
-import { BehaviorNpcInput } from "../ai/behavior-npc-input";
-import { computeFlockCenter } from "../ai/boid-forces";
 import { MissionNavigation } from "../ai/navigation/mission-navigation";
 import { resolveFaction } from "../combat/faction";
-import { updateWeaponAimForObserver } from "../combat/weapon-aim-controller";
 import {
   loadNpcBehaviorConfig,
   type NpcBehaviorConfig,
-} from "../config/npc-behavior-config";
+} from "../data/config/npc-behavior-config";
 import {
   cloneDebugPreferences,
   loadDebugPreferences,
@@ -37,14 +32,6 @@ import {
 import { GameDebugOverlay } from "../debug/game-debug-overlay";
 import {
   hasActiveDebugWork,
-  needsAsteroidDebugData,
-  needsColliderDebugData,
-  needsNavDebugData,
-  needsNpcDebugData,
-  needsPlayerAimDebugData,
-  needsProjectileDebugData,
-  needsVehicleDebugData,
-  needsZoneDebugData,
 } from "../debug/debug-overlay-utils";
 import { EngineVfxController } from "../vfx/engine-vfx-controller";
 import {
@@ -55,95 +42,57 @@ import { MissionAssetPreloader } from "../loading/mission-asset-preloader";
 import { Vehicle } from "../vehicles/vehicle";
 import {
   GameAudioBridge,
-  type GameAudioUpdateContext,
-  type ShipEngineAudioSource,
 } from "../audio/game-audio-bridge";
-import type { PlayerInput } from "../input/player-input";
-import {
-  CollisionSystem,
-  buildSphereBody,
-  type SphereBody,
-} from "../collision/collision-system";
+import { CollisionSystem } from "../collision/collision-system";
 import { HealthComponent } from "../actors/health-component";
 import { GameEventBus, GameEvents } from "../events/game-events";
-import {
-  ActorRoles,
-  AmmoIds,
-  CombatTeams,
-  EntityDestroyKinds,
-  MissionIds,
-  SfxClipIds,
-  WinConditionTypes,
-} from "../constants";
+import { CombatTeams } from "../data/constants";
 import { WeaponHitSfxResolver } from "../audio/weapon-hit-sfx";
 import { CameraController } from "../flight/camera-controller";
-import {
-  RETICLE_INNER_DISTANCE,
-  RETICLE_OUTER_DISTANCE,
-} from "../flight/flight-constants";
 import type { FlightAssistOptions } from "../flight/flight-assist";
-import {
-  projectWorldToScreen,
-  type HudScreenPoint,
-} from "../flight/screen-project";
-import {
-  getShipForward,
-  shipRotationFromHeading,
-} from "../flight/ship-forward";
-import { AsteroidField, type AsteroidInstance } from "../hazards/asteroid-field";
-import { BoundPlayerInput } from "../input/bound-player-input";
-import type { FlightPreferences } from "../settings/flight-preferences";
+import { shipRotationFromHeading } from "../flight/ship-forward";
+import { AsteroidField } from "../hazards/asteroid-field";
+import { BoundPlayerInput } from "../player/input/bound-player-input";
+import type { FlightPreferences } from "../player/settings/flight-preferences";
 import {
   loadControlBindings,
   saveControlBindings,
   type ControlBindingsConfig,
-} from "../settings/control-bindings";
-import { loadFlightPreferences } from "../settings/flight-preferences";
-import { CombatSystem, type ProjectileHit } from "../weapons/combat-system";
-import type { VehicleWeaponSystem } from "../weapons/core/vehicle-weapon-system";
+} from "../player/settings/control-bindings";
+import { loadFlightPreferences } from "../player/settings/flight-preferences";
+import { CombatSystem } from "../weapons/combat-system";
+import { buildMissionAudioContext } from "./mission-audio-context";
 import {
-  hudCurrentWave,
-  hudTotalWaves,
-  missionWaveCount,
-  missionWaves,
-} from "./mission-waves";
+  checkAsteroidCollisions,
+  collectMissionWeaponSystems,
+  collectProjectileTargets,
+  handleProjectileHit,
+  updateMissionLod,
+  type MissionCombatHandlerContext,
+} from "./mission-combat-handlers";
+import { updateMissionNpcs } from "./mission-npc-update";
+import {
+  createInitialWaveState,
+  isDestroyAllEnemiesWon,
+  updateMissionWaves,
+  type MissionWaveState,
+} from "./mission-wave-runner";
+import {
+  getMissionList,
+  getMissionConfig,
+  requireMissionConfig,
+} from "./mission-registry";
+import {
+  buildMissionHudState,
+  type MissionHudState,
+  type MissionLoadState,
+} from "./mission-hud";
+import { collectMissionDebugFrame } from "./mission-debug-snapshot";
 import type {
   MissionConfig,
   MissionEndState,
-  MissionWave,
 } from "./mission-types";
 import { MissionEndStates } from "./mission-types";
-import asteroidFieldSpace from "./configs/asteroid-field-space.json";
-import mission02 from "./configs/mission-02-hoth-surface.json";
-import mission03 from "./configs/mission-03-tatooine.json";
-
-export interface MissionLoadState {
-  loading: boolean;
-  message: string;
-}
-
-export interface MissionHudState {
-  health: number;
-  maxHealth: number;
-  shield: number;
-  maxShield: number;
-  wave: number;
-  totalWaves: number;
-  enemiesRemaining: number;
-  backend: string;
-  laserReady: boolean;
-  torpedoesRemaining: number;
-  reticleInner: HudScreenPoint;
-  reticleOuter: HudScreenPoint;
-  targetLock: HudScreenPoint | null;
-}
-
-const MISSIONS: Record<string, MissionConfig> = {
-  [MissionIds.AsteroidFieldSpace]:
-    asteroidFieldSpace as unknown as MissionConfig,
-  [MissionIds.HothSurface]: mission02 as unknown as MissionConfig,
-  [MissionIds.Tatooine]: mission03 as unknown as MissionConfig,
-};
 
 export class MissionManager {
   readonly events = new GameEventBus();
@@ -159,9 +108,11 @@ export class MissionManager {
   private combat!: CombatSystem;
   private collision = new CollisionSystem();
   private asteroidField = new AsteroidField();
-  private wavesSpawned = 0;
-  private waveTimer = 0;
-  private waveSpawnInProgress = false;
+  private waveState: MissionWaveState = {
+    wavesSpawned: 0,
+    waveTimer: 0,
+    waveSpawnInProgress: false,
+  };
   private endState: MissionEndState = MissionEndStates.Playing;
   private hitSfxResolver?: WeaponHitSfxResolver;
   private weaponsManifest!: WeaponsManifest;
@@ -188,22 +139,12 @@ export class MissionManager {
     this.wreckDebris = new WreckDebrisManager(host.scene);
   }
 
-  static getMissionList(): {
-    id: string;
-    displayName: string;
-    stub: boolean;
-    stubMessage?: string;
-  }[] {
-    return Object.values(MISSIONS).map((m) => ({
-      id: m.id,
-      displayName: m.displayName,
-      stub: !!m.stub,
-      stubMessage: m.stubMessage,
-    }));
+  static getMissionList() {
+    return getMissionList();
   }
 
   static getConfig(id: string): MissionConfig | undefined {
-    return MISSIONS[id];
+    return getMissionConfig(id);
   }
 
   setLoadProgressCallback(
@@ -235,11 +176,7 @@ export class MissionManager {
   }
 
   async load(missionId: string): Promise<void> {
-    const config = MISSIONS[missionId];
-    if (!config) throw new Error(`Unknown mission: ${missionId}`);
-    if (config.stub)
-      throw new Error(config.stubMessage ?? "Mission not available");
-
+    const config = requireMissionConfig(missionId);
     this.config = config;
     this.assetManifest = await loadAssetManifest("/assets/manifest.json");
     this.wreckDebris.setEnvironment(resolveMissionEnvironment(config));
@@ -281,8 +218,8 @@ export class MissionManager {
     this.combat.setWeaponsManifest(this.weaponsManifest);
     this.combat.initPlayerAmmo(this.combatConfig.playerAmmo);
     this.combat.initTargets(
-      () => this.getProjectileTargets(),
-      (hit) => this.handleProjectileHit(hit),
+      () => collectProjectileTargets(this.world, this.asteroidField),
+      (hit) => handleProjectileHit(this.combatHandlerContext(), hit),
     );
     this.combat.initProjectilePassBy((weaponId, point, velocity) => {
       this.events.emit(
@@ -365,9 +302,7 @@ export class MissionManager {
       this.camera.startIntro(config.introCinematicSec);
     }
 
-    this.wavesSpawned = 0;
-    this.waveSpawnInProgress = false;
-    this.waveTimer = missionWaves(config.waves)[0]?.delaySec ?? 0;
+    this.waveState = createInitialWaveState(config);
 
     this.events.emit(
       GameEvents.missionStarted({
@@ -386,43 +321,15 @@ export class MissionManager {
   }
 
   getHudState(): MissionHudState {
-    const hidden: HudScreenPoint = { xPct: 50, yPct: 50, visible: false };
-    let reticleInner = hidden;
-    let reticleOuter = hidden;
-
-    const player = this.world.player;
-    if (player) {
-      const shipPos = player.vehicle.root.getAbsolutePosition();
-      const fwd = getShipForward(
-        player.vehicle.root.rotationQuaternion ?? Quaternion.Identity(),
-      );
-      reticleInner = projectWorldToScreen(
-        this.host.scene,
-        shipPos.add(fwd.scale(RETICLE_INNER_DISTANCE)),
-      );
-      reticleOuter = projectWorldToScreen(
-        this.host.scene,
-        shipPos.add(fwd.scale(RETICLE_OUTER_DISTANCE)),
-      );
-    }
-
-    return {
-      health: player?.health.health ?? 0,
-      maxHealth: player?.health.maxHealth ?? 100,
-      shield: player?.health.shield ?? 0,
-      maxShield: player?.health.maxShield ?? 50,
-      wave: hudCurrentWave(this.wavesSpawned, this.config?.waves),
-      totalWaves: hudTotalWaves(this.config?.waves),
-      enemiesRemaining: this.world.getNpcCount(),
+    return buildMissionHudState({
+      scene: this.host.scene,
       backend: this.host.backend,
-      laserReady: true,
-      torpedoesRemaining: this.combat
-        .getPlayerAmmo()
-        .getCount(AmmoIds.ProtonTorpedo),
-      reticleInner,
-      reticleOuter,
-      targetLock: player?.targeting.getActiveTarget()?.screenPoint ?? null,
-    };
+      player: this.world.player,
+      combat: this.combat,
+      wavesSpawned: this.waveState.wavesSpawned,
+      config: this.config,
+      npcCount: this.world.getNpcCount(),
+    });
   }
 
   applyAudioSettings(
@@ -488,8 +395,19 @@ export class MissionManager {
       position: player.vehicle.position,
       team: CombatTeams.Player,
     });
-    this.combat.updateWeapons(this.collectWeaponSystems(), dt);
-    this.updateNpcs(dt, player, boundary);
+    this.combat.updateWeapons(collectMissionWeaponSystems(this.world), dt);
+    updateMissionNpcs(
+      {
+        scene: this.host.scene,
+        world: this.world,
+        combat: this.combat,
+        combatConfig: this.combatConfig,
+        npcBehaviorConfig: this.npcBehaviorConfig,
+      },
+      dt,
+      player,
+      boundary,
+    );
     this.audioBridge?.processInbound(
       this.world.npcActors,
       player.vehicle.position,
@@ -500,17 +418,42 @@ export class MissionManager {
       this.events.emit(GameEvents.boostStarted());
     }
 
-    this.updateWaves(dt);
+    updateMissionWaves(
+      this.waveState,
+      dt,
+      this.config,
+      this.world.getNpcCount(),
+      {
+        world: this.world,
+        assetManifest: this.assetManifest,
+        assetPreloader: this.assetPreloader,
+        shipLoader: this.shipLoader,
+        combat: this.combat,
+        combatConfig: this.combatConfig,
+        npcBehaviorConfig: this.npcBehaviorConfig,
+        missionNavigation: this.missionNavigation,
+      },
+    );
     this.asteroidField.update(dt);
     this.asteroidHitCooldown = Math.max(0, this.asteroidHitCooldown - dt);
-    this.checkAsteroidCollisions();
-    this.updateLod();
+    this.asteroidHitCooldown = checkAsteroidCollisions(
+      this.combatHandlerContext(),
+      this.asteroidHitCooldown,
+    );
+    updateMissionLod(this.host.scene, this.world);
     this.wreckDebris.update(dt);
     this.engineVfx.update();
-    this.audioBridge?.update(
+    const audioFrame = buildMissionAudioContext({
+      world: this.world,
+      player,
+      input: playerInput,
       dt,
-      this.buildAudioContext(player, playerInput, dt),
-    );
+      camera: this.camera.getCamera(),
+      npcBehaviorConfig: this.npcBehaviorConfig,
+      prevListenerPosition: this.prevListenerPosition,
+    });
+    this.prevListenerPosition = audioFrame.prevListenerPosition;
+    this.audioBridge?.update(dt, audioFrame.context);
     this.renderGameDebug(player);
 
     if (!this.debugPreferences.gameplay.invincible && player.health.isDead()) {
@@ -529,7 +472,13 @@ export class MissionManager {
         player.vehicle.root.getAbsolutePosition(),
       );
       this.events.emit(GameEvents.missionEnded());
-    } else if (this.isDestroyAllEnemiesWon()) {
+    } else if (
+      isDestroyAllEnemiesWon(
+        this.config,
+        this.waveState,
+        this.world.getNpcCount(),
+      )
+    ) {
       this.endState = MissionEndStates.Won;
       this.events.emit(GameEvents.missionEnded());
     }
@@ -559,242 +508,23 @@ export class MissionManager {
     this.events.clear();
   }
 
-  private buildAudioContext(
-    player: PlayerActor,
-    input: PlayerInput,
-    dt: number,
-  ): GameAudioUpdateContext {
-    const playerPos = player.vehicle.position;
-    const camera = this.camera.getCamera();
-    const listenerPos = camera.position.clone();
-    let listenerVelocity = player.vehicle.velocity.clone();
-
-    if (this.prevListenerPosition && dt > 0) {
-      listenerVelocity = listenerPos
-        .subtract(this.prevListenerPosition)
-        .scale(1 / dt);
-    }
-    this.prevListenerPosition = listenerPos.clone();
-
-    const radar = this.npcBehaviorConfig.radarRadius;
-    const attack = this.npcBehaviorConfig.attackEnterRange;
-    let enemiesInRadar = 0;
-    let enemiesInAttackRange = 0;
-
-    for (const npc of this.world.npcActors) {
-      if (npc.health.isDead()) continue;
-      const dist = Vector3.Distance(playerPos, npc.vehicle.position);
-      if (dist <= radar) enemiesInRadar++;
-      if (dist <= attack) enemiesInAttackRange++;
-    }
-
+  private combatHandlerContext(): MissionCombatHandlerContext {
     return {
-      enemyCount: this.world.getNpcCount(),
-      enemiesInRadar,
-      enemiesInAttackRange,
-      playerFiring: input.combat.fire || input.combat.fireSecondaryPressed,
-      playerThrottle: input.vehicle.throttle,
-      listenerPosition: listenerPos,
-      listenerVelocity,
-      playerPosition: playerPos.clone(),
-      playerVelocity: player.vehicle.velocity.clone(),
-      playerSpeedRatio: player.vehicle.getEngineSpeedRatio(),
-      npcEngines: this.buildNpcEngineSources(),
+      host: this.host,
+      world: this.world,
+      combat: this.combat,
+      asteroidField: this.asteroidField,
+      collision: this.collision,
+      camera: this.camera,
+      wreckDebris: this.wreckDebris,
+      assetPreloader: this.assetPreloader,
+      assetManifest: this.assetManifest,
+      weaponsManifest: this.weaponsManifest,
+      hitSfxResolver: this.hitSfxResolver,
+      events: this.events,
+      debugPreferences: this.debugPreferences,
+      config: this.config,
     };
-  }
-
-  private buildNpcEngineSources(): ShipEngineAudioSource[] {
-    const sources: ShipEngineAudioSource[] = [];
-    for (const npc of this.world.npcActors) {
-      if (npc.health.isDead()) continue;
-      sources.push({
-        id: npc.id,
-        shipId: npc.vehicle.shipId,
-        position: npc.vehicle.position.clone(),
-        velocity: npc.vehicle.velocity.clone(),
-        speedRatio: npc.vehicle.getEngineSpeedRatio(),
-      });
-    }
-    return sources;
-  }
-
-  private isDestroyAllEnemiesWon(): boolean {
-    if (this.config.winCondition.type !== WinConditionTypes.DestroyAllEnemies)
-      return false;
-    const total = missionWaveCount(this.config.waves);
-    if (total === 0) return false;
-    if (this.waveSpawnInProgress) return false;
-    return this.wavesSpawned >= total && this.world.getNpcCount() === 0;
-  }
-
-  private updateWaves(dt: number): void {
-    const waves = missionWaves(this.config.waves);
-    if (this.waveSpawnInProgress || this.wavesSpawned >= waves.length) return;
-
-    const nextWave = waves[this.wavesSpawned];
-    if (!nextWave) return;
-
-    const clearanceGated = nextWave.trigger?.endsWith("_cleared") ?? false;
-    if (clearanceGated && this.world.getNpcCount() > 0) {
-      return;
-    }
-
-    if (!clearanceGated && this.waveTimer > 0) {
-      this.waveTimer -= dt;
-      return;
-    }
-
-    if (clearanceGated && this.waveTimer > 0) {
-      this.waveTimer -= dt;
-    }
-
-    this.waveSpawnInProgress = true;
-    this.spawnWave(nextWave);
-    this.wavesSpawned++;
-    if (this.wavesSpawned < waves.length) {
-      this.waveTimer = waves[this.wavesSpawned].delaySec;
-    }
-    this.waveSpawnInProgress = false;
-  }
-
-  private spawnWave(wave: MissionWave): void {
-    for (const spec of wave.enemies) {
-      const entry = this.assetManifest.ships[spec.shipId];
-      if (!entry) continue;
-      const npcId = `enemy_${this.world.getNpcCount()}`;
-      const loaded = this.assetPreloader.shipPool.acquireNpcShip(
-        spec.shipId,
-        npcId,
-        this.shipLoader,
-      );
-      loaded.root.position = Vector3.FromArray(spec.spawn);
-      const faction = resolveFaction(entry.faction);
-      const weapons = this.combat.attachWeapons(
-        loaded.root,
-        entry,
-        "enemy",
-        loaded.anchors,
-      );
-      const vehicle = Vehicle.spawn({
-        id: npcId,
-        shipId: spec.shipId,
-        shipEntry: entry,
-        loaded,
-        faction,
-        combatTeam: "enemy",
-        weapons,
-        flightDefaults: this.combatConfig.defaults.flight,
-      });
-      const navKit = this.missionNavigation.createFlockKit(
-        wave.id,
-        this.npcBehaviorConfig.pathArriveRadius,
-        this.npcBehaviorConfig.wanderRetargetRadius,
-      );
-      const combatRole =
-        navKit.combatRole ??
-        this.missionNavigation.getFlockAssignment(wave.id)?.combatRole ??
-        "hunter";
-      this.world.addNpc(
-        new NpcActor(
-          npcId,
-          wave.id,
-          new HealthComponent(40, 40, 0, 0),
-          vehicle,
-          new BehaviorNpcInput(
-            this.npcBehaviorConfig,
-            navKit,
-            spec.behavior,
-            combatRole,
-          ),
-          faction,
-        ),
-      );
-    }
-  }
-
-  private collectWeaponSystems(): VehicleWeaponSystem[] {
-    const systems = this.world.npcActors.map((npc) => npc.vehicle.weapons);
-    if (this.world.player) {
-      systems.push(this.world.player.vehicle.weapons);
-    }
-    return systems;
-  }
-
-  private updateNpcs(
-    dt: number,
-    player: PlayerActor,
-    boundary?: { center: Vector3; radius: number },
-  ): void {
-    const playerPos = player.vehicle.position;
-    const playerVel = player.vehicle.velocity;
-
-    const flockMembers = new Map<string, NpcActor[]>();
-    for (const npc of this.world.npcActors) {
-      const members = flockMembers.get(npc.flockId) ?? [];
-      members.push(npc);
-      flockMembers.set(npc.flockId, members);
-    }
-
-    const flockCenters = new Map<string, Vector3>();
-    for (const [flockId, members] of flockMembers) {
-      flockCenters.set(
-        flockId,
-        computeFlockCenter(members.map((npc) => npc.vehicle.position)),
-      );
-    }
-
-    for (const npc of this.world.npcActors) {
-      const flock = flockMembers.get(npc.flockId) ?? [];
-      const flockMates = flock
-        .filter((mate) => mate.id !== npc.id)
-        .map((mate) => ({
-          id: mate.id,
-          position: mate.vehicle.position,
-          velocity: mate.vehicle.velocity,
-          radius: mate.vehicle.colliderRadius,
-        }));
-
-      const wantsFire = npc.updateSteering({
-        dt,
-        playerPosition: playerPos,
-        playerVelocity: playerVel,
-        flockMates,
-        flockCenter: flockCenters.get(npc.flockId) ?? npc.vehicle.position,
-        boundary,
-      });
-
-      const enemyForward = getShipForward(npc.vehicle.rotationQuaternion);
-      updateWeaponAimForObserver({
-        scene: this.host.scene,
-        combat: this.combat,
-        weapons: npc.vehicle.weapons,
-        observerId: npc.id,
-        observerFaction: npc.faction,
-        observerPos: npc.vehicle.position,
-        observerVel: npc.vehicle.velocity,
-        aimAxis: enemyForward,
-        candidates: [player.toTargetEntity()],
-        targeting: this.combatConfig.targeting,
-        radarRadius: this.npcBehaviorConfig.radarRadius,
-        dt,
-        mode: "radar",
-        targetingSystem: npc.targeting,
-      });
-
-      if (wantsFire) {
-        this.combat.tryFireAtTarget(
-          npc.vehicle.weapons,
-          npc.vehicle.combatTeam,
-          npc.faction,
-          npc.id,
-          playerPos,
-          playerVel,
-          npc.vehicle.velocity,
-          this.combatConfig.targeting,
-          this.npcBehaviorConfig.fireRange,
-        );
-      }
-    }
   }
 
   private renderGameDebug(player: PlayerActor): void {
@@ -806,113 +536,17 @@ export class MissionManager {
 
     this.gameDebugOverlay.render(
       this.host.scene,
-      this.collectDebugFrame(player, prefs),
+      collectMissionDebugFrame({
+        world: this.world,
+        player,
+        prefs,
+        missionNavigation: this.missionNavigation,
+        npcBehaviorConfig: this.npcBehaviorConfig,
+        combat: this.combat,
+        asteroidField: this.asteroidField,
+      }),
       prefs,
     );
-  }
-
-  private collectDebugFrame(player: PlayerActor, prefs: DebugPreferences) {
-    const vehicles = [];
-    if (needsVehicleDebugData(prefs)) {
-      if (this.world.player) {
-        vehicles.push({
-          id: this.world.player.id,
-          position: this.world.player.vehicle.position.clone(),
-          radius: this.world.player.vehicle.colliderRadius,
-          label: this.world.player.vehicle.shipId,
-          isPlayer: true,
-        });
-      }
-      for (const npc of this.world.npcActors) {
-        vehicles.push({
-          id: npc.id,
-          position: npc.vehicle.position.clone(),
-          radius: npc.vehicle.colliderRadius,
-          label: npc.vehicle.shipId,
-          isPlayer: false,
-        });
-      }
-    }
-
-    const npcSnapshots = needsNpcDebugData(prefs)
-      ? this.world.npcActors
-          .map((npc) => {
-            const steering = npc.getSteeringDebug();
-            if (!steering) return null;
-            return {
-              id: npc.id,
-              flockId: npc.flockId,
-              position: npc.vehicle.position.clone(),
-              state: steering.state,
-              steering,
-              radarRadius: this.npcBehaviorConfig.radarRadius,
-            };
-          })
-          .filter((entry): entry is NonNullable<typeof entry> => entry != null)
-      : [];
-
-    return {
-      playerAim: needsPlayerAimDebugData(prefs)
-        ? (player.lastAimDebug ?? undefined)
-        : undefined,
-      paths: needsNavDebugData(prefs)
-        ? this.missionNavigation.listPathPolylines()
-        : [],
-      zones: needsZoneDebugData(prefs)
-        ? this.missionNavigation.listZones()
-        : [],
-      npcs: npcSnapshots,
-      vehicles,
-      projectiles: needsProjectileDebugData(prefs)
-        ? this.combat.projectiles.getDebugSnapshots()
-        : [],
-      asteroids: needsAsteroidDebugData(prefs)
-        ? this.asteroidField.asteroids.map((asteroid) => ({
-            id: asteroid.id,
-            position: asteroid.root.position.clone(),
-            radius: asteroid.colliderRadius,
-            usesMeshCollider: asteroid.usesMeshCollider,
-          }))
-        : [],
-      colliders: needsColliderDebugData(prefs)
-        ? this.collectColliderDebugSnapshots()
-        : [],
-    };
-  }
-
-  private collectColliderDebugSnapshots() {
-    const colliders = [];
-
-    if (this.world.player?.vehicle.colliderMeshes.length) {
-      colliders.push({
-        ownerId: this.world.player.id,
-        meshes: this.world.player.vehicle.colliderMeshes,
-        isPlayer: true,
-        kind: "ship" as const,
-      });
-    }
-
-    for (const npc of this.world.npcActors) {
-      if (!npc.vehicle.colliderMeshes.length) continue;
-      colliders.push({
-        ownerId: npc.id,
-        meshes: npc.vehicle.colliderMeshes,
-        isPlayer: false,
-        kind: "ship" as const,
-      });
-    }
-
-    for (const asteroid of this.asteroidField.asteroids) {
-      if (!asteroid.colliderMeshes.length) continue;
-      colliders.push({
-        ownerId: asteroid.id,
-        meshes: asteroid.colliderMeshes,
-        isPlayer: false,
-        kind: "asteroid" as const,
-      });
-    }
-
-    return colliders;
   }
 
   private syncDebugStaticMeshes(
@@ -947,159 +581,6 @@ export class MissionManager {
       this.debugShipAxes.setEnabled(true);
     } else {
       this.debugShipAxes?.setEnabled(false);
-    }
-  }
-
-  private getProjectileTargets(): SphereBody[] {
-    const targets = this.world.collectActorSphereBodies();
-
-    for (const asteroid of this.asteroidField.asteroids) {
-      targets.push(
-        buildSphereBody({
-          id: asteroid.id,
-          position: asteroid.root.position,
-          radius: asteroid.colliderRadius,
-          team: "neutral",
-          faction: "neutral",
-          colliderMeshes: asteroid.colliderMeshes,
-        }),
-      );
-    }
-
-    return targets;
-  }
-
-  private handleProjectileHit(hit: ProjectileHit): void {
-    ParticleFx.hitSpark(this.host.scene, hit.point);
-    const hitSfx =
-      this.hitSfxResolver?.resolve(hit.weaponId, hit.behavior) ??
-      this.weaponsManifest.weapons[hit.weaponId]?.audio?.hit ??
-      SfxClipIds.BulletHit;
-    this.events.emit(
-      GameEvents.projectileHit({
-        weaponId: hit.weaponId,
-        behavior: hit.behavior,
-        sfx: hitSfx,
-        position: hit.point.clone(),
-      }),
-    );
-
-    if (!hit.targetId) return;
-
-    const actor = this.world.findActor(hit.targetId);
-    if (actor) {
-      if (actor.role === ActorRoles.Player) {
-        if (!this.debugPreferences.gameplay.invincible) {
-          const result = actor.health.applyDamage(hit.damage);
-          const playerPos = actor.vehicle.position.clone();
-          if (result.shield > 0) {
-            this.events.emit(GameEvents.shieldHit({ position: playerPos }));
-          } else {
-            this.events.emit(GameEvents.playerDamaged({ position: playerPos }));
-          }
-        }
-        this.camera.shake();
-        return;
-      }
-
-      actor.health.applyDamage(hit.damage);
-      if (actor.health.isDead()) this.destroyNpc(actor as NpcActor);
-      return;
-    }
-
-    const asteroid = this.asteroidField.asteroids.find(
-      (a) => a.id === hit.targetId,
-    );
-    if (asteroid) {
-      asteroid.health.applyDamage(hit.damage);
-      if (asteroid.health.isDead()) this.destroyAsteroid(asteroid);
-    }
-  }
-
-  private destroyNpc(npc: NpcActor): void {
-    const entry = this.assetManifest.ships[npc.vehicle.shipId];
-    if (entry) {
-      this.wreckDebris.spawnFromVehicle(npc.vehicle.shipId, entry, npc.vehicle);
-    }
-    ParticleFx.explosion(this.host.scene, npc.vehicle.position);
-    this.events.emit(
-      GameEvents.entityDestroyed({
-        kind: EntityDestroyKinds.Fighter,
-        shipId: npc.vehicle.shipId,
-        position: npc.vehicle.position.clone(),
-      }),
-    );
-    this.world.removeNpc(npc.id);
-    npc.vehicle.prepareForPool();
-    this.assetPreloader.shipPool.releaseNpcShip(
-      npc.vehicle.shipId,
-      npc.vehicle.loadedEntity,
-    );
-  }
-
-  private destroyAsteroid(asteroid: AsteroidInstance): void {
-    ParticleFx.explosion(this.host.scene, asteroid.root.position);
-    this.events.emit(
-      GameEvents.entityDestroyed({
-        kind: EntityDestroyKinds.Asteroid,
-        position: asteroid.root.position.clone(),
-      }),
-    );
-    this.asteroidField.remove(asteroid.id);
-  }
-
-  private checkAsteroidCollisions(): void {
-    const player = this.world.player;
-    if (!player || !this.config.asteroids) return;
-    if (this.asteroidHitCooldown > 0) return;
-    const playerBody: SphereBody = {
-      id: player.id,
-      position: player.vehicle.position,
-      radius: player.vehicle.colliderRadius,
-      team: player.vehicle.combatTeam,
-      faction: player.faction,
-      colliderMeshes: player.vehicle.colliderMeshes,
-    };
-
-    for (const asteroid of this.asteroidField.asteroids) {
-      const aBody = buildSphereBody({
-        id: asteroid.id,
-        position: asteroid.root.position,
-        radius: asteroid.colliderRadius,
-        team: "neutral",
-        faction: "neutral",
-        colliderMeshes: asteroid.colliderMeshes,
-      });
-      if (this.collision.sphereOverlap(playerBody, aBody)) {
-        this.asteroidHitCooldown = 1.0;
-        if (!this.debugPreferences.gameplay.invincible) {
-          const result = player.health.applyDamage(
-            this.config.asteroids.damageOnImpact,
-          );
-          const playerPos = player.vehicle.position.clone();
-          if (result.shield > 0) {
-            this.events.emit(GameEvents.shieldHit({ position: playerPos }));
-          } else {
-            this.events.emit(GameEvents.playerDamaged({ position: playerPos }));
-            this.events.emit(
-              GameEvents.asteroidImpact({ position: playerPos }),
-            );
-          }
-        }
-        this.camera.shake(0.35);
-      }
-    }
-  }
-
-  private updateLod(): void {
-    if (this.world.player) {
-      updateLodByScreenCoverage(
-        this.host.scene,
-        this.world.player.vehicle.lodRuntime,
-      );
-    }
-    for (const npc of this.world.npcActors) {
-      updateLodByScreenCoverage(this.host.scene, npc.vehicle.lodRuntime);
     }
   }
 }

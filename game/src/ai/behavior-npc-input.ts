@@ -1,8 +1,8 @@
 import { Vector3 } from '@babylonjs/core';
-import type { NpcBehaviorConfig, NpcStateId } from '../config/npc-behavior-config';
+import type { NpcBehaviorConfig, NpcStateId } from '../data/config/npc-behavior-config';
 import { directionToVehicleInput } from '../flight/flight-steering';
 import { getShipForward } from '../flight/ship-forward';
-import type { NpcInput, NpcInputContext, NpcInputResult } from '../input/npc-input';
+import type { NpcInput, NpcInputContext, NpcInputResult } from '../player/input/npc-input';
 import {
   computeAlignment,
   computeCohesion,

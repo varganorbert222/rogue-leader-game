@@ -1,5 +1,5 @@
 import { Quaternion, Scalar, Vector3 } from '@babylonjs/core';
-import { ZERO_VEHICLE_INPUT, type VehicleInput } from '../input/vehicle-input';
+import { ZERO_VEHICLE_INPUT, type VehicleInput } from '../player/input/vehicle-input';
 import { getShipForward, getShipRight, getShipUp } from './ship-forward';
 
 /** Proportional heading error → flight axes; flight angular smoother handles inertia. */

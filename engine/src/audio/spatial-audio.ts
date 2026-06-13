@@ -1,4 +1,5 @@
 import { Vector3, type Sound } from '@babylonjs/core';
+import { applySoundPitch } from './sound-variation';
 import type { AudioClipDef, AudioLibraryCategory } from './audio-types';
 
 export interface SpatialAudioSettings {
@@ -62,6 +63,34 @@ export function configureSpatialSound(sound: Sound, settings: SpatialAudioSettin
   sound.rolloffFactor = settings.rolloffFactor;
   sound.distanceModel = settings.distanceModel;
   sound.switchPanningModelToHRTF();
+}
+
+export interface SpatialMotionState {
+  position: Vector3;
+  velocity: Vector3;
+}
+
+/** Apply world position and Doppler-scaled pitch for a spatial sound voice. */
+export function applySpatialMotionToSound(
+  sound: Sound,
+  settings: SpatialAudioSettings | null,
+  source: SpatialMotionState,
+  listener: SpatialMotionState,
+  basePitch = 1,
+): void {
+  sound.setPosition(source.position);
+  if (!settings?.doppler) {
+    applySoundPitch(sound, basePitch);
+    return;
+  }
+
+  const doppler = computeDopplerPitch(
+    source.position,
+    source.velocity,
+    listener.position,
+    listener.velocity,
+  );
+  applySoundPitch(sound, basePitch * doppler);
 }
 
 /** Doppler pitch multiplier from relative radial velocity (approach raises pitch). */

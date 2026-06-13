@@ -1,7 +1,7 @@
 import { Quaternion, Vector3 } from '@babylonjs/core';
 import { directionToVehicleInput } from '../flight/flight-steering';
 import { getShipForward } from '../flight/ship-forward';
-import type { NpcInput, NpcInputContext, NpcInputResult } from '../input/npc-input';
+import type { NpcInput, NpcInputContext, NpcInputResult } from '../player/input/npc-input';
 import {
   computeAlignment,
   computeCohesion,

@@ -43,6 +43,10 @@ import {
 } from "./clone-entity-utils";
 import { disableMeshBackfaceCulling } from "../render/mesh-material-utils";
 import {
+  shareMaterialsFromTemplate,
+  optimizeLoadedEntityMeshes,
+} from '../render/mesh-batching';
+import {
   applyModelAxisCorrection,
   resolveShipVisualOptions,
 } from "./ship-axis-convention";
@@ -142,7 +146,7 @@ export class GltfShipLoader {
       const visualRoot = attachVisualPivot(result.root, this.scene);
       applyModelAxisCorrection(visualRoot, entry.axes);
       const anchors = detectShipAnchors(visualRoot);
-      return finalizeLoadedEntity(
+      const loaded = finalizeLoadedEntity(
         result.root,
         visualRoot,
         result.meshes,
@@ -157,6 +161,8 @@ export class GltfShipLoader {
           isPlaceholder: false,
         },
       );
+      optimizeLoadedEntityMeshes(loaded);
+      return loaded;
     }
 
     warnMissingOnce(`ship:${id}`);
@@ -189,6 +195,7 @@ export class GltfShipLoader {
         },
       );
       applyPropColliderPolicy(loaded, entry);
+      optimizeLoadedEntityMeshes(loaded);
       return loaded;
     }
 
@@ -248,6 +255,13 @@ export class GltfShipLoader {
       },
     );
     applyPropColliderPolicy(loaded, entry);
+    shareMaterialsFromTemplate(
+      template.meshes,
+      template.root,
+      loaded.meshes,
+      loaded.root,
+    );
+    optimizeLoadedEntityMeshes(loaded);
     return loaded;
   }
 
@@ -256,7 +270,7 @@ export class GltfShipLoader {
     const visualRoot = findVisualRoot(root);
     const allMeshes = collectDescendantMeshes(root);
     const lodMeshes = this.resolveClonedLodMeshes(template, root, allMeshes);
-    return finalizeLoadedEntity(
+    const loaded = finalizeLoadedEntity(
       root,
       visualRoot,
       allMeshes,
@@ -271,6 +285,14 @@ export class GltfShipLoader {
         animationGroups: [],
       },
     );
+    shareMaterialsFromTemplate(
+      template.meshes,
+      template.root,
+      loaded.meshes,
+      loaded.root,
+    );
+    optimizeLoadedEntityMeshes(loaded);
+    return loaded;
   }
 
   private resolveClonedLodMeshes(
@@ -330,6 +352,7 @@ export class GltfShipLoader {
         },
       );
       applyPropColliderPolicy(loaded, entry);
+      optimizeLoadedEntityMeshes(loaded);
       return loaded;
     } catch {
       warnMissingOnce(`prop:${id}`);

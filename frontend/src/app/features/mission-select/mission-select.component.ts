@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { MissionManager } from '@rogue-leader/game';
-import { AudioBootstrapService } from '../../services/audio-bootstrap.service';
+import { AudioBootstrapService } from '../../core/services/audio-bootstrap.service';
 
 @Component({
   selector: 'app-mission-select',

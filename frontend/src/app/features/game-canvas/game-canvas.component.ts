@@ -19,16 +19,16 @@ import {
   type MissionEndState,
   type MissionHudState,
 } from '@rogue-leader/game';
-import { ControlsPanelComponent } from '../../components/controls-panel/controls-panel.component';
-import { AudioBootstrapService } from '../../services/audio-bootstrap.service';
-import { AudioSettingsService } from '../../services/audio-settings.service';
-import { DebugSettingsService } from '../../services/debug-settings.service';
-import { FlightSettingsService } from '../../services/flight-settings.service';
-import { DebugPanelComponent } from '../../components/debug-panel/debug-panel.component';
+import { ControlsPanelComponent } from '../../shared/components/controls-panel/controls-panel.component';
+import { AudioBootstrapService } from '../../core/services/audio-bootstrap.service';
+import { AudioSettingsService } from '../../core/services/audio-settings.service';
+import { DebugSettingsService } from '../../core/services/debug-settings.service';
+import { FlightSettingsService } from '../../core/services/flight-settings.service';
+import { DebugPanelComponent } from '../../shared/components/debug-panel/debug-panel.component';
 import {
   SettingsPanelComponent,
   type AudioSettingsSnapshot,
-} from '../../components/settings-panel/settings-panel.component';
+} from '../../shared/components/settings-panel/settings-panel.component';
 
 @Component({
   selector: 'app-game-canvas',

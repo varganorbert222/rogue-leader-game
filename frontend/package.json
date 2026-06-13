@@ -10,8 +10,6 @@
   },
   "private": true,
   "dependencies": {
-    "@babylonjs/core": "^7.54.3",
-    "@babylonjs/loaders": "^7.54.3",
     "@rogue-leader/engine": "1.0.0",
     "@rogue-leader/game": "1.0.0",
     "@angular/common": "^19.2.0",

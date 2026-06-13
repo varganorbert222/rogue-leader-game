@@ -1,11 +1,11 @@
 import {
-  Color4,
-  ParticleSystem,
+  Color3,
+  Constants,
+  StandardMaterial,
+  TrailMesh,
   Scene,
-  Vector3,
   type TransformNode,
 } from '@babylonjs/core';
-import { getFlareTexture } from './vfx-textures';
 
 export interface EngineVfxProfile {
   emitRate: number;
@@ -35,35 +35,52 @@ export const DEFAULT_ENGINE_VFX: EngineVfxProfile = {
   direction2: [0.2, 0, 1],
 };
 
+function trailLengthFromProfile(profile: EngineVfxProfile): number {
+  const life = (profile.minLifeTime ?? 0.1) + (profile.maxLifeTime ?? 0.35);
+  const rateScale = Math.min(1.4, (profile.emitRate ?? 80) / 80);
+  return Math.round(Math.max(24, Math.min(140, life * rateScale * 90)));
+}
+
+function trailSegments(length: number): number {
+  return Math.round(Math.max(16, Math.min(72, length * 0.45)));
+}
+
+/** Native Babylon TrailMesh exhaust ribbon following an engine anchor. */
 export function createEngineTrail(
   scene: Scene,
   anchor: TransformNode,
   profile: EngineVfxProfile = DEFAULT_ENGINE_VFX
-): ParticleSystem {
-  const ps = new ParticleSystem(`engine_${anchor.name}`, 40, scene);
-  ps.particleTexture = getFlareTexture(scene);
-  ps.emitter = anchor.getAbsolutePosition().clone();
-  ps.minEmitBox = new Vector3(-0.1, -0.1, -0.1);
-  ps.maxEmitBox = new Vector3(0.1, 0.1, 0.1);
-  ps.color1 = new Color4(...profile.color1);
-  ps.color2 = new Color4(...profile.color2);
-  ps.minSize = profile.minSize;
-  ps.maxSize = profile.maxSize;
-  ps.minLifeTime = profile.minLifeTime ?? 0.1;
-  ps.maxLifeTime = profile.maxLifeTime ?? 0.35;
-  ps.emitRate = profile.emitRate;
-  ps.blendMode =
-    profile.blendMode === 'standard'
-      ? ParticleSystem.BLENDMODE_ONEONE
-      : ParticleSystem.BLENDMODE_ADD;
-  const d1 = profile.direction1 ?? [-0.2, 0, 0.5];
-  const d2 = profile.direction2 ?? [0.2, 0, 1];
-  ps.direction1 = new Vector3(d1[0], d1[1], d1[2]);
-  ps.direction2 = new Vector3(d2[0], d2[1], d2[2]);
-  ps.start();
-  return ps;
+): TrailMesh {
+  const length = trailLengthFromProfile(profile);
+  const trail = new TrailMesh(`engine_${anchor.name}`, anchor, scene, {
+    diameter: Math.max(0.2, profile.maxSize * 1.4),
+    length,
+    segments: trailSegments(length),
+    sections: 4,
+    doNotTaper: false,
+    autoStart: true,
+  });
+
+  const mat = new StandardMaterial(`engineTrailMat_${anchor.name}`, scene);
+  mat.emissiveColor = new Color3(
+    profile.color1[0],
+    profile.color1[1],
+    profile.color1[2],
+  );
+  mat.alpha = profile.color1[3];
+  mat.disableLighting = true;
+  mat.backFaceCulling = false;
+  if (profile.blendMode === 'add') {
+    mat.alphaMode = Constants.ALPHA_ADD;
+  }
+  trail.material = mat;
+  trail.isPickable = false;
+
+  return trail;
 }
 
-export function updateEngineTrailEmitter(trail: ParticleSystem, anchor: TransformNode): void {
-  trail.emitter = anchor.getAbsolutePosition().clone();
-}
+/** @deprecated TrailMesh follows its generator automatically; kept for API compatibility. */
+export function updateEngineTrailEmitter(
+  _trail: TrailMesh,
+  _anchor: TransformNode,
+): void {}

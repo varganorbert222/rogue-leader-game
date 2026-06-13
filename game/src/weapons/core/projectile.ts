@@ -4,7 +4,7 @@ import { areFactionsHostile } from '../../combat/faction';
 import type { FactionId } from '../../combat/faction';
 import type { CombatTeam } from './combat-team';
 import type { ProjectileConfig } from './projectile-config';
-import { ProjectileBehaviors } from '../../constants/weapon-behaviors';
+import { ProjectileBehaviors } from '../../data/constants/weapon-behaviors';
 import {
   closestPointOnSegment,
   detectProjectileNearMiss,

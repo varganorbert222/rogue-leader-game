@@ -14,7 +14,12 @@ export type {
   MusicSetDef,
   MusicLayerDef,
 } from './audio/audio-types';
-export { SPEED_OF_SOUND, computeDopplerPitch } from './audio/spatial-audio';
+export {
+  SPEED_OF_SOUND,
+  computeDopplerPitch,
+  applySpatialMotionToSound,
+  type SpatialMotionState,
+} from './audio/spatial-audio';
 export { SkyboxLoader, type SkyboxApplyOptions } from './render/skybox-loader';
 export { DebugFloor, type DebugFloorOptions } from './render/debug-floor';
 export { DebugAxes, type DebugAxesOptions } from './render/debug-axes';
@@ -33,7 +38,6 @@ export {
 } from './render/debug/collider-wireframe-debug';
 export {
   DebugLabelLayer,
-  DebugLabelGizmo,
   type DebugLabelSpec,
   type DebugLabelCategory,
 } from './render/debug/debug-labels';
@@ -85,6 +89,7 @@ export {
   DEFAULT_ENGINE_VFX,
   type EngineVfxProfile,
 } from './vfx/engine-vfx';
+export type { TrailMesh } from '@babylonjs/core/Meshes/trailMesh';
 export { GltfShipLoader, type LoadedEntity } from './loaders/gltf-ship-loader';
 export {
   refreshLoadedEntityColliders,
@@ -112,6 +117,16 @@ export {
 } from './loaders/lod-runtime';
 export { computeScreenCoveragePercent } from './render/screen-coverage';
 export { applyMeshAlphaCutoff, disableMeshBackfaceCulling } from './render/mesh-material-utils';
+export {
+  shareMaterialsFromTemplate,
+  optimizeMeshesForRendering,
+  optimizeLoadedEntityMeshes,
+} from './render/mesh-batching';
+export {
+  ThinInstanceBatch,
+  composeThinInstanceTransform,
+  type ThinInstanceTransform,
+} from './render/thin-instance-batch';
 export { detectFirePoints, refreshFirePoints, type FirePoints } from './loaders/firepoint-detector';
 export {
   detectWeaponMounts,

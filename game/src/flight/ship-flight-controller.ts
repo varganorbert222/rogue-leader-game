@@ -1,5 +1,5 @@
 import { Quaternion, Scalar, TransformNode, Vector3 } from '@babylonjs/core';
-import type { VehicleInput } from '../input/vehicle-input';
+import type { VehicleInput } from '../player/input/vehicle-input';
 import {
   AngularRateSmoother,
   DEFAULT_ANGULAR_DYNAMICS,
@@ -13,7 +13,7 @@ import {
   ROLL_IDLE_DELAY_SEC,
   type FlightAssistOptions,
 } from './flight-assist';
-import type { ResolvedShipFlightStats } from '../config/ship-flight-stats';
+import type { ResolvedShipFlightStats } from '../data/config/ship-flight-stats';
 import { computeRogueFlightAxes } from './rogue-flight-controls';
 import { applySoftBoundary, type SoftBoundary } from './soft-boundary';
 import { getShipForward } from './ship-forward';

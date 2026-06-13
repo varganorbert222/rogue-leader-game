@@ -5,7 +5,7 @@ import {
   updateWeaponAimForObserver,
   type WeaponAimDebugInfo,
 } from '../combat/weapon-aim-controller';
-import type { TargetingConfig } from '../config/combat-config';
+import type { TargetingConfig } from '../data/config/combat-config';
 import type { SphereBody } from '../collision/collision-system';
 import type { HealthComponent } from './health-component';
 import type { CameraController } from '../flight/camera-controller';
@@ -13,7 +13,7 @@ import { RETICLE_INNER_DISTANCE } from '../flight/flight-constants';
 import { projectWorldToScreen } from '../flight/screen-project';
 import { getShipForward } from '../flight/ship-forward';
 import type { SoftBoundary } from '../flight/soft-boundary';
-import type { PlayerInput } from '../input/player-input';
+import type { PlayerInput } from '../player/input/player-input';
 import type { CombatSystem } from '../weapons/combat-system';
 import type { Vehicle } from '../vehicles/vehicle';
 import type { GameEventBus } from '../events/game-events';

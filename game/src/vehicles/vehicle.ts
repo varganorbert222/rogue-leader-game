@@ -12,7 +12,7 @@ import { computeEngineSpeedRatio } from '../audio/engine-audio-config';
 import {
   resolveShipFlightStats,
   type ShipFlightStatsConfig,
-} from '../config/ship-flight-stats';
+} from '../data/config/ship-flight-stats';
 import {
   INPUT_DEADZONE,
   type FlightAssistOptions,
@@ -20,7 +20,7 @@ import {
 import { YAW_VISUAL_BANK_DEG } from '../flight/flight-constants';
 import { ShipFlightController } from '../flight/ship-flight-controller';
 import type { SoftBoundary } from '../flight/soft-boundary';
-import type { VehicleInput } from '../input/vehicle-input';
+import type { VehicleInput } from '../player/input/vehicle-input';
 import type { CombatTeam } from '../weapons/core/combat-team';
 import type { VehicleWeaponSystem } from '../weapons/core/vehicle-weapon-system';
 import type { SfoilSfxPlayRequest } from '../audio/sfoil-sfx';

@@ -1,6 +1,6 @@
 import { Vector3, type Scene } from '@babylonjs/core';
 import type { FactionId } from './faction';
-import type { TargetingConfig } from '../config/combat-config';
+import type { TargetingConfig } from '../data/config/combat-config';
 import { getShipForward } from '../flight/ship-forward';
 import type { HudScreenPoint } from '../flight/screen-project';
 import { TargetingSystem, type ActiveTarget, type TargetEntity } from './targeting-system';

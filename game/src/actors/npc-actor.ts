@@ -9,7 +9,7 @@ import { resolveFlockOverlap } from '../ai/boid-forces';
 import type { FlockMate } from '../ai/flock-types';
 import type { SphereBody } from '../collision/collision-system';
 import type { HealthComponent } from './health-component';
-import type { NpcInput } from '../input/npc-input';
+import type { NpcInput } from '../player/input/npc-input';
 import type { SoftBoundary } from '../flight/soft-boundary';
 import type { Vehicle } from '../vehicles/vehicle';
 import type { Actor, ActorRole } from './actor';

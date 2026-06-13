@@ -1,6 +1,6 @@
 import { Vector3 } from '@babylonjs/core';
 import type { AudioManager } from '@rogue-leader/engine';
-import type { SfxClipId } from '../constants/audio-clips';
+import type { SfxClipId } from '../data/constants/audio-clips';
 import { ShipAudioCatalog } from './ship-audio-map';
 import {
   enginePitchFromSpeedRatio,

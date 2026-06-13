@@ -1,5 +1,5 @@
 import type { Quaternion, Vector3 } from '@babylonjs/core';
-import type { FlockMate } from '../ai/flock-types';
+import type { FlockMate } from '../../ai/flock-types';
 import type { VehicleInput } from './vehicle-input';
 
 /** World context for NPC steering each tick. */

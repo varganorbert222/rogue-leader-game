@@ -1,6 +1,6 @@
-import { SfxClipIds, type SfxClipId } from '../constants/audio-clips';
-import { isMissileHitBehavior } from '../constants/weapon-behaviors';
-import type { WeaponsManifest } from '../config/weapons-manifest';
+import { SfxClipIds, type SfxClipId } from '../data/constants/audio-clips';
+import { isMissileHitBehavior } from '../data/constants/weapon-behaviors';
+import type { WeaponsManifest } from '../data/config/weapons-manifest';
 
 /** Resolves weapon hit SFX clip id from manifest + projectile behavior. */
 export class WeaponHitSfxResolver {

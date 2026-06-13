@@ -3,8 +3,8 @@ import { RouterLink } from '@angular/router';
 import {
   SettingsPanelComponent,
   type AudioSettingsSnapshot,
-} from '../../components/settings-panel/settings-panel.component';
-import { AudioBootstrapService } from '../../services/audio-bootstrap.service';
+} from '../../shared/components/settings-panel/settings-panel.component';
+import { AudioBootstrapService } from '../../core/services/audio-bootstrap.service';
 
 @Component({
   selector: 'app-settings',

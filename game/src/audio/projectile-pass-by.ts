@@ -1,5 +1,5 @@
 import { Vector3 } from '@babylonjs/core';
-import { CombatTeams, type CombatTeamId } from '../constants/combat-teams';
+import { CombatTeams, type CombatTeamId } from '../data/constants/combat-teams';
 
 export interface ProjectileNearMiss {
   weaponId: string;

@@ -29,7 +29,7 @@ import {
   type ControlActionId,
   type ControlBindingsConfig,
 } from '@rogue-leader/game';
-import { ControlSettingsService } from '../../services/control-settings.service';
+import { ControlSettingsService } from '../../../core/services/control-settings.service';
 
 type ControlsTab = 'keyboard' | 'gamepad';
 

@@ -1,7 +1,7 @@
 import type { ShipManifestEntry } from '@rogue-leader/engine';
 import type { DetectedWeaponMount } from '@rogue-leader/engine';
-import type { WeaponsManifest } from '../../config/weapons-manifest';
-import { resolveWeaponIdForMount } from '../../config/weapons-manifest';
+import type { WeaponsManifest } from '../../data/config/weapons-manifest';
+import { resolveWeaponIdForMount } from '../../data/config/weapons-manifest';
 import type { ResolvedWeaponDefinition } from './weapon-definition';
 import type { ProjectileConfig } from './projectile-config';
 

@@ -32,6 +32,7 @@ export class BabylonHost {
     const { engine, backend } = await createGraphicsEngine(canvas);
     const scene = new Scene(engine);
     scene.clearColor = new Color4(0.02, 0.05, 0.12, 1);
+    scene.blockMaterialDirtyMechanism = true;
 
     new HemisphericLight('hemi', new Vector3(0, 1, 0), scene).intensity = 0.6;
     const dir = new DirectionalLight('sun', new Vector3(-0.5, -1, -0.3), scene);

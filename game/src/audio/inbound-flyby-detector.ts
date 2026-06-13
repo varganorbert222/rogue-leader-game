@@ -3,7 +3,7 @@ import type { NpcActor } from '../actors/npc-actor';
 import { areFactionsHostile } from '../combat/faction';
 import type { FactionId } from '../combat/faction';
 import { ShipAudioCatalog } from './ship-audio-map';
-import type { SfxClipId } from '../constants/audio-clips';
+import type { SfxClipId } from '../data/constants/audio-clips';
 
 const INBOUND_TRIGGER_RANGE = 155;
 const INBOUND_RESET_RANGE = 240;

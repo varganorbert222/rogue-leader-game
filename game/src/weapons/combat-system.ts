@@ -1,16 +1,16 @@
 import type { Scene, Vector3 } from '@babylonjs/core';
 import type { ShipAnchors, ShipManifestEntry } from '@rogue-leader/engine';
 import type { FactionId } from '../combat/faction';
-import type { TargetingConfig } from '../config/combat-config';
+import type { TargetingConfig } from '../data/config/combat-config';
 import type { GameEventBus } from '../events/game-events';
 import type { SphereBody } from '../collision/collision-system';
-import type { WeaponsManifest } from '../config/weapons-manifest';
+import type { WeaponsManifest } from '../data/config/weapons-manifest';
 import type { CombatTeam } from './core/combat-team';
 import { ProjectileManager, type ProjectileHitCallback, type ProjectilePassByCallback } from './core/projectile-manager';
 import type { ProjectilePassByObserver } from '../audio/projectile-pass-by';
 import type { ProjectileHit } from './core/projectile';
 import { VehicleWeaponSystem } from './core/vehicle-weapon-system';
-import type { PlayerAmmoConfig } from '../config/combat-config';
+import type { PlayerAmmoConfig } from '../data/config/combat-config';
 import { PlayerAmmoStore } from './player-ammo';
 
 export type { ProjectileHit };

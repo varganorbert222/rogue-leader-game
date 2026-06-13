@@ -1,7 +1,7 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { DebugPreferences } from '@rogue-leader/game';
-import { DebugSettingsService } from '../../services/debug-settings.service';
+import { DebugSettingsService } from '../../../core/services/debug-settings.service';
 
 @Component({
   selector: 'app-debug-panel',

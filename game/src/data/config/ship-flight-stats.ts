@@ -3,12 +3,12 @@ import {
   DEFAULT_BOOST_MULTIPLIER,
   DEFAULT_MAX_SPEED,
   MIN_FLIGHT_SPEED,
-} from '../flight/flight-constants';
+} from '../../flight/flight-constants';
 import {
   ROGUE_PITCH_RATE,
   ROGUE_ROLL_RATE,
   ROGUE_YAW_RATE,
-} from '../flight/rogue-flight-controls';
+} from '../../flight/rogue-flight-controls';
 
 export interface ShipFlightStatsConfig {
   maxSpeed?: number;

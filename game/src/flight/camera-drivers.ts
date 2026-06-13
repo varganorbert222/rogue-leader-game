@@ -4,7 +4,7 @@ import {
   Vector3,
   type TransformNode,
 } from "@babylonjs/core";
-import type { CameraInput } from "../input/camera-input";
+import type { CameraInput } from "../player/input/camera-input";
 import { getShipForward, getShipRight, getShipUp } from "./ship-forward";
 
 /** Outside chase distance presets (Rogue Leader style). */

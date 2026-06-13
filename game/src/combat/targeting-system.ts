@@ -1,6 +1,6 @@
 import { Vector3, type Scene } from '@babylonjs/core';
 import { isAutoAimCandidate, type FactionId } from './faction';
-import type { TargetingConfig } from '../config/combat-config';
+import type { TargetingConfig } from '../data/config/combat-config';
 import { projectWorldToScreen, type HudScreenPoint } from '../flight/screen-project';
 import { isTargetInAimHemisphere } from '../weapons/aim-solver';
 import { angularOffsetDeg, isInsideAimCone } from './targeting-cone';

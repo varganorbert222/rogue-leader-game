@@ -1,15 +1,16 @@
 import {
   Quaternion,
   Vector3,
-  type AbstractMesh,
-  type TransformNode,
 } from "@babylonjs/core";
+import {
+  ThinInstanceBatch,
+  composeThinInstanceTransform,
+} from "@rogue-leader/engine";
 import type {
   GltfShipLoader,
   LoadedEntity,
   PropManifestEntry,
 } from "@rogue-leader/engine";
-import { setLoadedEntityVisible } from "@rogue-leader/engine";
 import { HealthComponent } from "../actors/health-component";
 
 export interface AsteroidConfig {
@@ -30,11 +31,14 @@ export interface AsteroidConfig {
 
 export interface AsteroidInstance {
   id: string;
-  root: TransformNode;
+  variantIndex: number;
+  batchIndex: number;
+  position: Vector3;
+  rotationQuaternion: Quaternion;
+  uniformScale: number;
   health: HealthComponent;
-  /** Sphere fallback radius — 0 when `usesMeshCollider` is true. */
+  /** Scaled sphere radius for batched collision. */
   colliderRadius: number;
-  colliderMeshes: readonly AbstractMesh[];
   usesMeshCollider: boolean;
   tumbleAxis: Vector3;
   tumbleSpeed: number;
@@ -55,7 +59,6 @@ function shuffleInPlace<T>(items: T[], rand: () => number): void {
   }
 }
 
-/** Every variant at least once, then random picks; full list shuffled. */
 function buildVariantIndices(
   spawnCount: number,
   variantCount: number,
@@ -74,8 +77,10 @@ function buildVariantIndices(
 
 export class AsteroidField {
   readonly asteroids: AsteroidInstance[] = [];
+  private batches: ThinInstanceBatch[] = [];
   private templates: LoadedEntity[] = [];
   private ownsTemplates = true;
+  private baseColliderRadius = 3;
 
   async spawn(
     loader: GltfShipLoader,
@@ -88,6 +93,19 @@ export class AsteroidField {
       ? [...preloadedTemplates]
       : await loader.loadPropVariantTemplates(config.prefabId, entry);
     this.ownsTemplates = !preloadedTemplates?.length;
+    this.baseColliderRadius = entry.colliderRadius;
+
+    const scene = this.templates[0]?.root.getScene();
+    if (!scene) return;
+
+    this.batches = this.templates.map((template, variantIndex) =>
+      ThinInstanceBatch.fromLoadedEntity(
+        scene,
+        `asteroid_var_${variantIndex}`,
+        template,
+      ),
+    );
+
     const variantCount = this.templates.length;
     const rand = seededRandom(config.seed);
     const spawnCount = Math.max(config.count, variantCount);
@@ -116,14 +134,13 @@ export class AsteroidField {
         attempts++;
       } while (Vector3.Distance(pos, playerSpawn) < 80 && attempts < 20);
 
-      const template = this.templates[variantIndices[i]];
-      const loaded = loader.cloneProp(template, `asteroid_${i}`, entry);
-      setLoadedEntityVisible(loaded, true);
-      loaded.root.position = pos;
+      const variantIndex = variantIndices[i];
+      const batch = this.batches[variantIndex];
       const scale =
         config.scaleRange[0] +
         rand() * (config.scaleRange[1] - config.scaleRange[0]);
-      loaded.root.scaling.scaleInPlace(scale);
+      const id = `asteroid_${i}`;
+      const rotation = Quaternion.Identity();
 
       const tumbleAxis = new Vector3(
         rand() - 0.5,
@@ -134,47 +151,87 @@ export class AsteroidField {
         ? rand() * config.maxAngularSpeed
         : 0;
 
-      const usesMeshCollider = loaded.colliderMeshes.length > 0;
+      const batchIndex = batch.add(
+        id,
+        composeThinInstanceTransform(pos, rotation, scale),
+      );
 
       this.asteroids.push({
-        id: `asteroid_${i}`,
-        root: loaded.root,
+        id,
+        variantIndex,
+        batchIndex,
+        position: pos.clone(),
+        rotationQuaternion: rotation,
+        uniformScale: scale,
         health: new HealthComponent(30, 30, 0, 0),
-        colliderRadius: usesMeshCollider ? 0 : loaded.colliderRadius * scale,
-        colliderMeshes: loaded.colliderMeshes,
-        usesMeshCollider,
+        colliderRadius: this.baseColliderRadius * scale,
+        usesMeshCollider: false,
         tumbleAxis,
         tumbleSpeed,
       });
     }
+
+    for (const batch of this.batches) {
+      batch.flush();
+    }
   }
 
   update(dt: number): void {
-    for (const a of this.asteroids) {
-      if (a.tumbleSpeed > 0) {
-        const q = Quaternion.RotationAxis(a.tumbleAxis, a.tumbleSpeed * dt);
-        a.root.rotationQuaternion = (
-          a.root.rotationQuaternion ?? Quaternion.Identity()
-        )
+    for (const asteroid of this.asteroids) {
+      if (asteroid.tumbleSpeed > 0) {
+        const q = Quaternion.RotationAxis(asteroid.tumbleAxis, asteroid.tumbleSpeed * dt);
+        asteroid.rotationQuaternion = asteroid.rotationQuaternion
           .multiply(q)
           .normalize();
       }
+
+      const batch = this.batches[asteroid.variantIndex];
+      batch.setTransform(
+        asteroid.batchIndex,
+        composeThinInstanceTransform(
+          asteroid.position,
+          asteroid.rotationQuaternion,
+          asteroid.uniformScale,
+        ),
+      );
+    }
+
+    for (const batch of this.batches) {
+      batch.flush();
     }
   }
 
   remove(id: string): void {
     const idx = this.asteroids.findIndex((a) => a.id === id);
-    if (idx >= 0) {
-      this.asteroids[idx].root.dispose();
-      this.asteroids.splice(idx, 1);
+    if (idx < 0) return;
+
+    const asteroid = this.asteroids[idx];
+    const batch = this.batches[asteroid.variantIndex];
+    const movedId = batch.remove(id);
+    batch.flush();
+    if (movedId) {
+      const moved = this.asteroids.find((entry) => entry.id === movedId);
+      if (moved) {
+        moved.batchIndex = batch.getIndexForId(movedId) ?? moved.batchIndex;
+      }
     }
+
+    this.asteroids.splice(idx, 1);
   }
 
   dispose(): void {
-    this.asteroids.forEach((a) => a.root.dispose());
+    for (const batch of this.batches) {
+      batch.dispose();
+    }
+    this.batches = [];
     this.asteroids.length = 0;
+
     if (this.ownsTemplates) {
-      this.templates.forEach((t) => t.root.dispose());
+      for (const template of this.templates) {
+        if (!template.root.isDisposed()) {
+          template.root.dispose();
+        }
+      }
     }
     this.templates = [];
     this.ownsTemplates = true;

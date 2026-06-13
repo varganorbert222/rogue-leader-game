@@ -8,35 +8,35 @@ export {
   type DebugLabelToggles,
   type DebugGameplayToggles,
 } from "./debug/debug-preferences";
-export { KeyboardInput } from "./input/keyboard-input";
-export { GamepadInput } from "./input/gamepad-input";
-export { BoundPlayerInput } from "./input/bound-player-input";
+export { KeyboardInput } from "./player/input/keyboard-input";
+export { GamepadInput } from "./player/input/gamepad-input";
+export { BoundPlayerInput } from "./player/input/bound-player-input";
 export {
   startBindingCapture,
   type BindingCaptureSession,
-} from "./input/binding-capture";
+} from "./player/input/binding-capture";
 export {
   formatBinding,
   formatKeyboardCode,
   formatGamepadButton,
-} from "./input/binding-labels";
+} from "./player/input/binding-labels";
 export {
   listConnectedGamepads,
   wakeGamepads,
   type ConnectedGamepadInfo,
-} from "./input/gamepad-list";
+} from "./player/input/gamepad-list";
 export {
   gamepadIdsMatch,
   pickPreferredGamepadSlot,
   isPlayStationGamepad,
   usesStandardGamepadLayout,
-} from "./input/gamepad-profiles";
+} from "./player/input/gamepad-profiles";
 export {
   loadFlightPreferences,
   saveFlightPreferences,
   normalizeSelectedGamepadId,
   type FlightPreferences,
-} from "./settings/flight-preferences";
+} from "./player/settings/flight-preferences";
 export {
   loadControlBindings,
   saveControlBindings,
@@ -53,7 +53,7 @@ export {
   type ButtonActionBindings,
   type StickSettings,
   type TriggerSettings,
-} from "./settings/control-bindings";
+} from "./player/settings/control-bindings";
 export {
   applyCapturedBinding,
   isAxisAction,
@@ -61,24 +61,24 @@ export {
   removeGamepadButtonBinding,
   removeKeyboardBinding,
   type BindingPole,
-} from "./settings/control-binding-utils";
-export { CombinedInput } from "./input/combined-input";
-export type { IInputSource, FlightInput } from "./input/i-input-source";
-export type { IPlayerInputSource } from "./input/i-player-input-source";
-export type { VehicleInput } from "./input/vehicle-input";
-export type { CombatInput } from "./input/combat-input";
-export type { CameraInput } from "./input/camera-input";
-export type { PlayerInput } from "./input/player-input";
+} from "./player/settings/control-binding-utils";
+export { CombinedInput } from "./player/input/combined-input";
+export type { IInputSource, FlightInput } from "./player/input/i-input-source";
+export type { IPlayerInputSource } from "./player/input/i-player-input-source";
+export type { VehicleInput } from "./player/input/vehicle-input";
+export type { CombatInput } from "./player/input/combat-input";
+export type { CameraInput } from "./player/input/camera-input";
+export type { PlayerInput } from "./player/input/player-input";
 export {
   playerInputFromFlightInput,
   flightInputFromPlayerInput,
   mergePlayerInputs,
-} from "./input/player-input";
+} from "./player/input/player-input";
 export type {
   NpcInput,
   NpcInputContext,
   NpcInputResult,
-} from "./input/npc-input";
+} from "./player/input/npc-input";
 export { Vehicle, type VehicleSpawnOptions } from "./vehicles/vehicle";
 export type { Actor, ActorRole } from "./actors/actor";
 export { ActorWorld } from "./actors/actor-world";
@@ -127,7 +127,7 @@ export type {
 export {
   loadWeaponsManifest,
   type WeaponsManifest,
-} from "./config/weapons-manifest";
+} from "./data/config/weapons-manifest";
 export { VehicleWeaponSystem } from "./weapons/core/vehicle-weapon-system";
 export { MissileWeapon } from "./weapons/missile-weapon";
 export { HarpoonWeapon } from "./weapons/harpoon-weapon";
@@ -142,15 +142,12 @@ export {
   DEFAULT_NPC_BEHAVIOR_CONFIG,
   type NpcBehaviorConfig,
   type NpcStateId,
-} from "./config/npc-behavior-config";
+} from "./data/config/npc-behavior-config";
 export { GameDebugOverlay } from "./debug/game-debug-overlay";
 export { CollisionSystem, buildSphereBody } from "./collision/collision-system";
 export { AsteroidField } from "./hazards/asteroid-field";
-export {
-  MissionManager,
-  type MissionHudState,
-  type MissionLoadState,
-} from "./mission/mission-manager";
+export { MissionManager } from "./mission/mission-manager";
+export type { MissionHudState, MissionLoadState } from "./mission/mission-hud";
 export type { MissionConfig, MissionEndState } from "./mission/mission-types";
 export { MissionEndStates } from "./mission/mission-types";
 export {
@@ -177,7 +174,7 @@ export {
   type MissionId,
   type EntityDestroyKind,
   type DamageSeverity,
-} from "./constants";
+} from "./data/constants";
 export {
   GameEventTypes,
   GameEventPayloadKeys,

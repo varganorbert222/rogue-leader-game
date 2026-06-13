@@ -1,6 +1,6 @@
 import { Vector3 } from "@babylonjs/core";
-import type { EntityDestroyKind } from "../constants/entity-destroy-kind";
-import type { SfxClipId } from "../constants/audio-clips";
+import type { EntityDestroyKind } from "../data/constants/entity-destroy-kind";
+import type { SfxClipId } from "../data/constants/audio-clips";
 
 export const GameEventTypes = {
   WeaponFired: "WeaponFired",

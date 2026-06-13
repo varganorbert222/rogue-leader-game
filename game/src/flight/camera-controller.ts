@@ -5,8 +5,8 @@ import {
   type Scene,
   type TransformNode,
 } from '@babylonjs/core';
-import type { CameraInput } from '../input/camera-input';
-import type { FlightInput } from '../input/i-input-source';
+import type { CameraInput } from '../player/input/camera-input';
+import type { FlightInput } from '../player/input/i-input-source';
 import {
   FollowCameraDriver,
   OUTSIDE_VIEW_MODES,

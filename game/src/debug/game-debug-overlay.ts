@@ -4,7 +4,7 @@ import {
   type AbstractMesh,
   type Scene,
 } from "@babylonjs/core";
-import type { NpcStateId } from "../config/npc-behavior-config";
+import type { NpcStateId } from "../data/config/npc-behavior-config";
 import type { WeaponAimDebugInfo } from "../combat/weapon-aim-controller";
 import type { NpcSteeringDebugInfo } from "../ai/behavior-npc-input";
 import type { WanderZoneDefinition } from "../ai/navigation/nav-types";

@@ -15,8 +15,8 @@ import {
   type ConnectedGamepadInfo,
   type FlightPreferences,
 } from '@rogue-leader/game';
-import { AudioSettingsService } from '../../services/audio-settings.service';
-import { FlightSettingsService } from '../../services/flight-settings.service';
+import { AudioSettingsService } from '../../../core/services/audio-settings.service';
+import { FlightSettingsService } from '../../../core/services/flight-settings.service';
 
 export interface AudioSettingsSnapshot {
   master: number;

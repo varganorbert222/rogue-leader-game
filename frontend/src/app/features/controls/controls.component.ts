@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { ControlBindingsConfig } from '@rogue-leader/game';
-import { ControlsPanelComponent } from '../../components/controls-panel/controls-panel.component';
-import { AudioBootstrapService } from '../../services/audio-bootstrap.service';
-import { FlightSettingsService } from '../../services/flight-settings.service';
+import { ControlsPanelComponent } from '../../shared/components/controls-panel/controls-panel.component';
+import { AudioBootstrapService } from '../../core/services/audio-bootstrap.service';
+import { FlightSettingsService } from '../../core/services/flight-settings.service';
 
 @Component({
   selector: 'app-controls',

@@ -1,7 +1,7 @@
 import type { AssetManifest, GltfShipLoader, LoadedEntity } from '@rogue-leader/engine';
 import { resetLoadedEntityTransform, refreshLoadedEntityColliders, setLoadedEntityVisible } from '@rogue-leader/engine';
 
-const MAX_INSTANCES_PER_SHIP = 24;
+const MAX_INSTANCES_PER_SHIP = 256;
 const POOL_HIDE_Y = -5000;
 
 export class ShipTemplatePool {
