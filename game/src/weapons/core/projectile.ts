@@ -1,10 +1,4 @@
-import {
-  Mesh,
-  MeshBuilder,
-  StandardMaterial,
-  Vector3,
-  type Scene,
-} from '@babylonjs/core';
+import { Vector3, type Mesh, type Scene } from '@babylonjs/core';
 import type { CollisionSystem, SphereBody } from '../../collision/collision-system';
 import { areFactionsHostile } from '../../combat/faction';
 import type { FactionId } from '../../combat/faction';
@@ -16,6 +10,11 @@ import {
   detectProjectileNearMiss,
   type ProjectilePassByObserver,
 } from '../../audio/projectile-pass-by';
+import {
+  ProjectileMeshPool,
+  syncProjectileMeshTransform,
+  type PooledProjectileMesh,
+} from './projectile-mesh-pool';
 
 export interface ProjectileHit {
   point: Vector3;
@@ -45,13 +44,22 @@ export class Projectile {
   readonly weaponId: string;
   readonly behavior?: string;
   private readonly mesh: Mesh;
+  private readonly meshPool: ProjectileMeshPool;
+  private readonly meshSlot: PooledProjectileMesh;
   private direction: Vector3;
   private readonly config: ProjectileConfig;
   private distanceTraveled = 0;
-  private disposed = false;
+  private active = false;
   private whooshTriggered = false;
 
-  constructor(scene: Scene, options: ProjectileSpawnOptions) {
+  private constructor(
+    meshPool: ProjectileMeshPool,
+    meshSlot: PooledProjectileMesh,
+    options: ProjectileSpawnOptions
+  ) {
+    this.meshPool = meshPool;
+    this.meshSlot = meshSlot;
+    this.mesh = meshSlot.mesh;
     this.team = options.team;
     this.faction = options.faction;
     this.shooterId = options.shooterId;
@@ -60,28 +68,30 @@ export class Projectile {
     this.behavior = options.config.behavior;
     this.config = options.config;
     this.direction = options.direction.clone().normalize();
+    this.activate(options);
+  }
 
-    const { visual } = this.config;
-    this.mesh = MeshBuilder.CreateCylinder(
-      `projectile_${options.weaponId}_${options.team}`,
-      {
-        diameter: visual.boltDiameter,
-        height: visual.boltLength,
-        tessellation: 6,
-      },
-      scene
-    );
-    const mat = new StandardMaterial(`projectileMat_${options.weaponId}`, scene);
-    mat.emissiveColor.set(visual.emissive[0], visual.emissive[1], visual.emissive[2]);
-    mat.disableLighting = true;
-    mat.alpha = 0.95;
-    this.mesh.material = mat;
-    this.mesh.isPickable = false;
-    this.syncMeshTransform(options.origin);
+  static spawn(
+    scene: Scene,
+    meshPool: ProjectileMeshPool,
+    options: ProjectileSpawnOptions
+  ): Projectile {
+    const meshSlot = meshPool.acquire(scene, options.config.visual);
+    return new Projectile(meshPool, meshSlot, options);
   }
 
   private get speed(): number {
     return this.config.speed;
+  }
+
+  private activate(options: ProjectileSpawnOptions): void {
+    this.active = true;
+    this.distanceTraveled = 0;
+    this.whooshTriggered = false;
+    this.direction = options.direction.clone().normalize();
+    this.mesh.setEnabled(true);
+    this.mesh.isVisible = true;
+    syncProjectileMeshTransform(this.mesh, options.origin, this.direction);
   }
 
   update(
@@ -92,7 +102,7 @@ export class Projectile {
     passByObserver?: ProjectilePassByObserver,
     onPassBy?: (weaponId: string, point: Vector3, velocity: Vector3) => void
   ): boolean {
-    if (this.disposed) return false;
+    if (!this.active) return false;
 
     if (this.config.behavior === ProjectileBehaviors.MissileHoming && this.config.homing) {
       this.steerHoming(dt, targets);
@@ -147,7 +157,16 @@ export class Projectile {
         if (dist < closest) {
           closest = dist;
           hitTarget = target;
-          hitPoint = target.position.clone();
+          hitPoint = target.colliderMeshes?.length
+            ? collision.raycastMeshColliders(prev, this.direction, target.colliderMeshes, stepLen).point
+            : target.position.clone();
+        }
+      } else if (target.colliderMeshes?.length && collision.sphereOverlapsMeshColliders(projectileBody)) {
+        const meshHit = collision.raycastMeshColliders(prev, this.direction, target.colliderMeshes, stepLen);
+        if (meshHit.hit && meshHit.distance < closest) {
+          closest = meshHit.distance;
+          hitTarget = target;
+          hitPoint = meshHit.point;
         }
       }
     }
@@ -161,16 +180,16 @@ export class Projectile {
         weaponId: this.weaponId,
         behavior: this.behavior,
       });
-      this.dispose();
+      this.release();
       return false;
     }
 
     if (this.distanceTraveled >= this.config.maxRange) {
-      this.dispose();
+      this.release();
       return false;
     }
 
-    this.syncMeshTransform(next);
+    syncProjectileMeshTransform(this.mesh, next, this.direction);
     return true;
   }
 
@@ -198,12 +217,10 @@ export class Projectile {
     this.direction = Vector3.Lerp(this.direction, desired, turn).normalize();
   }
 
-  /** Friendly fire allowed — any entity except the shooter. */
   private isHittableTarget(target: SphereBody): boolean {
     return target.id !== this.shooterId;
   }
 
-  /** Homing missiles only steer toward hostile factions. */
   private isHomingTarget(target: SphereBody): boolean {
     if (target.id === this.shooterId) return false;
     if (target.faction) {
@@ -228,16 +245,17 @@ export class Projectile {
     };
   }
 
-  dispose(): void {
-    if (this.disposed) return;
-    this.disposed = true;
-    this.mesh.dispose();
+  release(): void {
+    if (!this.active) return;
+    this.active = false;
+    this.meshPool.release(this.config.visual, this.meshSlot);
   }
 
-  private syncMeshTransform(position: Vector3): void {
-    this.mesh.position.copyFrom(position);
-    if (this.direction.lengthSquared() < 1e-6) return;
-    this.mesh.lookAt(position.add(this.direction));
-    this.mesh.rotation.x += Math.PI / 2;
+  dispose(): void {
+    this.release();
+  }
+
+  isActive(): boolean {
+    return this.active;
   }
 }

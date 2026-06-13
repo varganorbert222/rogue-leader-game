@@ -14,6 +14,7 @@ import {
   readPayloadDestroyKind,
   readPayloadSfx,
   readPayloadString,
+  readPayloadStringArray,
   readPayloadVector3,
   type GameEventBus,
 } from '../events/game-events';
@@ -113,6 +114,26 @@ export class GameAudioBridge {
         SfxClipIds.AsteroidExplosion,
         spatialOptions(e.payload)
       );
+    });
+
+    events.on(GameEventTypes.SfoilToggled, (e) => {
+      const files = readPayloadStringArray(e.payload, GameEventPayloadKeys.SfxFiles);
+      const basePath = readPayloadString(e.payload, GameEventPayloadKeys.SfxBasePath);
+      if (files?.length && basePath) {
+        this.audio.playRandomFile(basePath, files, spatialOptions(e.payload));
+        return;
+      }
+
+      const clipIds = readPayloadStringArray(e.payload, GameEventPayloadKeys.SfxClipIds);
+      if (clipIds?.length) {
+        const clipId = clipIds[Math.floor(Math.random() * clipIds.length)];
+        this.audio.playOneShot(clipId, spatialOptions(e.payload));
+        return;
+      }
+
+      const clip =
+        readPayloadString(e.payload, GameEventPayloadKeys.Sfx) ?? SfxClipIds.XwingSfoil;
+      this.audio.playOneShot(clip, spatialOptions(e.payload));
     });
 
     events.on(GameEventTypes.MissionStarted, (e) => {

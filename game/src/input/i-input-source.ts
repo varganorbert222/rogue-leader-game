@@ -8,6 +8,8 @@ export interface FlightInput {
   fire: boolean;
   /** One-frame pulse for secondary weapons (torpedoes / rockets). */
   fireSecondaryPressed: boolean;
+  /** One-frame pulse for S-foil / special ship animation toggle. */
+  toggleSfoilPressed: boolean;
   /** X — toggle chase / cockpit (Rogue Leader) */
   cameraToggle: boolean;
   /** ~ / F1–F4 — cycle outside camera presets */
@@ -38,6 +40,7 @@ export const ZERO_FLIGHT_INPUT: FlightInput = {
   boost: false,
   fire: false,
   fireSecondaryPressed: false,
+  toggleSfoilPressed: false,
   cameraToggle: false,
   cameraCycle: 0,
   cameraProfileCycle: false,
@@ -57,6 +60,7 @@ export function mergeFlightInputs(inputs: FlightInput[]): FlightInput {
     if (input.boost) out.boost = true;
     if (input.fire) out.fire = true;
     if (input.fireSecondaryPressed) out.fireSecondaryPressed = true;
+    if (input.toggleSfoilPressed) out.toggleSfoilPressed = true;
     if (input.cameraToggle) out.cameraToggle = true;
     out.cameraCycle += input.cameraCycle;
     if (input.cameraProfileCycle) out.cameraProfileCycle = true;

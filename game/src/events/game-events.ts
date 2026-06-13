@@ -18,6 +18,7 @@ export const GameEventTypes = {
   HarpoonAttached: 'HarpoonAttached',
   ProjectileWhoosh: 'ProjectileWhoosh',
   ShipInbound: 'ShipInbound',
+  SfoilToggled: 'SfoilToggled',
 } as const;
 
 export type GameEventType = (typeof GameEventTypes)[keyof typeof GameEventTypes];
@@ -37,6 +38,9 @@ export const GameEventPayloadKeys = {
   ClipId: 'clipId',
   Position: 'position',
   Velocity: 'velocity',
+  SfxClipIds: 'sfxClipIds',
+  SfxFiles: 'sfxFiles',
+  SfxBasePath: 'sfxBasePath',
 } as const;
 
 export interface WeaponFiredPayload {
@@ -65,6 +69,7 @@ export interface EntityDestroyedPayload {
 export interface SpatialSfxPayload {
   position?: Vector3;
   velocity?: Vector3;
+  sfx?: string;
 }
 
 export interface MissionStartedPayload {
@@ -179,6 +184,13 @@ export const GameEvents = {
   harpoonAttached(): GameEvent {
     return { type: GameEventTypes.HarpoonAttached };
   },
+
+  sfoilToggled(payload: SpatialSfxPayload): GameEvent {
+    return {
+      type: GameEventTypes.SfoilToggled,
+      payload: asEventPayload(payload),
+    };
+  },
 };
 
 export function readPayloadString(
@@ -200,6 +212,16 @@ export function readPayloadDestroyKind(
   payload: Record<string, unknown> | undefined
 ): EntityDestroyKind | undefined {
   return readPayloadString(payload, GameEventPayloadKeys.Kind) as EntityDestroyKind | undefined;
+}
+
+export function readPayloadStringArray(
+  payload: Record<string, unknown> | undefined,
+  key: string
+): string[] | undefined {
+  const value = payload?.[key];
+  if (!Array.isArray(value)) return undefined;
+  const strings = value.filter((entry): entry is string => typeof entry === 'string');
+  return strings.length > 0 ? strings : undefined;
 }
 
 export function readPayloadVector3(

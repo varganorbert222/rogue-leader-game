@@ -1,33 +1,15 @@
-import { Scene, Sound } from '@babylonjs/core';
+import { Sound } from '@babylonjs/core';
 import type { AudioBus } from './audio-bus';
-
-export interface MusicEntry {
-  path: string;
-  loop: boolean;
-  volume: number;
-}
+import type { MusicTrackRegistry } from './music-track-registry';
 
 export class MusicController {
-  private readonly tracks = new Map<string, Sound>();
   private currentId: string | null = null;
   private fadeTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
-    private readonly scene: Scene,
-    private readonly bus: AudioBus
+    private readonly bus: AudioBus,
+    private readonly tracks: MusicTrackRegistry
   ) {}
-
-  register(id: string, entry: MusicEntry, baseUrl: string): void {
-    const url = `${baseUrl}/${entry.path}`.replace(/\/+/g, '/').replace(':/', '://');
-    const sound = new Sound(
-      `music_${id}`,
-      url,
-      this.scene,
-      undefined,
-      { loop: entry.loop, autoplay: false, volume: entry.volume }
-    );
-    this.tracks.set(id, sound);
-  }
 
   play(id: string, fadeInMs = 0): void {
     const next = this.tracks.get(id);
@@ -120,10 +102,6 @@ export class MusicController {
 
   dispose(): void {
     this.clearFade();
-    for (const track of this.tracks.values()) {
-      track.dispose();
-    }
-    this.tracks.clear();
     this.currentId = null;
   }
 

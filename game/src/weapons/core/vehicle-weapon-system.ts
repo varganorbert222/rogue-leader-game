@@ -21,6 +21,7 @@ export interface WeaponAimTarget {
 
 export class VehicleWeaponSystem {
   private readonly weapons: MountedWeapon[];
+  private fireEnabled = true;
 
   private constructor(weapons: MountedWeapon[]) {
     this.weapons = weapons;
@@ -41,6 +42,14 @@ export class VehicleWeaponSystem {
 
   get mountCount(): number {
     return this.weapons.length;
+  }
+
+  setFireEnabled(enabled: boolean): void {
+    this.fireEnabled = enabled;
+  }
+
+  isFireEnabled(): boolean {
+    return this.fireEnabled;
   }
 
   update(dt: number): void {
@@ -100,6 +109,7 @@ export class VehicleWeaponSystem {
     group: WeaponFireGroup,
     playerAmmo?: PlayerAmmoStore
   ): boolean {
+    if (!this.fireEnabled) return false;
     let fired = false;
     const dir = aimDirection.clone().normalize();
     for (const weapon of this.weapons) {
@@ -189,6 +199,7 @@ export class VehicleWeaponSystem {
     targeting: TargetingConfig,
     maxRange = Infinity
   ): boolean {
+    if (!this.fireEnabled) return false;
     const origin = this.weapons[0]?.mount.node.getAbsolutePosition();
     if (!origin) return false;
     if (Vector3.Distance(origin, targetPosition) > maxRange) return false;

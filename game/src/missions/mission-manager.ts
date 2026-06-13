@@ -3,7 +3,7 @@ import {
   GltfShipLoader,
   LodShipLoader,
   ParticleFx,
-  SkyboxLoader,
+  disposeParticleFxPool,
   loadAssetManifest,
   type AssetManifest,
   DebugFloor,
@@ -36,6 +36,11 @@ import {
 } from "../debug/debug-preferences";
 import { GameDebugOverlay } from "../debug/game-debug-overlay";
 import { EngineVfxController } from "../vfx/engine-vfx-controller";
+import {
+  WreckDebrisManager,
+  resolveMissionEnvironment,
+} from "../vfx/wreck-debris-manager";
+import { MissionAssetPreloader } from "../assets/mission-asset-preloader";
 import { Vehicle } from "../vehicles/vehicle";
 import {
   GameAudioBridge,
@@ -153,6 +158,8 @@ export class MissionManager {
   private debugPreferences: DebugPreferences = loadDebugPreferences();
   private readonly gameDebugOverlay = new GameDebugOverlay();
   private readonly engineVfx = new EngineVfxController();
+  private wreckDebris!: WreckDebrisManager;
+  private assetPreloader = new MissionAssetPreloader();
   private meteorHitCooldown = 0;
   private prevListenerPosition: Vector3 | null = null;
   private debugFloor?: DebugFloor;
@@ -165,6 +172,7 @@ export class MissionManager {
   ) {
     this.camera = new CameraController(host.scene, canvas);
     host.scene.activeCamera = this.camera.getCamera();
+    this.wreckDebris = new WreckDebrisManager(host.scene);
   }
 
   static getMissionList(): {
@@ -221,6 +229,7 @@ export class MissionManager {
 
     this.config = config;
     this.assetManifest = await loadAssetManifest("/assets/manifest.json");
+    this.wreckDebris.setEnvironment(resolveMissionEnvironment(config));
     this.weaponsManifest = await loadWeaponsManifest(
       "/assets/weapons/manifest.json",
     );
@@ -241,6 +250,19 @@ export class MissionManager {
     this.applyFlightPreferences(loadFlightPreferences());
     this.audioBridge = new GameAudioBridge(this.host.audio, this.events);
 
+    await this.assetPreloader.preloadAll({
+      config,
+      manifest: this.assetManifest,
+      weaponsManifest: this.weaponsManifest,
+      scene: this.host.scene,
+      shipLoader: this.shipLoader,
+      wreckDebris: this.wreckDebris,
+      audio: this.host.audio,
+      onMessage: (message) => {
+        this.loadState = { loading: true, message };
+      },
+    });
+
     // Initialize combat system and load player ammo
     this.combat = new CombatSystem(this.host.scene, this.events);
     this.combat.setWeaponsManifest(this.weaponsManifest);
@@ -258,19 +280,11 @@ export class MissionManager {
       );
     });
 
-    const sky = this.assetManifest.skyboxes[config.skyboxId];
-    if (sky) {
-      await SkyboxLoader.apply(this.host.scene, sky, "/assets");
-    } else {
-      SkyboxLoader.applyFallback(this.host.scene);
-    }
-
     const shipEntry = this.assetManifest.ships[config.player.shipId];
     if (!shipEntry) throw new Error(`Missing ship: ${config.player.shipId}`);
 
-    const playerLoaded = await this.shipLoader.loadShip(
+    const playerLoaded = this.assetPreloader.shipPool.takePlayerShip(
       config.player.shipId,
-      shipEntry,
     );
     playerLoaded.root.position = Vector3.FromArray(config.player.spawn);
     const heading = Vector3.FromArray(config.player.heading).normalize();
@@ -313,6 +327,7 @@ export class MissionManager {
         this.assetManifest.props[config.meteors.prefabId],
         config.meteors,
         playerLoaded.root.position,
+        this.assetPreloader.getMeteorTemplates(),
       );
     }
 
@@ -447,6 +462,7 @@ export class MissionManager {
       boundary,
       camera: this.camera,
       combat: this.combat,
+      events: this.events,
       targetingConfig: this.combatConfig.targeting,
       radarRadius: this.combatConfig.radar.radius,
       hostileTargets: this.world.collectHostileTargets(player.faction),
@@ -473,12 +489,22 @@ export class MissionManager {
     this.meteorHitCooldown = Math.max(0, this.meteorHitCooldown - dt);
     this.checkMeteorCollisions();
     this.updateLod();
+    this.wreckDebris.update(dt);
     this.engineVfx.update();
     this.audioBridge?.update(dt, this.buildAudioContext(player, playerInput, dt));
     this.renderGameDebug(player);
 
     if (!this.debugPreferences.gameplay.invincible && player.health.isDead()) {
       this.endState = MissionEndStates.Lost;
+      const entry = this.assetManifest.ships[player.vehicle.shipId];
+      if (entry) {
+        this.wreckDebris.spawnFromVehicle(
+          player.vehicle.shipId,
+          entry,
+          player.vehicle,
+        );
+      }
+      player.vehicle.root.setEnabled(false);
       ParticleFx.explosion(
         this.host.scene,
         player.vehicle.root.getAbsolutePosition(),
@@ -506,6 +532,10 @@ export class MissionManager {
     this.world.player?.dispose();
     this.world.clear();
     this.engineVfx.dispose();
+    this.wreckDebris.dispose();
+    disposeParticleFxPool(this.host.scene);
+    this.assetPreloader.dispose();
+    this.assetPreloader = new MissionAssetPreloader();
     this.gameDebugOverlay.dispose();
     this.events.clear();
   }
@@ -597,22 +627,25 @@ export class MissionManager {
     }
 
     this.waveSpawnInProgress = true;
-    void this.spawnWave(nextWave).then(() => {
-      this.wavesSpawned++;
-      if (this.wavesSpawned < waves.length) {
-        this.waveTimer = waves[this.wavesSpawned].delaySec;
-      }
-      this.waveSpawnInProgress = false;
-    });
+    this.spawnWave(nextWave);
+    this.wavesSpawned++;
+    if (this.wavesSpawned < waves.length) {
+      this.waveTimer = waves[this.wavesSpawned].delaySec;
+    }
+    this.waveSpawnInProgress = false;
   }
 
-  private async spawnWave(wave: MissionWave): Promise<void> {
+  private spawnWave(wave: MissionWave): void {
     for (const spec of wave.enemies) {
       const entry = this.assetManifest.ships[spec.shipId];
       if (!entry) continue;
-      const loaded = await this.shipLoader.loadShip(spec.shipId, entry);
-      loaded.root.position = Vector3.FromArray(spec.spawn);
       const npcId = `enemy_${this.world.getNpcCount()}`;
+      const loaded = this.assetPreloader.shipPool.acquireNpcShip(
+        spec.shipId,
+        npcId,
+        this.shipLoader,
+      );
+      loaded.root.position = Vector3.FromArray(spec.spawn);
       const faction = resolveFaction(entry.faction);
       const weapons = this.combat.attachWeapons(
         loaded.root,
@@ -798,7 +831,40 @@ export class MissionManager {
         position: meteor.root.position.clone(),
         radius: meteor.colliderRadius,
       })),
+      colliders: this.collectColliderDebugSnapshots(),
     };
+  }
+
+  private collectColliderDebugSnapshots() {
+    const colliders = [];
+
+    if (this.world.player?.vehicle.colliderMeshes.length) {
+      colliders.push({
+        ownerId: this.world.player.id,
+        meshes: this.world.player.vehicle.colliderMeshes,
+        isPlayer: true,
+      });
+    }
+
+    for (const npc of this.world.npcActors) {
+      if (!npc.vehicle.colliderMeshes.length) continue;
+      colliders.push({
+        ownerId: npc.id,
+        meshes: npc.vehicle.colliderMeshes,
+        isPlayer: false,
+      });
+    }
+
+    for (const meteor of this.meteorField.meteors) {
+      if (!meteor.colliderMeshes.length) continue;
+      colliders.push({
+        ownerId: meteor.id,
+        meshes: meteor.colliderMeshes,
+        isPlayer: false,
+      });
+    }
+
+    return colliders;
   }
 
   private syncDebugStaticMeshes(
@@ -846,6 +912,7 @@ export class MissionManager {
         radius: meteor.colliderRadius,
         team: "neutral",
         faction: "neutral",
+        colliderMeshes: meteor.colliderMeshes,
       });
     }
 
@@ -898,6 +965,14 @@ export class MissionManager {
   }
 
   private destroyNpc(npc: NpcActor): void {
+    const entry = this.assetManifest.ships[npc.vehicle.shipId];
+    if (entry) {
+      this.wreckDebris.spawnFromVehicle(
+        npc.vehicle.shipId,
+        entry,
+        npc.vehicle,
+      );
+    }
     ParticleFx.explosion(this.host.scene, npc.vehicle.position);
     this.events.emit(
       GameEvents.entityDestroyed({
@@ -907,7 +982,11 @@ export class MissionManager {
       }),
     );
     this.world.removeNpc(npc.id);
-    npc.dispose();
+    npc.vehicle.prepareForPool();
+    this.assetPreloader.shipPool.releaseNpcShip(
+      npc.vehicle.shipId,
+      npc.vehicle.loadedEntity,
+    );
   }
 
   private destroyMeteor(meteor: MeteorInstance): void {
@@ -925,17 +1004,23 @@ export class MissionManager {
     const player = this.world.player;
     if (!player || !this.config.meteors) return;
     if (this.meteorHitCooldown > 0) return;
-    const playerBody = {
+    const playerBody: SphereBody = {
       id: player.id,
       position: player.vehicle.position,
       radius: player.vehicle.colliderRadius,
+      team: player.vehicle.combatTeam,
+      faction: player.faction,
+      colliderMeshes: player.vehicle.colliderMeshes,
     };
 
     for (const meteor of this.meteorField.meteors) {
-      const mBody = {
+      const mBody: SphereBody = {
         id: meteor.id,
         position: meteor.root.position,
         radius: meteor.colliderRadius,
+        team: "neutral",
+        faction: "neutral",
+        colliderMeshes: meteor.colliderMeshes,
       };
       if (this.collision.sphereOverlap(playerBody, mBody)) {
         this.meteorHitCooldown = 1.0;

@@ -73,6 +73,7 @@ export class NpcActor implements Actor {
       team: this.vehicle.combatTeam,
       faction: this.faction,
       velocity: this.vehicle.velocity,
+      colliderMeshes: this.vehicle.colliderMeshes,
     };
   }
 

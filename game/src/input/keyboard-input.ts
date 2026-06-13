@@ -117,6 +117,7 @@ export class KeyboardInput implements IPlayerInputSource {
         this.keys.has('ControlLeft') ||
         this.keys.has('ControlRight'),
       fireSecondaryPressed,
+      toggleSfoilPressed: false,
       cameraToggle: toggle,
       cameraCycle: cycle,
       cameraProfileCycle,

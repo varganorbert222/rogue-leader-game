@@ -133,6 +133,7 @@ export class GamepadInput implements IPlayerInputSource {
       boost: rTrigger > 0.95,
       fire: btn(0),
       fireSecondaryPressed,
+      toggleSfoilPressed: false,
       cameraToggle: toggle,
       cameraCycle: 0,
       cameraDistance: -cStickY,

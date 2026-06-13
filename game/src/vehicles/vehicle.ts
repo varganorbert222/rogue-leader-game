@@ -3,9 +3,10 @@ import {
   Scalar,
   TransformNode,
   Vector3,
+  type AbstractMesh,
 } from '@babylonjs/core';
-import type { LoadedEntity, ShipManifestEntry } from '@rogue-leader/engine';
-import type { LodRuntimeState } from '@rogue-leader/engine';
+import type { LoadedEntity, LodRuntimeState, ShipManifestEntry } from '@rogue-leader/engine';
+import { setLoadedEntityVisible } from '@rogue-leader/engine';
 import type { FactionId } from '../combat/faction';
 import { computeEngineSpeedRatio } from '../audio/engine-audio-config';
 import {
@@ -22,6 +23,8 @@ import type { SoftBoundary } from '../flight/soft-boundary';
 import type { VehicleInput } from '../input/vehicle-input';
 import type { CombatTeam } from '../weapons/core/combat-team';
 import type { VehicleWeaponSystem } from '../weapons/core/vehicle-weapon-system';
+import type { SfoilSfxPlayRequest } from '../audio/sfoil-sfx';
+import { ShipSfoilController } from './ship-sfoil-controller';
 
 const YAW_VISUAL_BANK_RAD = (YAW_VISUAL_BANK_DEG * Math.PI) / 180;
 
@@ -43,8 +46,10 @@ export class Vehicle {
   readonly faction: FactionId;
   readonly combatTeam: CombatTeam;
   readonly colliderRadius: number;
+  readonly colliderMeshes: readonly AbstractMesh[];
   readonly lodRuntime: LodRuntimeState;
   readonly weapons: VehicleWeaponSystem;
+  readonly loadedEntity: LoadedEntity;
   private readonly flight: ShipFlightController;
   private readonly bankPivot?: TransformNode;
   private readonly invertForwardRoll: boolean;
@@ -53,6 +58,7 @@ export class Vehicle {
   private constructor(
     options: VehicleSpawnOptions,
     flight: ShipFlightController,
+    private readonly sfoil?: ShipSfoilController,
     bankPivot?: TransformNode,
     invertForwardRoll = false
   ) {
@@ -61,9 +67,12 @@ export class Vehicle {
     this.faction = options.faction;
     this.combatTeam = options.combatTeam;
     this.colliderRadius = options.loaded.colliderRadius;
+    this.colliderMeshes = options.loaded.colliderMeshes;
     this.lodRuntime = options.loaded.lodRuntime;
     this.weapons = options.weapons;
+    this.loadedEntity = options.loaded;
     this.flight = flight;
+    this.sfoil = sfoil;
     this.bankPivot = bankPivot;
     this.invertForwardRoll = invertForwardRoll;
   }
@@ -75,12 +84,33 @@ export class Vehicle {
       options.loaded.visualRoot,
       options.loaded.visual.invertForwardRoll
     );
+    const sfoil = ShipSfoilController.tryCreate({
+      shipEntry: options.shipEntry,
+      animationGroups: options.loaded.animationGroups,
+      weapons: options.weapons,
+      flight,
+    });
     return new Vehicle(
       options,
       flight,
+      sfoil ?? undefined,
       bankPivot,
       options.loaded.visual.invertForwardRoll
     );
+  }
+
+  hasSfoilAbility(): boolean {
+    return this.sfoil != null;
+  }
+
+  /** Start S-foil toggle; returns sfx play request when a transition starts. */
+  tryToggleSfoil(): SfoilSfxPlayRequest | null {
+    if (!this.sfoil?.requestToggle()) return null;
+    return this.sfoil.sfxRequest;
+  }
+
+  getSfoilState(): string | null {
+    return this.sfoil?.getState() ?? null;
   }
 
   get root(): TransformNode {
@@ -156,7 +186,17 @@ export class Vehicle {
   }
 
   dispose(): void {
+    this.sfoil?.dispose();
     this.root.dispose();
+  }
+
+  /** Return ship visuals to instance pool without destroying the loaded hierarchy. */
+  prepareForPool(): void {
+    this.sfoil?.dispose();
+    this.weapons.setFireEnabled(false);
+    this.flight.resetKinematics();
+    setLoadedEntityVisible(this.loadedEntity, false);
+    this.root.position.y = -5000;
   }
 }
 

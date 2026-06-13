@@ -1,6 +1,7 @@
-import { Scene, Sound } from '@babylonjs/core';
+import { Sound } from '@babylonjs/core';
 import type { AudioBus } from './audio-bus';
 import type { MusicEntry, MusicLayerDef, MusicSetDef } from './audio-types';
+import type { MusicTrackRegistry } from './music-track-registry';
 
 interface ActiveLayer {
   def: MusicLayerDef;
@@ -13,7 +14,6 @@ interface ActiveLayer {
  * mixed by a smoothed combat-intensity value (0 = calm, 1 = combat).
  */
 export class DynamicMusicController {
-  private readonly tracks = new Map<string, Sound>();
   private activeSet: MusicSetDef | null = null;
   private activeLayers: ActiveLayer[] = [];
   private intensity = 0;
@@ -22,21 +22,9 @@ export class DynamicMusicController {
   private duckFactor = 1;
 
   constructor(
-    private readonly scene: Scene,
-    private readonly bus: AudioBus
+    private readonly bus: AudioBus,
+    private readonly tracks: MusicTrackRegistry
   ) {}
-
-  register(id: string, entry: MusicEntry, baseUrl: string): void {
-    const url = `${baseUrl}/${entry.path}`.replace(/\/+/g, '/').replace(':/', '://');
-    const sound = new Sound(
-      `dmusic_${id}`,
-      url,
-      this.scene,
-      undefined,
-      { loop: entry.loop, autoplay: false, volume: 0 }
-    );
-    this.tracks.set(id, sound);
-  }
 
   startSet(set: MusicSetDef, musicCatalog: Record<string, MusicEntry>): void {
     this.stop(0);
@@ -135,8 +123,6 @@ export class DynamicMusicController {
 
   dispose(): void {
     this.stop(0);
-    for (const track of this.tracks.values()) track.dispose();
-    this.tracks.clear();
   }
 
   private applyLayerVolumes(): void {
