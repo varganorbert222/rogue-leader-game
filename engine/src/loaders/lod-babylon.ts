@@ -1,6 +1,6 @@
 import { Mesh, type AbstractMesh } from '@babylonjs/core';
 import { normalizeAnchorNodeName } from './ship-anchor-detector';
-import { defaultScreenThresholds } from './lod-config';
+import { defaultScreenThresholds, defaultDistanceThresholds } from './lod-config';
 
 function meshLookupKey(name: string): string {
   return normalizeAnchorNodeName(name).toLowerCase();
@@ -45,69 +45,55 @@ export function resolveThresholdsForLevelCount(
   return defaultScreenThresholds(levelCount);
 }
 
-/** Wire Babylon's built-in screen-coverage LOD + cull on LOD0 meshes. */
-export function applyBabylonScreenCoverageLod(
+export function resolveDistanceThresholdsForLevelCount(
+  plannedThresholds: readonly number[],
+  levelCount: number,
+): number[] {
+  if (levelCount <= 1) return [];
+  const needed = levelCount - 1;
+  if (plannedThresholds.length >= needed) {
+    return plannedThresholds.slice(0, needed);
+  }
+  return defaultDistanceThresholds(levelCount);
+}
+
+/** Initial LOD group state — runtime switching uses Unity-style height % via `updateLodByScreenCoverage`. */
+export function prepareLodMeshGroups(
   lodGroups: readonly (readonly AbstractMesh[])[],
-  screenThresholdsPercent: readonly number[],
-  cullScreenPercent: number,
 ): void {
   if (lodGroups.length === 0) return;
 
-  const lod0Group = lodGroups[0];
-  if (lod0Group.length === 0) return;
-
-  const thresholds = resolveThresholdsForLevelCount(
-    screenThresholdsPercent,
-    lodGroups.length,
-  );
-  const cullCoverage = Math.max(0, cullScreenPercent) / 100;
-
-  const lowerMaps: Map<AbstractMesh, AbstractMesh>[] = [];
-  for (let level = 1; level < lodGroups.length; level++) {
-    lowerMaps.push(mapMeshesByName(lod0Group, lodGroups[level]));
-  }
-
-  for (const lod0Mesh of lod0Group) {
-    if (!isLodCapableMesh(lod0Mesh)) continue;
-
-    clearMeshLodLevels(lod0Mesh);
-    lod0Mesh.useLODScreenCoverage = true;
-    lod0Mesh.setEnabled(true);
-    lod0Mesh.isVisible = true;
-
-    for (let level = 0; level < lowerMaps.length; level++) {
-      const lowerMesh = lowerMaps[level].get(lod0Mesh);
-      const thresholdPct = thresholds[level];
-      if (!lowerMesh || thresholdPct == null) continue;
-      if (!isLodCapableMesh(lowerMesh)) continue;
-
-      lowerMesh.setEnabled(false);
-      lowerMesh.isVisible = false;
-      lod0Mesh.addLODLevel(thresholdPct / 100, lowerMesh);
-    }
-
-    lod0Mesh.addLODLevel(cullCoverage, null);
-  }
-
-  for (let level = 1; level < lodGroups.length; level++) {
-    for (const mesh of lodGroups[level]) {
-      if (mesh.isDisposed()) continue;
-      mesh.setEnabled(false);
-      mesh.isVisible = false;
-    }
-  }
-}
-
-/** Cull-only when a model has a single LOD group. */
-export function applyBabylonCullOnly(
-  meshes: readonly AbstractMesh[],
-  cullScreenPercent: number,
-): void {
-  const cullCoverage = Math.max(0, cullScreenPercent) / 100;
-  for (const mesh of meshes) {
+  for (const mesh of lodGroups[0]) {
     if (!isLodCapableMesh(mesh)) continue;
     clearMeshLodLevels(mesh);
-    mesh.useLODScreenCoverage = true;
-    mesh.addLODLevel(cullCoverage, null);
+    mesh.useLODScreenCoverage = false;
+  }
+
+  for (let level = 0; level < lodGroups.length; level++) {
+    const show = level === 0;
+    for (const mesh of lodGroups[level]) {
+      if (mesh.isDisposed()) continue;
+      mesh.setEnabled(show);
+      mesh.isVisible = show;
+    }
   }
 }
+
+/** @deprecated Use `prepareLodMeshGroups` — thresholds are applied at runtime, not via Babylon LOD. */
+export function applyBabylonScreenCoverageLod(
+  lodGroups: readonly (readonly AbstractMesh[])[],
+  _screenThresholdsPercent: readonly number[],
+  _cullScreenPercent: number,
+): void {
+  prepareLodMeshGroups(lodGroups);
+}
+
+/** @deprecated Use `prepareLodMeshGroups` — cull threshold is applied at runtime. */
+export function applyBabylonCullOnly(
+  meshes: readonly AbstractMesh[],
+  _cullScreenPercent: number,
+): void {
+  prepareLodMeshGroups([meshes]);
+}
+
+export { mapMeshesByName, isLodCapableMesh, clearMeshLodLevels };

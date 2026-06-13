@@ -20,11 +20,8 @@ import { detectFirePoints } from "./firepoint-detector";
 import { detectShipAnchors, type ShipAnchors } from "./ship-anchor-detector";
 import { LodShipLoader, type LodProgressCallback } from "./lod-ship-loader";
 import { createLodRuntimeState, type LodRuntimeState } from "./lod-runtime";
-import { DEFAULT_CULL_SCREEN_PERCENT, defaultScreenThresholds } from "./lod-config";
-import {
-  applyBabylonCullOnly,
-  applyBabylonScreenCoverageLod,
-} from "./lod-babylon";
+import { DEFAULT_CULL_DISTANCE, DEFAULT_CULL_SCREEN_PERCENT, defaultDistanceThresholds, defaultScreenThresholds } from "./lod-config";
+import { prepareLodMeshGroups } from "./lod-babylon";
 
 function createPlaceholderLodRuntime(
   root: TransformNode,
@@ -32,9 +29,15 @@ function createPlaceholderLodRuntime(
 ): LodRuntimeState {
   return createLodRuntimeState(
     root,
+    lodMeshes,
     lodMeshes[0] ?? [],
-    [],
-    DEFAULT_CULL_SCREEN_PERCENT,
+    {
+      metric: 'screen',
+      screenThresholds: [],
+      cullScreenPercent: DEFAULT_CULL_SCREEN_PERCENT,
+      distanceThresholds: [],
+      cullDistance: DEFAULT_CULL_DISTANCE,
+    },
   );
 }
 import { attachVisualPivot } from "./visual-pivot";
@@ -103,23 +106,32 @@ function finalizeLoadedEntity(
   const visualMeshes = filterVisualMeshes(meshes, colliderMeshes);
   const visualLodMeshes = filterVisualLodMeshes(lodMeshes, colliderMeshes);
 
+  const lodRuntimeInput = extras.lodRuntime;
   const screenThresholds =
-    extras.lodRuntime?.screenThresholds ??
+    lodRuntimeInput?.screenThresholds ??
     defaultScreenThresholds(visualLodMeshes.length);
   const cullScreenPercent =
-    extras.lodRuntime?.cullScreenPercent ?? DEFAULT_CULL_SCREEN_PERCENT;
+    lodRuntimeInput?.cullScreenPercent ?? DEFAULT_CULL_SCREEN_PERCENT;
+  const distanceThresholds =
+    lodRuntimeInput?.distanceThresholds ??
+    defaultDistanceThresholds(visualLodMeshes.length);
+  const cullDistance =
+    lodRuntimeInput?.cullDistance ?? DEFAULT_CULL_DISTANCE;
+  const metric = lodRuntimeInput?.metric ?? 'screen';
 
-  if (visualLodMeshes.length > 1) {
-    applyBabylonScreenCoverageLod(visualLodMeshes, screenThresholds, cullScreenPercent);
-  } else if (visualLodMeshes[0]?.length) {
-    applyBabylonCullOnly(visualLodMeshes[0], cullScreenPercent);
-  }
+  prepareLodMeshGroups(visualLodMeshes);
 
   const lodRuntime = createLodRuntimeState(
     root,
+    visualLodMeshes,
     visualLodMeshes[0] ?? [],
-    screenThresholds,
-    cullScreenPercent,
+    {
+      metric,
+      screenThresholds,
+      cullScreenPercent,
+      distanceThresholds,
+      cullDistance,
+    },
   );
 
   const {

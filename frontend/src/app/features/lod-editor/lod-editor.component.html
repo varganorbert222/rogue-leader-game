@@ -1,0 +1,211 @@
+<div class="lod-editor">
+  <canvas #previewCanvas class="preview-canvas"></canvas>
+
+  <header class="top-bar">
+    <a routerLink="/" class="back-link">← Main menu</a>
+    <h1>LOD Group Editor</h1>
+    <span class="dev-badge">Developer tool</span>
+  </header>
+
+  <aside class="panel panel-left">
+    <h2>Models</h2>
+    <label class="field">
+      <span>Asset</span>
+      <select
+        [ngModel]="selectedModelId"
+        (ngModelChange)="onModelChange($event)"
+        [disabled]="loading"
+      >
+        @for (model of models; track model.id) {
+          <option [value]="model.id">{{ model.label }}</option>
+        }
+      </select>
+    </label>
+    <p class="hint">Orbit: drag · Zoom: wheel · Preview scene only (not shipped in production).</p>
+  </aside>
+
+  <aside class="panel panel-right">
+    <h2>LOD Group</h2>
+
+    @if (loading) {
+      <p class="status loading">{{ loadingMessage }}</p>
+    }
+    @if (errorMessage) {
+      <p class="status error">{{ errorMessage }}</p>
+    }
+
+    <label class="field">
+      <span>LOD metric</span>
+      <select [(ngModel)]="config.metric" (ngModelChange)="onMetricChange()">
+        <option value="screen">Screen coverage (% height)</option>
+        <option value="distance">Camera distance (meters)</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Mode</span>
+      <select [(ngModel)]="config.mode" (ngModelChange)="onConfigFieldChange()">
+        <option value="manual">Manual (_LODX files)</option>
+        <option value="auto">Auto simplify</option>
+        <option value="mixed">Mixed</option>
+        <option value="none">None (single mesh)</option>
+      </select>
+    </label>
+
+    <label class="field checkbox">
+      <input type="checkbox" [(ngModel)]="config.discoverSiblingLods" (ngModelChange)="onConfigFieldChange()" />
+      <span>Discover sibling _LOD1, _LOD2… when only LOD0 is listed</span>
+    </label>
+
+    <label class="field checkbox">
+      <input type="checkbox" [(ngModel)]="config.enableAutoSimplify" (ngModelChange)="onConfigFieldChange()" />
+      <span>Enable auto simplify (opt-in for LOD0-only models)</span>
+    </label>
+
+    <label class="field">
+      <span>Manual GLB paths (one per line)</span>
+      <textarea rows="4" [(ngModel)]="pathsText" (ngModelChange)="onConfigFieldChange()"></textarea>
+    </label>
+
+    @if (config.mode === 'auto' || config.enableAutoSimplify) {
+      <label class="field">
+        <span>Auto simplify qualities (0–1)</span>
+        <input type="text" [(ngModel)]="autoQualitiesText" (ngModelChange)="onConfigFieldChange()" />
+      </label>
+    }
+
+    @if (!isDistanceMetric()) {
+      <label class="field">
+        <span>Cull below screen %</span>
+        <input
+          type="number"
+          min="0"
+          max="100"
+          step="0.1"
+          [(ngModel)]="config.cullScreenPercent"
+          (ngModelChange)="onConfigFieldChange()"
+        />
+      </label>
+    } @else {
+      <label class="field">
+        <span>Cull beyond distance (m)</span>
+        <input
+          type="number"
+          min="0"
+          step="1"
+          [(ngModel)]="config.cullDistance"
+          (ngModelChange)="onConfigFieldChange()"
+        />
+      </label>
+    }
+
+    @if (snapshot && snapshot.levelCount > 1 && !isDistanceMetric()) {
+      <div class="thresholds">
+        <h3>Transition thresholds (% screen height)</h3>
+        @for (threshold of snapshot.screenThresholds; track $index) {
+          <label class="field threshold-row">
+            <span>LOD {{ $index }} → {{ $index + 1 }}</span>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              [ngModel]="threshold"
+              (ngModelChange)="onThresholdChange($index, $event)"
+            />
+            <button type="button" class="snap-btn" (click)="snapToThreshold($index)">Preview</button>
+          </label>
+        }
+      </div>
+    }
+
+    @if (snapshot && snapshot.levelCount > 1 && isDistanceMetric()) {
+      <div class="thresholds">
+        <h3>Transition thresholds (meters from camera)</h3>
+        @for (threshold of snapshot.distanceThresholds; track $index) {
+          <label class="field threshold-row">
+            <span>LOD {{ $index }} → {{ $index + 1 }} after</span>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              [ngModel]="threshold"
+              (ngModelChange)="onDistanceThresholdChange($index, $event)"
+            />
+            <span class="unit">m</span>
+            <button type="button" class="snap-btn" (click)="snapToThreshold($index)">Preview</button>
+          </label>
+        }
+      </div>
+    }
+
+    <button type="button" class="primary-btn" (click)="applyReloadNow()" [disabled]="loading">
+      Reload preview
+    </button>
+
+    <section class="live-stats">
+      <h3>Live</h3>
+      <dl>
+        <div><dt>Metric</dt><dd>{{ live.metric === 'distance' ? 'Distance (m)' : 'Screen %' }}</dd></div>
+        <div><dt>Screen coverage</dt><dd>{{ live.coveragePercent | number:'1.1-1' }}%</dd></div>
+        <div><dt>Camera distance</dt><dd>{{ live.cameraDistanceMeters | number:'1.1-1' }} m</dd></div>
+        <div><dt>Active LOD</dt><dd>{{ activeLodLabel() }}</dd></div>
+        <div><dt>Camera radius</dt><dd>{{ live.cameraRadius | number:'1.1-1' }}</dd></div>
+      </dl>
+    </section>
+
+    @if (snapshot) {
+      <section class="lod-bar-section">
+        <h3>LOD coverage map</h3>
+        <div class="lod-bar">
+          @for (segment of lodBarSegments(); track segment.label) {
+            <div class="lod-bar-segment" [class]="segment.tone" [style.flex]="segment.widthPct">
+              <span>{{ segment.label }}</span>
+            </div>
+          }
+        </div>
+        <div class="lod-levels">
+          @for (level of snapshot.levels; track level.index) {
+            <div class="lod-level-card" [class.active]="live.activeLodIndex === level.index">
+              <strong>{{ level.label }}</strong>
+              <span>{{ level.vertexCount | number }} verts</span>
+              <span>{{ level.meshCount }} meshes</span>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="preview-scrub">
+        <h3>Preview transition (camera)</h3>
+        <input
+          type="range"
+          min="0"
+          [max]="previewScrubMax()"
+          [step]="isDistanceMetric() ? 1 : 0.5"
+          [ngModel]="previewCoverageSlider"
+          (ngModelChange)="onPreviewSliderChange($event)"
+        />
+        <p class="hint scrub-label">
+          @if (isDistanceMetric()) {
+            Scrub camera distance: {{ previewCoverageSlider | number:'1.0-0' }} m
+          } @else {
+            Scrub screen coverage: {{ previewCoverageSlider | number:'1.1-1' }}%
+          }
+        </p>
+        <div class="scrub-actions">
+          <button type="button" (click)="resetCamera()">Reset view</button>
+          <button type="button" (click)="snapToCull()">Preview cull</button>
+        </div>
+      </section>
+    }
+
+    <section class="export">
+      <h3>Manifest snippet</h3>
+      <textarea readonly rows="8" [value]="exportJson"></textarea>
+      <button type="button" (click)="copyExport()">Copy JSON</button>
+      @if (copyStatus) {
+        <span class="copy-status">{{ copyStatus }}</span>
+      }
+    </section>
+  </aside>
+</div>

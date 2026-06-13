@@ -3,6 +3,8 @@ import {
   ParticleFx,
   type AssetManifest,
   type BabylonHost,
+  updateLod,
+  type LodRuntimeState,
 } from "@rogue-leader/engine";
 import type { WeaponsManifest } from "../data/config/weapons-manifest";
 import { ActorRoles, EntityDestroyKinds, SfxClipIds } from "../data/constants";
@@ -209,6 +211,18 @@ export function checkAsteroidCollisions(
   return asteroidHitCooldown;
 }
 
-export function updateMissionLod(_scene: Scene, _world: ActorWorld): void {
-  // Babylon switches LOD each frame via mesh.useLODScreenCoverage.
+export function updateMissionLod(
+  scene: Scene,
+  world: ActorWorld,
+  extraLodStates: readonly LodRuntimeState[] = [],
+): void {
+  scene.updateTransformMatrix(true);
+
+  for (const actor of world.allActors()) {
+    updateLod(scene, actor.vehicle.lodRuntime);
+  }
+
+  for (const state of extraLodStates) {
+    updateLod(scene, state);
+  }
 }

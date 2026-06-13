@@ -109,23 +109,35 @@ export {
 export {
   resolveLodPlan,
   defaultScreenThresholds,
+  defaultDistanceThresholds,
   DEFAULT_CULL_SCREEN_PERCENT,
+  DEFAULT_CULL_DISTANCE,
   type LodConfig,
   type LodLevelDef,
   type LodManifestValue,
+  type LodMetric,
   type ResolvedLodPlan,
 } from './loaders/lod-config';
 export {
   createLodRuntimeState,
+  updateLod,
   updateLodByScreenCoverage,
+  predictActiveLodIndex,
+  predictActiveLodIndexByDistance,
+  predictActiveLodIndexByScreen,
+  predictActiveLodIndexForMetric,
+  applyLodVisibility,
   type LodRuntimeState,
 } from './loaders/lod-runtime';
 export {
   applyBabylonScreenCoverageLod,
   applyBabylonCullOnly,
+  prepareLodMeshGroups,
   resolveThresholdsForLevelCount,
+  resolveDistanceThresholdsForLevelCount,
 } from './loaders/lod-babylon';
 export { computeScreenCoveragePercent } from './render/screen-coverage';
+export { computeCameraDistanceMeters } from './render/lod-distance';
 export { applyMeshAlphaCutoff, disableMeshBackfaceCulling } from './render/mesh-material-utils';
 export {
   shareMaterialsFromTemplate,
@@ -135,6 +147,21 @@ export {
 export {
   PropInstanceGroup,
 } from './render/prop-instance-group';
+export {
+  LodPreviewScene,
+} from './dev/lod-preview-scene';
+export {
+  listLodEditorModels,
+} from './dev/lod-manifest-models';
+export {
+  lodManifestToEditableConfig,
+  editableConfigToManifestValue,
+  type LodEditorModelEntry,
+  type LodEditorModelKind,
+  type LodPreviewLiveState,
+  type LodPreviewSnapshot,
+  type LodPreviewLevelInfo,
+} from './dev/lod-editor-types';
 export { detectFirePoints, refreshFirePoints, type FirePoints } from './loaders/firepoint-detector';
 export {
   detectWeaponMounts,

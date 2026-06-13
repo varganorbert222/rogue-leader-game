@@ -440,7 +440,7 @@ export class MissionManager {
       this.combatHandlerContext(),
       this.asteroidHitCooldown,
     );
-    updateMissionLod(this.host.scene, this.world);
+    updateMissionLod(this.host.scene, this.world, this.asteroidField.collectLodRuntimes());
     this.wreckDebris.update(dt);
     this.engineVfx.update();
     const audioFrame = buildMissionAudioContext({

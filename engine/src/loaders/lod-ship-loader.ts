@@ -14,7 +14,7 @@ import {
   type LodManifestValue,
   type ResolvedLodPlan,
 } from './lod-config';
-import { resolveThresholdsForLevelCount } from './lod-babylon';
+import { resolveDistanceThresholdsForLevelCount, resolveThresholdsForLevelCount } from './lod-babylon';
 import { createLodRuntimeState, type LodRuntimeState } from './lod-runtime';
 import { attachGltfImportToParent } from './gltf-import-utils';
 import { discoverSiblingLodPaths } from './lod-discovery';
@@ -243,14 +243,24 @@ export class LodShipLoader {
       plan.screenThresholds,
       lodMeshes.length,
     );
+    const distanceThresholds = resolveDistanceThresholdsForLevelCount(
+      plan.distanceThresholds,
+      lodMeshes.length,
+    );
     const lod0Meshes = lodMeshes[0] ?? [];
     disableMeshBackfaceCulling(lodMeshes.flat());
 
     const lodRuntime = createLodRuntimeState(
       root,
+      lodMeshes,
       lod0Meshes,
-      screenThresholds,
-      plan.cullScreenPercent,
+      {
+        metric: plan.metric,
+        screenThresholds,
+        cullScreenPercent: plan.cullScreenPercent,
+        distanceThresholds,
+        cullDistance: plan.cullDistance,
+      },
     );
 
     onProgress?.({
@@ -291,15 +301,14 @@ export class LodShipLoader {
 
     const url = `${this.baseUrl}/${relativePath}`;
     try {
-      const result = await SceneLoader.ImportMeshAsync('', url, '', this.scene);
-      const ok =
-        result.meshes.length > 0 || (result.transformNodes?.length ?? 0) > 0;
-      for (const mesh of result.meshes) {
-        mesh.dispose(false, false);
+      let response = await fetch(url, { method: 'HEAD' });
+      if (response.status === 405 || response.status === 501) {
+        response = await fetch(url, {
+          method: 'GET',
+          headers: { Range: 'bytes=0-0' },
+        });
       }
-      for (const node of result.transformNodes ?? []) {
-        node.dispose();
-      }
+      const ok = response.ok || response.status === 206;
       this.loadProbeCache.set(relativePath, ok);
       return ok;
     } catch {

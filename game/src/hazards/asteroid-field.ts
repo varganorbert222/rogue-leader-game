@@ -68,6 +68,8 @@ export interface AsteroidInstance {
 
   root: TransformNode;
 
+  lodRuntime: import("@rogue-leader/engine").LodRuntimeState;
+
   health: HealthComponent;
 
   /** Sphere fallback radius — 0 when `usesMeshCollider` is true. */
@@ -334,6 +336,8 @@ export class AsteroidField {
 
         root: loaded.root,
 
+        lodRuntime: loaded.lodRuntime,
+
         health: new HealthComponent(30, 30, 0, 0),
 
         colliderRadius: usesMeshCollider ? 0 : loaded.colliderRadius * scale,
@@ -376,6 +380,12 @@ export class AsteroidField {
 
     }
 
+  }
+
+
+
+  collectLodRuntimes(): import("@rogue-leader/engine").LodRuntimeState[] {
+    return this.asteroids.map((asteroid) => asteroid.lodRuntime);
   }
 
 

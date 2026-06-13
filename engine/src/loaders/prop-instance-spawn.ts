@@ -18,11 +18,8 @@ import {
   findVisualRoot,
 } from './clone-entity-utils';
 import { createLodRuntimeState } from './lod-runtime';
-import { DEFAULT_CULL_SCREEN_PERCENT } from './lod-config';
-import {
-  applyBabylonCullOnly,
-  applyBabylonScreenCoverageLod,
-} from './lod-babylon';
+import { DEFAULT_CULL_DISTANCE, DEFAULT_CULL_SCREEN_PERCENT } from './lod-config';
+import { prepareLodMeshGroups } from './lod-babylon';
 
 function findMatchingTransformNode(
   templateRoot: TransformNode,
@@ -233,21 +230,21 @@ export function spawnPropInstancesFromTemplate(
     entry.colliderSource === 'named'
       ? filterVisualLodMeshes(lodMeshes, colliderMeshes)
       : lodMeshes;
-  const screenThresholds = template.lodRuntime.screenThresholds;
-  const cullScreenPercent =
-    template.lodRuntime.cullScreenPercent ?? DEFAULT_CULL_SCREEN_PERCENT;
 
-  if (visualLodMeshes.length > 1) {
-    applyBabylonScreenCoverageLod(visualLodMeshes, screenThresholds, cullScreenPercent);
-  } else if (visualLodMeshes[0]?.length) {
-    applyBabylonCullOnly(visualLodMeshes[0], cullScreenPercent);
-  }
+  prepareLodMeshGroups(visualLodMeshes);
 
   const lodRuntime = createLodRuntimeState(
     root,
+    visualLodMeshes,
     visualLodMeshes[0] ?? [],
-    screenThresholds,
-    cullScreenPercent,
+    {
+      metric: template.lodRuntime.metric,
+      screenThresholds: template.lodRuntime.screenThresholds,
+      cullScreenPercent:
+        template.lodRuntime.cullScreenPercent ?? DEFAULT_CULL_SCREEN_PERCENT,
+      distanceThresholds: template.lodRuntime.distanceThresholds,
+      cullDistance: template.lodRuntime.cullDistance ?? DEFAULT_CULL_DISTANCE,
+    },
   );
 
   const loaded: LoadedEntity = {
