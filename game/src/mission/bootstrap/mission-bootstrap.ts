@@ -16,12 +16,12 @@ import { requireMissionConfig } from '../mission-registry';
 import type { MissionConfig } from '../mission-types';
 import type { MissionRuntimeContext } from '../simulation/mission-runtime-context';
 import { MissionSimulationCoordinator } from '../simulation/coordinator/mission-simulation-coordinator';
-import type { MissionWorld } from '../simulation/world/mission-world';
+import type { World } from '../../ecs/world';
 
 export interface MissionBootstrapInput {
   host: BabylonHost;
   missionId: string;
-  world: MissionWorld;
+  world: World;
   collision: CollisionSystem;
   camera: CameraController;
   events: GameEventBus;

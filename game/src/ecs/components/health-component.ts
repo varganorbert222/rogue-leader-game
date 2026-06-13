@@ -3,7 +3,7 @@ export class HealthComponent {
     public health: number,
     public maxHealth: number,
     public shield: number,
-    public maxShield: number
+    public maxShield: number,
   ) {}
 
   applyDamage(amount: number): { hull: number; shield: number } {

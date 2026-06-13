@@ -1,34 +1,42 @@
 import { Vector3 } from '@babylonjs/core';
 import type { Camera } from '@babylonjs/core/Cameras/camera';
 import type { NpcBehaviorConfig } from '../../../data/config/npc-behavior-config';
-import type { PlayerActor } from '../../../actors/player-actor';
-import type { ActorRegistry } from '../../../actors/actor-registry';
+import { Role } from '../../../ecs/components/role-tag';
+import type { EntityId } from '../../../ecs/entity-id';
+import {
+  getEngineSpeedRatio,
+  getShipPosition,
+  getShipVelocity,
+} from '../../../ecs/queries/ship-queries';
+import type { World } from '../../../ecs/world';
 import type {
   GameAudioUpdateContext,
   ShipEngineAudioSource,
 } from '../../../audio/game-audio-bridge';
 import type { PlayerInput } from '../../../player/input/player-input';
 
-export function buildNpcEngineSources(
-  actors: ActorRegistry,
-): ShipEngineAudioSource[] {
+export function buildNpcEngineSources(world: World): ShipEngineAudioSource[] {
   const sources: ShipEngineAudioSource[] = [];
-  for (const npc of actors.npcActors) {
-    if (npc.health.isDead()) continue;
+  for (const npcId of world.queryByRole(Role.Npc)) {
+    const health = world.get(npcId, 'health');
+    const shipIdentity = world.get(npcId, 'shipIdentity');
+    if (!health || health.isDead() || !shipIdentity || !world.has(npcId, 'flight')) {
+      continue;
+    }
     sources.push({
-      id: npc.id,
-      shipId: npc.vehicle.shipId,
-      position: npc.vehicle.position.clone(),
-      velocity: npc.vehicle.velocity.clone(),
-      speedRatio: npc.vehicle.getEngineSpeedRatio(),
+      id: npcId,
+      shipId: shipIdentity.shipId,
+      position: getShipPosition(world, npcId).clone(),
+      velocity: getShipVelocity(world, npcId).clone(),
+      speedRatio: getEngineSpeedRatio(world, npcId),
     });
   }
   return sources;
 }
 
 export function buildMissionAudioContext(params: {
-  actors: ActorRegistry;
-  player: PlayerActor;
+  world: World;
+  playerId: EntityId;
   input: PlayerInput;
   dt: number;
   camera: Camera;
@@ -38,9 +46,15 @@ export function buildMissionAudioContext(params: {
   context: GameAudioUpdateContext;
   prevListenerPosition: Vector3;
 } {
-  const playerPos = params.player.vehicle.position;
+  const { world, playerId } = params;
+  const hasPlayerShip = world.has(playerId, 'flight');
+  const playerPos = hasPlayerShip
+    ? getShipPosition(world, playerId)
+    : Vector3.Zero();
   const listenerPos = params.camera.position.clone();
-  let listenerVelocity = params.player.vehicle.velocity.clone();
+  let listenerVelocity = hasPlayerShip
+    ? getShipVelocity(world, playerId).clone()
+    : Vector3.Zero();
 
   if (params.prevListenerPosition && params.dt > 0) {
     listenerVelocity = listenerPos
@@ -53,9 +67,10 @@ export function buildMissionAudioContext(params: {
   let enemiesInRadar = 0;
   let enemiesInAttackRange = 0;
 
-  for (const npc of params.actors.npcActors) {
-    if (npc.health.isDead()) continue;
-    const dist = Vector3.Distance(playerPos, npc.vehicle.position);
+  for (const npcId of world.queryByRole(Role.Npc)) {
+    const health = world.get(npcId, 'health');
+    if (!health || health.isDead() || !world.has(npcId, 'flight')) continue;
+    const dist = Vector3.Distance(playerPos, getShipPosition(world, npcId));
     if (dist <= radar) enemiesInRadar++;
     if (dist <= attack) enemiesInAttackRange++;
   }
@@ -63,7 +78,7 @@ export function buildMissionAudioContext(params: {
   return {
     prevListenerPosition: listenerPos.clone(),
     context: {
-      enemyCount: params.actors.getNpcCount(),
+      enemyCount: world.getNpcCount(),
       enemiesInRadar,
       enemiesInAttackRange,
       playerFiring:
@@ -72,9 +87,13 @@ export function buildMissionAudioContext(params: {
       listenerPosition: listenerPos,
       listenerVelocity,
       playerPosition: playerPos.clone(),
-      playerVelocity: params.player.vehicle.velocity.clone(),
-      playerSpeedRatio: params.player.vehicle.getEngineSpeedRatio(),
-      npcEngines: buildNpcEngineSources(params.actors),
+      playerVelocity: hasPlayerShip
+        ? getShipVelocity(world, playerId).clone()
+        : Vector3.Zero(),
+      playerSpeedRatio: hasPlayerShip
+        ? getEngineSpeedRatio(world, playerId)
+        : 0,
+      npcEngines: buildNpcEngineSources(world),
     },
   };
 }

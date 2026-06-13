@@ -6,11 +6,10 @@ import { resolveFaction } from '../../../combat/faction';
 import type { CombatConfig } from '../../../data/config/combat-config';
 import type { NpcBehaviorConfig } from '../../../data/config/npc-behavior-config';
 import { WinConditionTypes } from '../../../data/constants';
-import { HealthComponent } from '../../../actors/health-component';
-import { NpcActor } from '../../../actors/npc-actor';
-import type { ActorRegistry } from '../../../actors/actor-registry';
+import { HealthComponent } from '../../../ecs/components/health-component';
+import { spawnNpcEntity } from '../../../ecs/spawn/entity-factory';
+import type { World } from '../../../ecs/world';
 import type { MissionAssetPreloader } from '../../../mission/loading/mission-asset-preloader';
-import { Vehicle } from '../../../vehicles/vehicle';
 import type { CombatSystem } from '../../../combat/systems/combat-system';
 import type { MissionConfig, MissionWave } from '../../mission-types';
 import { missionWaveCount, missionWaves } from '../utils/wave-display';
@@ -22,7 +21,7 @@ export interface WaveSpawnState {
 }
 
 export interface WaveSpawnContext {
-  actors: ActorRegistry;
+  world: World;
   assetManifest: AssetManifest;
   assetPreloader: MissionAssetPreloader;
   shipLoader: GltfShipLoader;
@@ -92,7 +91,7 @@ export function spawnWave(wave: MissionWave, ctx: WaveSpawnContext): void {
   for (const spec of wave.enemies) {
     const entry = ctx.assetManifest.ships[spec.shipId];
     if (!entry) continue;
-    const npcId = `enemy_${ctx.actors.getNpcCount()}`;
+    const npcId = `enemy_${ctx.world.getNpcCount()}`;
     const loaded = ctx.assetPreloader.shipPool.acquireNpcShip(
       spec.shipId,
       npcId,
@@ -106,16 +105,6 @@ export function spawnWave(wave: MissionWave, ctx: WaveSpawnContext): void {
       'enemy',
       loaded.anchors,
     );
-    const vehicle = Vehicle.spawn({
-      id: npcId,
-      shipId: spec.shipId,
-      shipEntry: entry,
-      loaded,
-      faction,
-      combatTeam: 'enemy',
-      weapons,
-      flightDefaults: ctx.combatConfig.defaults.flight,
-    });
     const navKit = ctx.missionNavigation.createFlockKit(
       wave.id,
       ctx.npcBehaviorConfig.pathArriveRadius,
@@ -125,20 +114,26 @@ export function spawnWave(wave: MissionWave, ctx: WaveSpawnContext): void {
       navKit.combatRole ??
       ctx.missionNavigation.getFlockAssignment(wave.id)?.combatRole ??
       'hunter';
-    ctx.actors.addNpc(
-      new NpcActor(
-        npcId,
-        wave.id,
-        new HealthComponent(40, 40, 0, 0),
-        vehicle,
-        new BehaviorNpcInput(
+    spawnNpcEntity(ctx.world, {
+      id: npcId,
+      flockId: wave.id,
+      shipId: spec.shipId,
+      shipEntry: entry,
+      loaded,
+      faction,
+      combatTeam: 'enemy',
+      weapons,
+      flightDefaults: ctx.combatConfig.defaults.flight,
+      health: new HealthComponent(40, 40, 0, 0),
+      steering: {
+        flockId: wave.id,
+        input: new BehaviorNpcInput(
           ctx.npcBehaviorConfig,
           navKit,
           spec.behavior,
           combatRole,
         ),
-        faction,
-      ),
-    );
+      },
+    });
   }
 }

@@ -1,6 +1,5 @@
 import { Quaternion, type Scene } from '@babylonjs/core';
 import { AmmoIds } from '../../data/constants';
-import type { PlayerActor } from '../../actors/player-actor';
 import {
   RETICLE_INNER_DISTANCE,
   RETICLE_OUTER_DISTANCE,
@@ -11,6 +10,9 @@ import {
 } from '../../flight/screen-project';
 import { getShipForward } from '../../flight/ship-forward';
 import type { CombatSystem } from '../../combat/systems/combat-system';
+import type { EntityId } from '../../ecs/entity-id';
+import { getShipRoot } from '../../ecs/queries/ship-queries';
+import type { World } from '../../ecs/world';
 import {
   hudCurrentWave,
   hudTotalWaves,
@@ -41,7 +43,8 @@ export interface MissionHudState {
 export function buildMissionHudState(params: {
   scene: Scene;
   backend: string;
-  player?: PlayerActor;
+  world: World;
+  playerId?: EntityId;
   combat: CombatSystem;
   wavesSpawned: number;
   config?: MissionConfig;
@@ -51,11 +54,16 @@ export function buildMissionHudState(params: {
   let reticleInner = hidden;
   let reticleOuter = hidden;
 
-  const { player, scene } = params;
-  if (player) {
-    const shipPos = player.vehicle.root.getAbsolutePosition();
+  const { playerId, scene, world } = params;
+  const playerHealth = playerId ? world.get(playerId, 'health') : undefined;
+  const targeting = playerId ? world.get(playerId, 'targeting') : undefined;
+  const hasPlayerShip = playerId ? world.has(playerId, 'flight') : false;
+
+  if (playerId && hasPlayerShip) {
+    const root = getShipRoot(world, playerId);
+    const shipPos = root.getAbsolutePosition();
     const fwd = getShipForward(
-      player.vehicle.root.rotationQuaternion ?? Quaternion.Identity(),
+      root.rotationQuaternion ?? Quaternion.Identity(),
     );
     reticleInner = projectWorldToScreen(
       scene,
@@ -68,10 +76,10 @@ export function buildMissionHudState(params: {
   }
 
   return {
-    health: player?.health.health ?? 0,
-    maxHealth: player?.health.maxHealth ?? 100,
-    shield: player?.health.shield ?? 0,
-    maxShield: player?.health.maxShield ?? 50,
+    health: playerHealth?.health ?? 0,
+    maxHealth: playerHealth?.maxHealth ?? 100,
+    shield: playerHealth?.shield ?? 0,
+    maxShield: playerHealth?.maxShield ?? 50,
     wave: hudCurrentWave(params.wavesSpawned, params.config?.waves),
     totalWaves: hudTotalWaves(params.config?.waves),
     enemiesRemaining: params.npcCount,
@@ -82,6 +90,6 @@ export function buildMissionHudState(params: {
       .getCount(AmmoIds.ProtonTorpedo),
     reticleInner,
     reticleOuter,
-    targetLock: player?.targeting.getActiveTarget()?.screenPoint ?? null,
+    targetLock: targeting?.system.getActiveTarget()?.screenPoint ?? null,
   };
 }

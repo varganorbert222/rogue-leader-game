@@ -11,7 +11,6 @@ import {
 } from '@rogue-leader/engine';
 import type { CombatConfig } from '../../data/config/combat-config';
 import type { WeaponsManifest } from '../../data/config/weapons-manifest';
-import { PlayerActor } from '../../actors/player-actor';
 import type { NpcBehaviorConfig } from '../../data/config/npc-behavior-config';
 import {
   cloneDebugPreferences,
@@ -26,10 +25,22 @@ import {
   resolveMissionEnvironment,
 } from '../../vfx/wreck-debris-manager';
 import { MissionAssetPreloader } from '../loading/mission-asset-preloader';
-import { Vehicle } from '../../vehicles/vehicle';
 import { GameAudioBridge } from '../../audio/game-audio-bridge';
 import { CollisionSystem } from '../../collision/collision-system';
-import { HealthComponent } from '../../actors/health-component';
+import { HealthComponent } from '../../ecs/components/health-component';
+import { Role } from '../../ecs/components/role-tag';
+import type { EntityId } from '../../ecs/entity-id';
+import { spawnPlayerEntity } from '../../ecs/spawn/entity-factory';
+import { World } from '../../ecs/world';
+import {
+  getShipPosition,
+  getShipRoot,
+  getShipRotation,
+  getShipVelocity,
+  isShipEntity,
+  prepareShipForPool,
+  setFlightAssist,
+} from '../../ecs/queries/ship-queries';
 import { GameEventBus, GameEvents } from '../../core/events/game-events';
 import type { WeaponHitSfxResolver } from '../../audio/weapon-hit-sfx';
 import { CameraController } from '../../flight/camera-controller';
@@ -55,9 +66,7 @@ import {
   type MissionLoadState,
 } from '../presentation/mission-hud-state';
 import { collectMissionDebugFrame } from '../presentation/mission-debug-snapshot';
-import type { MissionRuntimeContext } from '../simulation/mission-runtime-context';
 import { MissionSimulationCoordinator } from '../simulation/coordinator/mission-simulation-coordinator';
-import { MissionWorld } from '../simulation/world/mission-world';
 import { MissionBootstrap } from '../bootstrap/mission-bootstrap';
 import { isDestroyAllEnemiesWon } from '../simulation/systems/wave-spawn-system';
 import type { MissionConfig, MissionEndState } from '../mission-types';
@@ -66,7 +75,7 @@ import type { MissionNavigation } from '../../ai/navigation/mission-navigation';
 
 /**
  * Mission session facade: input, HUD, win/lose, and debug API.
- * Loading is delegated to {@link MissionBootstrap}; simulation to {@link MissionSimulationCoordinator}.
+ * Gameplay entities live in the ECS {@link World}.
  */
 export class MissionManager {
   readonly events = new GameEventBus();
@@ -76,7 +85,7 @@ export class MissionManager {
   private shipLoader!: GltfShipLoader;
   private simulation?: MissionSimulationCoordinator;
   private readonly boundInput = new BoundPlayerInput();
-  private readonly world = new MissionWorld();
+  private readonly world = new World();
   private loadState: MissionLoadState = { loading: false, message: '' };
   private loadProgressCallback?: (progress: LodLoadProgress) => void;
   private camera!: CameraController;
@@ -125,8 +134,8 @@ export class MissionManager {
     return this.loadState;
   }
 
-  getPlayer(): PlayerActor | undefined {
-    return this.world.actors.player;
+  getPlayerEntity(): EntityId | undefined {
+    return this.world.playerEntity;
   }
 
   getDebugPreferences(): DebugPreferences {
@@ -136,10 +145,6 @@ export class MissionManager {
   applyDebugPreferences(prefs: DebugPreferences): void {
     this.debugPreferences = cloneDebugPreferences(prefs);
     this.syncDebugStaticMeshes();
-  }
-
-  enterPlayerVehicle(vehicle: Vehicle): void {
-    this.world.actors.player?.enterVehicle(vehicle);
   }
 
   async load(missionId: string): Promise<void> {
@@ -198,8 +203,9 @@ export class MissionManager {
       'player',
       playerLoaded.anchors,
     );
-    const playerVehicle = Vehicle.spawn({
+    spawnPlayerEntity(this.world, {
       id: 'player',
+      health: new HealthComponent(100, 100, 50, 50),
       shipId: this.config.player.shipId,
       shipEntry,
       loaded: playerLoaded,
@@ -208,12 +214,6 @@ export class MissionManager {
       weapons: playerWeapons,
       flightDefaults: this.combatConfig.defaults.flight,
     });
-    this.world.actors.player = new PlayerActor(
-      'player',
-      new HealthComponent(100, 100, 50, 50),
-      playerVehicle,
-      playerFaction,
-    );
     this.engineVfx.attach(
       this.host.scene,
       playerLoaded.root,
@@ -226,7 +226,8 @@ export class MissionManager {
       this.config.asteroids &&
       this.assetManifest.props[this.config.asteroids.prefabId]
     ) {
-      await this.world.hazards.spawn(
+      await this.world.asteroids.spawnIntoWorld(
+        this.world,
         this.shipLoader,
         this.assetManifest.props[this.config.asteroids.prefabId],
         this.config.asteroids,
@@ -247,7 +248,7 @@ export class MissionManager {
         : undefined,
     });
 
-    this.syncDebugStaticMeshes(volumeCenter, playerVehicle.root);
+    this.syncDebugStaticMeshes(volumeCenter, playerLoaded.root);
 
     if (this.config.introCinematicSec) {
       this.camera.startIntro(this.config.introCinematicSec);
@@ -273,11 +274,12 @@ export class MissionManager {
     return buildMissionHudState({
       scene: this.host.scene,
       backend: this.host.backend,
-      player: this.world.actors.player,
+      world: this.world,
+      playerId: this.world.playerEntity,
       combat: this.combat,
       wavesSpawned: waveState?.wavesSpawned ?? 0,
       config: this.config,
-      npcCount: this.world.actors.getNpcCount(),
+      npcCount: this.world.getNpcCount(),
     });
   }
 
@@ -294,11 +296,18 @@ export class MissionManager {
   }
 
   applyFlightAssist(options: Partial<FlightAssistOptions>): void {
-    this.world.actors.player?.vehicle.setFlightAssist(options);
+    const playerId = this.world.playerEntity;
+    if (!playerId) return;
+    setFlightAssist(this.world, playerId, options);
   }
 
   applyFlightPreferences(prefs: FlightPreferences): void {
-    this.world.actors.player?.vehicle.setFlightAssist({ autoRoll: prefs.autoRoll });
+    const playerId = this.world.playerEntity;
+    if (playerId) {
+      setFlightAssist(this.world, playerId, {
+        autoRoll: prefs.autoRoll,
+      });
+    }
     const config = this.boundInput.getConfig();
     config.gamepad.selectedGamepadId = prefs.selectedGamepadId;
     this.boundInput.setConfig(config);
@@ -315,10 +324,24 @@ export class MissionManager {
   }
 
   update(dt: number): void {
-    const player = this.world.actors.player;
-    if (this.endState !== MissionEndStates.Playing || !player || !this.simulation) {
+    const playerId = this.world.playerEntity;
+    if (this.endState !== MissionEndStates.Playing || !playerId || !this.simulation) {
       return;
     }
+
+    const playerHealth = this.world.get(playerId, 'health');
+    const playerFaction = this.world.get(playerId, 'faction');
+    const shipIdentity = this.world.get(playerId, 'shipIdentity');
+    if (
+      !playerHealth ||
+      playerFaction === undefined ||
+      !shipIdentity ||
+      !this.world.has(playerId, 'flight')
+    ) {
+      return;
+    }
+
+    const playerRoot = getShipRoot(this.world, playerId);
 
     this.boundInput.update();
     const playerInput = this.boundInput.getPlayerInput();
@@ -331,7 +354,7 @@ export class MissionManager {
 
     const tick = this.simulation.tick({
       dt,
-      player,
+      playerId,
       playerInput,
       boundary,
       shipLoader: this.shipLoader,
@@ -342,34 +365,38 @@ export class MissionManager {
     this.prevListenerPosition = tick.prevListenerPosition;
 
     this.audioBridge?.processInbound(
-      this.world.actors.npcActors,
-      player.vehicle.position,
-      player.faction,
+      this.world,
+      getShipPosition(this.world, playerId),
+      playerFaction,
     );
     this.audioBridge?.update(dt, tick.audioContext);
-    this.renderGameDebug(player);
+    this.renderGameDebug(playerId);
 
-    if (!this.debugPreferences.gameplay.invincible && player.health.isDead()) {
+    if (!this.debugPreferences.gameplay.invincible && playerHealth.isDead()) {
       this.endState = MissionEndStates.Lost;
-      const entry = this.assetManifest.ships[player.vehicle.shipId];
+      const entry = this.assetManifest.ships[shipIdentity.shipId];
       if (entry) {
-        this.wreckDebris.spawnFromVehicle(
-          player.vehicle.shipId,
+        this.wreckDebris.spawnFromShip(
+          shipIdentity.shipId,
           entry,
-          player.vehicle,
+          {
+            position: getShipPosition(this.world, playerId).clone(),
+            rotationQuaternion: getShipRotation(this.world, playerId).clone(),
+            velocity: getShipVelocity(this.world, playerId).clone(),
+          },
         );
       }
-      player.vehicle.root.setEnabled(false);
+      playerRoot.setEnabled(false);
       ParticleFx.explosion(
         this.host.scene,
-        player.vehicle.root.getAbsolutePosition(),
+        playerRoot.getAbsolutePosition(),
       );
       this.events.emit(GameEvents.missionEnded());
     } else if (
       isDestroyAllEnemiesWon(
         this.config,
         tick.waveState,
-        this.world.actors.getNpcCount(),
+        this.world.getNpcCount(),
       )
     ) {
       this.endState = MissionEndStates.Won;
@@ -386,12 +413,19 @@ export class MissionManager {
     this.debugWorldAxes = undefined;
     this.debugShipAxes?.dispose();
     this.debugShipAxes = undefined;
-    this.world.hazards.dispose();
-    for (const npc of [...this.world.actors.npcActors]) {
-      npc.dispose();
+
+    for (const id of [...this.world.allEntities()]) {
+      const role = this.world.get(id, 'role');
+      if (role === Role.Npc && isShipEntity(this.world, id)) {
+        prepareShipForPool(this.world, id);
+      }
+      if (isShipEntity(this.world, id)) {
+        this.world.get(id, 'sfoil')?.controller.dispose();
+        getShipRoot(this.world, id).dispose();
+      }
     }
-    this.world.actors.player?.dispose();
-    this.world.actors.clear();
+    this.world.dispose();
+
     this.engineVfx.dispose();
     this.wreckDebris.dispose();
     disposeParticleFxPool(this.host.scene);
@@ -403,7 +437,7 @@ export class MissionManager {
     this.prevListenerPosition = null;
   }
 
-  private renderGameDebug(player: PlayerActor): void {
+  private renderGameDebug(playerId: EntityId): void {
     const prefs = this.debugPreferences;
     if (!hasActiveDebugWork(prefs)) {
       this.gameDebugOverlay.render(this.host.scene, null, prefs);
@@ -414,7 +448,7 @@ export class MissionManager {
       this.host.scene,
       collectMissionDebugFrame({
         world: this.world,
-        player,
+        playerId,
         prefs,
         missionNavigation: this.missionNavigation,
         npcBehaviorConfig: this.npcBehaviorConfig,
@@ -448,7 +482,11 @@ export class MissionManager {
       this.debugWorldAxes?.setEnabled(false);
     }
 
-    const playerRoot = shipRoot ?? this.world.actors.player?.vehicle.root;
+    const playerRoot =
+      shipRoot ??
+      (this.world.playerEntity
+        ? getShipRoot(this.world, this.world.playerEntity)
+        : undefined);
     if (enabled && prefs.overlays.shipAxes && playerRoot) {
       if (!this.debugShipAxes) {
         this.debugShipAxes = DebugAxes.local(this.host.scene, playerRoot, 14);

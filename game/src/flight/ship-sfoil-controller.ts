@@ -4,8 +4,8 @@ import {
   type ShipManifestEntry,
   type ShipSfoilAbilityManifest,
 } from '@rogue-leader/engine';
-import { resolveShipSfoilSfx, sfoilSfxToEventPayload, type SfoilSfxPlayRequest } from '../audio/sfoil-sfx';
-import type { ShipFlightController } from '../flight/ship-flight-controller';
+import { resolveShipSfoilSfx, type SfoilSfxPlayRequest } from '../audio/sfoil-sfx';
+import type { ShipFlightController } from './ship-flight-controller';
 import type { VehicleWeaponSystem } from '../combat/weapons/vehicle-weapon-system';
 
 const DEFAULT_FOLDED_STATE = 'folded';
@@ -23,12 +23,13 @@ export class ShipSfoilController {
     animation: ShipAnimationController,
     private readonly weapons: VehicleWeaponSystem,
     private readonly flight: ShipFlightController,
-    ability: ShipSfoilAbilityManifest
+    ability: ShipSfoilAbilityManifest,
   ) {
     this.animation = animation;
     this.foldedState = ability.foldedState ?? DEFAULT_FOLDED_STATE;
     this.openState = ability.openState ?? DEFAULT_OPEN_STATE;
-    this.closingBoostMultiplier = ability.closingBoostMultiplier ?? DEFAULT_CLOSING_BOOST;
+    this.closingBoostMultiplier =
+      ability.closingBoostMultiplier ?? DEFAULT_CLOSING_BOOST;
     this.sfxRequest = resolveShipSfoilSfx(ability.sfx);
     this.applyIdleState(this.animation.getState());
   }
@@ -48,14 +49,14 @@ export class ShipSfoilController {
 
     const animation = new ShipAnimationController(
       options.animationGroups,
-      animationConfig
+      animationConfig,
     );
 
     return new ShipSfoilController(
       animation,
       options.weapons,
       options.flight,
-      ability
+      ability,
     );
   }
 
@@ -76,8 +77,13 @@ export class ShipSfoilController {
     if (this.animation.isPlaying()) return false;
 
     const fromState = this.animation.getState();
-    const targetState = fromState === this.foldedState ? this.openState : this.foldedState;
-    if (!this.animation.playTransitionTo(targetState, (state) => this.onTransitionComplete(state))) {
+    const targetState =
+      fromState === this.foldedState ? this.openState : this.foldedState;
+    if (
+      !this.animation.playTransitionTo(targetState, (state) =>
+        this.onTransitionComplete(state),
+      )
+    ) {
       return false;
     }
 

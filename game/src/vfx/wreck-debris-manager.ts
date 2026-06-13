@@ -16,7 +16,6 @@ import {
   type ShipManifestEntry,
   type WreckTemplate,
 } from '@rogue-leader/engine';
-import type { Vehicle } from '../vehicles/vehicle';
 
 const DEBRIS_LIFETIME_SEC = 10;
 const DEBRIS_LIFETIME_JITTER_SEC = 4;
@@ -28,6 +27,12 @@ const MIN_DESPAWN_SCALE = 0.02;
 export interface MissionEnvironment {
   gravity: boolean;
   gravityVector: Vector3;
+}
+
+export interface WreckSpawnKinematics {
+  position: Vector3;
+  rotationQuaternion: Quaternion;
+  velocity: Vector3;
 }
 
 export function resolveMissionEnvironment(config: {
@@ -94,23 +99,23 @@ export class WreckDebrisManager {
     );
   }
 
-  spawnFromVehicle(
+  spawnFromShip(
     shipId: string,
     entry: ShipManifestEntry,
-    vehicle: Vehicle,
-    explosionCenter?: Vector3
+    kinematics: WreckSpawnKinematics,
+    explosionCenter?: Vector3,
   ): void {
     const template = this.wreckLoader.getCached(shipId);
     if (!template) {
       void this.wreckLoader.loadWreck(shipId, entry).then((loaded) => {
         if (loaded) {
-          this.spawnFromTemplate(loaded, vehicle, explosionCenter);
+          this.spawnFromTemplate(loaded, kinematics, explosionCenter);
         }
       });
       return;
     }
 
-    this.spawnFromTemplate(template, vehicle, explosionCenter);
+    this.spawnFromTemplate(template, kinematics, explosionCenter);
   }
 
   update(dt: number): void {
@@ -162,13 +167,13 @@ export class WreckDebrisManager {
 
   private spawnFromTemplate(
     template: WreckTemplate,
-    vehicle: Vehicle,
-    explosionCenter?: Vector3
+    kinematics: WreckSpawnKinematics,
+    explosionCenter?: Vector3,
   ): void {
     const instance = template.root.clone(`${template.root.name}_spawn`, null) as TransformNode;
     instance.setEnabled(true);
-    instance.position = vehicle.position.clone();
-    instance.rotationQuaternion = vehicle.rotationQuaternion.clone();
+    instance.position = kinematics.position.clone();
+    instance.rotationQuaternion = kinematics.rotationQuaternion.clone();
     instance.computeWorldMatrix(true);
 
     const pieceMeshes = filterDebrisPieceMeshes(
@@ -179,8 +184,8 @@ export class WreckDebrisManager {
       return;
     }
 
-    const center = explosionCenter?.clone() ?? vehicle.position.clone();
-    const inheritedVelocity = vehicle.velocity.clone();
+    const center = explosionCenter?.clone() ?? kinematics.position.clone();
+    const inheritedVelocity = kinematics.velocity.clone();
 
     for (const mesh of pieceMeshes) {
       mesh.computeWorldMatrix(true);

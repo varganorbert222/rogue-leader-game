@@ -1,9 +1,5 @@
 import type { NpcBehaviorConfig } from '../../data/config/npc-behavior-config';
 
-import type { PlayerActor } from '../../actors/player-actor';
-
-import type { ActorRegistry } from '../../actors/actor-registry';
-
 import type { DebugPreferences } from '../../debug/debug-preferences';
 
 import type { GameDebugFrame } from '../../debug/game-debug-overlay';
@@ -30,19 +26,25 @@ import {
 
 import type { MissionNavigation } from '../../ai/navigation/mission-navigation';
 
-import type { AsteroidField } from '../../hazards/asteroid-field';
-
 import type { CombatSystem } from '../../combat/systems/combat-system';
 
-import type { MissionWorld } from '../simulation/world/mission-world';
+import { Role } from '../../ecs/components/role-tag';
+
+import type { EntityId } from '../../ecs/entity-id';
+
+import { getShipPosition } from '../../ecs/queries/ship-queries';
+
+import type { World } from '../../ecs/world';
+
+import { getNpcSteeringDebug } from '../../ecs/systems/npc-system';
 
 
 
 export interface MissionDebugSnapshotContext {
 
-  world: MissionWorld;
+  world: World;
 
-  player: PlayerActor;
+  playerId: EntityId;
 
   prefs: DebugPreferences;
 
@@ -62,45 +64,33 @@ export function collectMissionDebugFrame(
 
 ): GameDebugFrame {
 
-  const { world, player, prefs } = ctx;
+  const { world, playerId, prefs } = ctx;
 
-  const actors = world.actors;
+
 
   const vehicles = [];
 
   if (needsVehicleDebugData(prefs)) {
 
-    if (actors.player) {
+    for (const id of world.query('flight', 'role', 'shipIdentity', 'collider')) {
+
+      const shipIdentity = world.get(id, 'shipIdentity')!;
+
+      const collider = world.get(id, 'collider')!;
+
+      const role = world.get(id, 'role');
 
       vehicles.push({
 
-        id: actors.player.id,
+        id,
 
-        position: actors.player.vehicle.position.clone(),
+        position: getShipPosition(world, id).clone(),
 
-        radius: actors.player.vehicle.colliderRadius,
+        radius: collider.radius,
 
-        label: actors.player.vehicle.shipId,
+        label: shipIdentity.shipId,
 
-        isPlayer: true,
-
-      });
-
-    }
-
-    for (const npc of actors.npcActors) {
-
-      vehicles.push({
-
-        id: npc.id,
-
-        position: npc.vehicle.position.clone(),
-
-        radius: npc.vehicle.colliderRadius,
-
-        label: npc.vehicle.shipId,
-
-        isPlayer: false,
+        isPlayer: role === Role.Player,
 
       });
 
@@ -112,21 +102,25 @@ export function collectMissionDebugFrame(
 
   const npcSnapshots = needsNpcDebugData(prefs)
 
-    ? actors.npcActors
+    ? world
 
-        .map((npc) => {
+        .queryByRole(Role.Npc)
 
-          const steering = npc.getSteeringDebug();
+        .map((npcId) => {
 
-          if (!steering) return null;
+          const steering = getNpcSteeringDebug(world, npcId);
+
+          const npcSteering = world.get(npcId, 'npcSteering');
+
+          if (!steering || !world.has(npcId, 'flight')) return null;
 
           return {
 
-            id: npc.id,
+            id: npcId,
 
-            flockId: npc.flockId,
+            flockId: npcSteering?.flockId ?? '',
 
-            position: npc.vehicle.position.clone(),
+            position: getShipPosition(world, npcId).clone(),
 
             state: steering.state,
 
@@ -144,11 +138,15 @@ export function collectMissionDebugFrame(
 
 
 
+  const playerTargeting = world.get(playerId, 'targeting');
+
+
+
   return {
 
     playerAim: needsPlayerAimDebugData(prefs)
 
-      ? (player.lastAimDebug ?? undefined)
+      ? (playerTargeting?.lastAimDebug ?? undefined)
 
       : undefined,
 
@@ -176,23 +174,29 @@ export function collectMissionDebugFrame(
 
     asteroids: needsAsteroidDebugData(prefs)
 
-      ? world.hazards.asteroids.map((asteroid) => ({
+      ? world.queryByRole(Role.Asteroid).map((id) => {
 
-          id: asteroid.id,
+          const body = world.get(id, 'asteroidBody')!;
 
-          position: asteroid.root.position.clone(),
+          return {
 
-          radius: asteroid.colliderRadius,
+            id,
 
-          usesMeshCollider: asteroid.usesMeshCollider,
+            position: body.root.position.clone(),
 
-        }))
+            radius: body.colliderRadius,
+
+            usesMeshCollider: body.usesMeshCollider,
+
+          };
+
+        })
 
       : [],
 
     colliders: needsColliderDebugData(prefs)
 
-      ? collectColliderDebugSnapshots(actors, world.hazards)
+      ? collectColliderDebugSnapshots(world)
 
       : [],
 
@@ -202,27 +206,25 @@ export function collectMissionDebugFrame(
 
 
 
-export function collectColliderDebugSnapshots(
-
-  actors: ActorRegistry,
-
-  asteroidField: AsteroidField,
-
-) {
+function collectColliderDebugSnapshots(world: World) {
 
   const colliders = [];
 
 
 
-  if (actors.player?.vehicle.colliderMeshes.length) {
+  for (const id of world.query('flight', 'role', 'collider')) {
+
+    const collider = world.get(id, 'collider')!;
+
+    if (!collider.meshes.length) continue;
 
     colliders.push({
 
-      ownerId: actors.player.id,
+      ownerId: id,
 
-      meshes: actors.player.vehicle.colliderMeshes,
+      meshes: collider.meshes,
 
-      isPlayer: true,
+      isPlayer: world.get(id, 'role') === Role.Player,
 
       kind: 'ship' as const,
 
@@ -232,35 +234,17 @@ export function collectColliderDebugSnapshots(
 
 
 
-  for (const npc of actors.npcActors) {
+  for (const id of world.queryByRole(Role.Asteroid)) {
 
-    if (!npc.vehicle.colliderMeshes.length) continue;
+    const body = world.get(id, 'asteroidBody');
 
-    colliders.push({
-
-      ownerId: npc.id,
-
-      meshes: npc.vehicle.colliderMeshes,
-
-      isPlayer: false,
-
-      kind: 'ship' as const,
-
-    });
-
-  }
-
-
-
-  for (const asteroid of asteroidField.asteroids) {
-
-    if (!asteroid.colliderMeshes.length) continue;
+    if (!body?.colliderMeshes.length) continue;
 
     colliders.push({
 
-      ownerId: asteroid.id,
+      ownerId: id,
 
-      meshes: asteroid.colliderMeshes,
+      meshes: body.colliderMeshes,
 
       isPlayer: false,
 

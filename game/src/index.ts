@@ -79,11 +79,17 @@ export type {
   NpcInputContext,
   NpcInputResult,
 } from "./player/input/npc-input";
-export { Vehicle, type VehicleSpawnOptions } from "./vehicles/vehicle";
-export type { Actor, ActorRole } from "./actors/actor";
-export { ActorRegistry } from "./actors/actor-registry";
-export { PlayerActor } from "./actors/player-actor";
-export { NpcActor } from "./actors/npc-actor";
+export {
+  spawnPlayerEntity,
+  spawnNpcEntity,
+  replacePlayerShip,
+  type ShipSpawnOptions,
+} from "./ecs/spawn/entity-factory";
+export { World, type SystemFn } from "./ecs/world";
+export type { EntityId } from "./ecs/entity-id";
+export type { ComponentMap, ComponentKey } from "./ecs/component-map";
+export { Role } from "./ecs/components/role-tag";
+export { HealthComponent } from "./ecs/components/health-component";
 export {
   CameraController,
   type CameraViewMode,
@@ -131,7 +137,6 @@ export {
 export { VehicleWeaponSystem } from "./combat/weapons/vehicle-weapon-system";
 export { MissileWeapon } from "./combat/weapons/missile-weapon";
 export { HarpoonWeapon } from "./combat/weapons/harpoon-weapon";
-export { HealthComponent } from "./actors/health-component";
 export { BoidNpcInput, type EnemyBehavior } from "./ai/boid-npc-input";
 export { BehaviorNpcInput } from "./ai/behavior-npc-input";
 export { NpcStateMachine } from "./ai/npc-state-machine";
@@ -145,11 +150,15 @@ export {
 } from "./data/config/npc-behavior-config";
 export { GameDebugOverlay } from "./debug/game-debug-overlay";
 export { CollisionSystem, buildSphereBody } from "./collision/collision-system";
-export { AsteroidField } from "./hazards/asteroid-field";
+export {
+  AsteroidSpawnService,
+  type AsteroidConfig,
+} from "./hazards/asteroid-spawn-service";
+/** @deprecated Use {@link AsteroidSpawnService}. */
+export { AsteroidSpawnService as AsteroidField } from "./hazards/asteroid-spawn-service";
 export { MissionManager } from "./mission/session/mission-manager";
 export { MissionBootstrap } from "./mission/bootstrap/mission-bootstrap";
 export { MissionSimulationCoordinator } from "./mission/simulation/coordinator/mission-simulation-coordinator";
-export { MissionWorld } from "./mission/simulation/world/mission-world";
 export type { MissionRuntimeContext } from "./mission/simulation/mission-runtime-context";
 export type { MissionHudState, MissionLoadState } from "./mission/presentation/mission-hud-state";
 export type { MissionConfig, MissionEndState } from "./mission/mission-types";
