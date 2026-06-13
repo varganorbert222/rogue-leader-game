@@ -12,7 +12,7 @@ export interface PlayerInput {
 
 export const ZERO_PLAYER_INPUT: PlayerInput = {
   vehicle: { ...ZERO_VEHICLE_INPUT },
-  combat: { fire: false, fireSecondaryPressed: false },
+  combat: { fire: false, fireSecondaryPressed: false, toggleSfoilPressed: false },
   camera: {
     cameraToggle: false,
     cameraCycle: 0,
@@ -36,6 +36,7 @@ export function playerInputFromFlightInput(input: FlightInput): PlayerInput {
     combat: {
       fire: input.fire,
       fireSecondaryPressed: input.fireSecondaryPressed,
+      toggleSfoilPressed: input.toggleSfoilPressed,
     },
     camera: {
       cameraToggle: input.cameraToggle,

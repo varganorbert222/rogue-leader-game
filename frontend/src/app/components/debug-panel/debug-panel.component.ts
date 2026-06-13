@@ -60,6 +60,7 @@ export class DebugPanelComponent implements OnInit {
         vehicleWireframes: true,
         projectileGizmos: true,
         meteorWireframes: true,
+        colliderWireframes: false,
       },
       labels: {
         enabled: true,

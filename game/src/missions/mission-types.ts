@@ -20,6 +20,11 @@ export interface MissionConfig {
   musicId: string;
   /** Adaptive calm ↔ combat score set id from audio manifest. */
   musicSetId?: string;
+  /** Scene physics — space missions disable gravity; planetary missions enable it. */
+  environment?: {
+    gravity?: boolean;
+    gravityVector?: [number, number, number];
+  };
   player: {
     shipId: string;
     spawn: [number, number, number];

@@ -1,5 +1,6 @@
 import {
   AbstractMesh,
+  AnimationGroup,
   Mesh,
   QuadraticErrorSimplification,
   Scene,
@@ -27,6 +28,7 @@ export interface LodResult {
   meshes: AbstractMesh[];
   lodMeshes: AbstractMesh[][];
   lodRuntime: LodRuntimeState;
+  animationGroups: AnimationGroup[];
 }
 
 function cloneMeshGroup(
@@ -132,6 +134,7 @@ export class LodShipLoader {
     const lodMeshes: AbstractMesh[][] = [];
     let lastMeshes: AbstractMesh[] | null = null;
     let autoSourceMeshes: AbstractMesh[] | null = null;
+    let animationGroups: AnimationGroup[] = [];
 
     const autoTasks = plan.levels.filter((l) => l.kind === 'auto').length;
     let autoTaskIndex = 0;
@@ -150,10 +153,13 @@ export class LodShipLoader {
 
         const loaded = await this.loadManualGlb(id, level.path, root, i);
         if (loaded) {
-          loaded.forEach((m) => m.setEnabled(i === 0));
-          lodMeshes.push(loaded);
-          lastMeshes = loaded;
-          autoSourceMeshes = loaded;
+          loaded.meshes.forEach((m) => m.setEnabled(i === 0));
+          lodMeshes.push(loaded.meshes);
+          lastMeshes = loaded.meshes;
+          autoSourceMeshes = loaded.meshes;
+          if (animationGroups.length === 0 && loaded.animationGroups.length > 0) {
+            animationGroups = loaded.animationGroups;
+          }
         } else if (lastMeshes) {
           const fallback = cloneMeshGroup(lastMeshes, root, `_lod${i}_fb`);
           fallback.forEach((m) => m.setEnabled(i === 0));
@@ -220,7 +226,7 @@ export class LodShipLoader {
       message: `Loaded ${id}`,
     });
 
-    return { root, meshes: allMeshes, lodMeshes, lodRuntime };
+    return { root, meshes: allMeshes, lodMeshes, lodRuntime, animationGroups };
   }
 
   private async loadManualGlb(
@@ -228,7 +234,7 @@ export class LodShipLoader {
     relativePath: string,
     root: TransformNode,
     lodIndex: number
-  ): Promise<AbstractMesh[] | null> {
+  ): Promise<{ meshes: AbstractMesh[]; animationGroups: AnimationGroup[] } | null> {
     const url = `${this.baseUrl}/${relativePath}`;
     try {
       const result = await SceneLoader.ImportMeshAsync('', url, '', this.scene);
@@ -238,7 +244,8 @@ export class LodShipLoader {
 
       const lodContainer = new TransformNode(`${id}_lod${lodIndex}`, this.scene);
       lodContainer.parent = root;
-      return attachGltfImportToParent(result, lodContainer);
+      const meshes = attachGltfImportToParent(result, lodContainer);
+      return { meshes, animationGroups: result.animationGroups ?? [] };
     } catch {
       if (!this.warnedUrls.has(url)) {
         this.warnedUrls.add(url);

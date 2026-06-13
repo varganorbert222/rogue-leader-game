@@ -10,6 +10,7 @@ export type ControlActionId =
   | "boost"
   | "firePrimary"
   | "fireSecondary"
+  | "toggleSfoil"
   | "cameraToggle"
   | "cameraCycle"
   | "cameraDrop"
@@ -66,6 +67,7 @@ export interface ControlBindingsConfig {
   boost: ButtonActionBindings;
   firePrimary: ButtonActionBindings;
   fireSecondary: ButtonActionBindings;
+  toggleSfoil: ButtonActionBindings;
   cameraToggle: ButtonActionBindings;
   cameraCycle: ButtonActionBindings;
   cameraDrop: ButtonActionBindings;
@@ -153,6 +155,11 @@ export const DEFAULT_CONTROL_BINDINGS: ControlBindingsConfig = {
     buttons: [3],
     pulse: true,
   },
+  toggleSfoil: {
+    keys: ["KeyX"],
+    buttons: [2],
+    pulse: true,
+  },
   cameraToggle: {
     keys: ["F8"],
     buttons: [8, 9],
@@ -191,6 +198,7 @@ export const CONTROL_ACTION_LABELS: Record<
   boost: { en: "Boost", hu: "Gyorsítás" },
   firePrimary: { en: "Fire blasters", hu: "Lövés (elsődleges)" },
   fireSecondary: { en: "Secondary weapon", hu: "Másodlagos fegyver" },
+  toggleSfoil: { en: "S-foils / special", hu: "S-szárny / speciális" },
   cameraToggle: { en: "Cockpit camera", hu: "Kabin kamera" },
   cameraCycle: { en: "Cycle camera", hu: "Kamera váltás" },
   cameraDrop: { en: "Drop camera", hu: "Kamera le" },
@@ -212,6 +220,7 @@ export const BUTTON_ACTION_IDS: ControlActionId[] = [
   "boost",
   "firePrimary",
   "fireSecondary",
+  "toggleSfoil",
   "cameraToggle",
   "cameraCycle",
   "cameraDrop",
@@ -317,6 +326,7 @@ export function mergeControlBindings(
       defaults.fireSecondary,
       patch.fireSecondary,
     ),
+    toggleSfoil: mergeButtonAction(defaults.toggleSfoil, patch.toggleSfoil),
     cameraToggle: mergeButtonAction(defaults.cameraToggle, patch.cameraToggle),
     cameraCycle: mergeButtonAction(defaults.cameraCycle, patch.cameraCycle),
     cameraDrop: mergeButtonAction(defaults.cameraDrop, patch.cameraDrop),

@@ -4,6 +4,9 @@
   "skyboxId": "asteroid_field_space",
   "musicId": "asteroid_field_combat",
   "musicSetId": "asteroid_field_space",
+  "environment": {
+    "gravity": false
+  },
   "player": {
     "shipId": "xwing",
     "spawn": [0, 0, 0],

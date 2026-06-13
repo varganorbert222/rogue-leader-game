@@ -4,6 +4,9 @@
   "skyboxId": "asteroid_field_space",
   "musicId": "mission_hoth_surface",
   "musicSetId": "mission_hoth",
+  "environment": {
+    "gravity": true
+  },
   "stub": true,
   "stubMessage": "Coming soon — terrain tilemap, AT-AT, harpoon tow cable",
   "player": { "shipId": "snowspeeder", "spawn": [0, 0, 0], "heading": [0, 0, -1] },

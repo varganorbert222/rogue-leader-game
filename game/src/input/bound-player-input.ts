@@ -74,6 +74,7 @@ export class BoundPlayerInput implements IPlayerInputSource {
 
   private queuePulseOnKeydown(code: string): void {
     this.queuePulseForAction('fireSecondary', this.config.fireSecondary, code);
+    this.queuePulseForAction('toggleSfoil', this.config.toggleSfoil, code);
     this.queuePulseForAction('cameraToggle', this.config.cameraToggle, code);
     this.queuePulseForAction('cameraCycle', this.config.cameraCycle, code);
     this.queuePulseForAction('cameraDrop', this.config.cameraDrop, code);
@@ -109,6 +110,7 @@ export class BoundPlayerInput implements IPlayerInputSource {
     };
 
     track('fireSecondary', this.config.fireSecondary);
+    track('toggleSfoil', this.config.toggleSfoil);
     track('cameraToggle', this.config.cameraToggle);
     track('cameraCycle', this.config.cameraCycle);
     track('cameraDrop', this.config.cameraDrop);

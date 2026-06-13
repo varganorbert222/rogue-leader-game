@@ -130,7 +130,8 @@
     "xwing/sfoil": {
       "basePath": "audio/sfx/xwing",
       "files": [
-        "xwing_sfoil.wav"
+        "xwing_sfoil_01.wav",
+        "xwing_sfoil_02.wav"
       ]
     }
   }

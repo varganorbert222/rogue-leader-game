@@ -25,9 +25,20 @@ export {
   type ShipManifestEntry,
   type ShipFlightStatsManifest,
   type ShipAnchorBindings,
+  type ShipAnimationManifest,
+  type ShipAnimationTransitionDef,
+  type ShipSfoilAbilityManifest,
+  type ShipSfoilSfxManifest,
+  type ShipAbilitiesManifest,
   type PropManifestEntry,
   type SkyboxManifestEntry,
 } from './loaders/asset-manifest';
+export {
+  detectColliderMeshes,
+  configureColliderMesh,
+  filterVisualMeshes,
+  filterVisualLodMeshes,
+} from './loaders/collider-mesh-detector';
 export {
   detectShipAnchors,
   getAnchorForward,
@@ -54,6 +65,7 @@ export {
   type EngineVfxProfile,
 } from './vfx/engine-vfx';
 export { GltfShipLoader, type LoadedEntity } from './loaders/gltf-ship-loader';
+export { setLoadedEntityVisible } from './loaders/loaded-entity-visibility';
 export {
   LodShipLoader,
   type LodLoadProgress,
@@ -74,6 +86,7 @@ export {
   type LodRuntimeState,
 } from './loaders/lod-runtime';
 export { computeScreenCoveragePercent } from './render/screen-coverage';
+export { applyMeshAlphaCutoff, disableMeshBackfaceCulling } from './render/mesh-material-utils';
 export { detectFirePoints, refreshFirePoints, type FirePoints } from './loaders/firepoint-detector';
 export {
   detectWeaponMounts,
@@ -82,3 +95,19 @@ export {
 } from './loaders/weapon-mount-detector';
 export { TerrainTileLoader } from './loaders/terrain-tile-loader';
 export { ParticleFx } from './vfx/particle-fx';
+export {
+  ParticleFxPool,
+  getParticleFxPool,
+  disposeParticleFxPool,
+} from './vfx/particle-fx-pool';
+export { preloadVfxTextures } from './vfx/vfx-textures';
+export { ObjectPool } from './pool/object-pool';
+export {
+  WreckLoader,
+  filterDebrisPieceMeshes,
+  type WreckTemplate,
+} from './loaders/wreck-loader';
+export {
+  ShipAnimationController,
+} from './animation/ship-animation-controller';
+export { resolveWreckPath } from './loaders/wreck-path';

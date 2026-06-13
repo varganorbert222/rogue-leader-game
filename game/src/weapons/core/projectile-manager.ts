@@ -1,6 +1,7 @@
 import type { Scene } from '@babylonjs/core';
 import { CollisionSystem, type SphereBody } from '../../collision/collision-system';
 import { Projectile, type ProjectileHit, type ProjectileSpawnOptions } from './projectile';
+import { ProjectileMeshPool } from './projectile-mesh-pool';
 
 import { Vector3 } from '@babylonjs/core';
 import type { ProjectilePassByObserver } from '../../audio/projectile-pass-by';
@@ -14,6 +15,7 @@ export type ProjectilePassByCallback = (
 
 export class ProjectileManager {
   private readonly projectiles: Projectile[] = [];
+  private readonly meshPool = new ProjectileMeshPool();
   private readonly collision = new CollisionSystem();
   private targetProvider: (() => SphereBody[]) | null = null;
   private onHit: ProjectileHitCallback | null = null;
@@ -39,7 +41,7 @@ export class ProjectileManager {
   }
 
   spawn(options: ProjectileSpawnOptions): void {
-    this.projectiles.push(new Projectile(this.scene, options));
+    this.projectiles.push(Projectile.spawn(this.scene, this.meshPool, options));
   }
 
   update(dt: number): void {
@@ -76,5 +78,6 @@ export class ProjectileManager {
       projectile.dispose();
     }
     this.projectiles.length = 0;
+    this.meshPool.dispose();
   }
 }

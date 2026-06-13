@@ -16,6 +16,9 @@ import type { SoftBoundary } from '../flight/soft-boundary';
 import type { PlayerInput } from '../input/player-input';
 import type { CombatSystem } from '../weapons/combat-system';
 import type { Vehicle } from '../vehicles/vehicle';
+import type { GameEventBus } from '../events/game-events';
+import { GameEvents } from '../events/game-events';
+import { sfoilSfxToEventPayload } from '../audio/sfoil-sfx';
 import type { Actor, ActorRole } from './actor';
 
 export interface PlayerActorUpdateContext {
@@ -25,6 +28,7 @@ export interface PlayerActorUpdateContext {
   boundary?: SoftBoundary;
   camera: CameraController;
   combat: CombatSystem;
+  events: GameEventBus;
   targetingConfig: TargetingConfig;
   radarRadius: number;
   hostileTargets: TargetEntity[];
@@ -76,6 +80,7 @@ export class PlayerActor implements Actor {
       team: this.vehicle.combatTeam,
       faction: this.faction,
       velocity: this.vehicle.velocity,
+      colliderMeshes: this.vehicle.colliderMeshes,
     };
   }
 
@@ -132,6 +137,16 @@ export class PlayerActor implements Actor {
         this.id,
         aim
       );
+    }
+    if (input.combat.toggleSfoilPressed && vehicle.hasSfoilAbility()) {
+      const sfxRequest = vehicle.tryToggleSfoil();
+      if (sfxRequest) {
+        context.events.emit(
+          GameEvents.sfoilToggled({
+            ...sfoilSfxToEventPayload(sfxRequest, vehicle.position.clone()),
+          })
+        );
+      }
     }
   }
 

@@ -2,12 +2,10 @@ import {
   Color4,
   ParticleSystem,
   Scene,
-  Texture,
   Vector3,
   type TransformNode,
 } from '@babylonjs/core';
-
-const FLARE = 'https://assets.babylonjs.com/textures/flare.png';
+import { getFlareTexture } from './vfx-textures';
 
 export interface EngineVfxProfile {
   emitRate: number;
@@ -43,7 +41,7 @@ export function createEngineTrail(
   profile: EngineVfxProfile = DEFAULT_ENGINE_VFX
 ): ParticleSystem {
   const ps = new ParticleSystem(`engine_${anchor.name}`, 40, scene);
-  ps.particleTexture = new Texture(FLARE, scene);
+  ps.particleTexture = getFlareTexture(scene);
   ps.emitter = anchor.getAbsolutePosition().clone();
   ps.minEmitBox = new Vector3(-0.1, -0.1, -0.1);
   ps.maxEmitBox = new Vector3(0.1, 0.1, 0.1);

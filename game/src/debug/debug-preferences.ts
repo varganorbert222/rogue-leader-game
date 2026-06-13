@@ -14,6 +14,7 @@ export interface DebugOverlayToggles {
   vehicleWireframes: boolean;
   projectileGizmos: boolean;
   meteorWireframes: boolean;
+  colliderWireframes: boolean;
 }
 
 export interface DebugLabelToggles {
@@ -54,6 +55,7 @@ export const DEFAULT_DEBUG_PREFERENCES: DebugPreferences = {
     vehicleWireframes: true,
     projectileGizmos: true,
     meteorWireframes: true,
+    colliderWireframes: false,
   },
   labels: {
     enabled: true,

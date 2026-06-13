@@ -1,22 +1,34 @@
-import { Quaternion, Scalar, Vector3, type TransformNode } from '@babylonjs/core';
-import type { CameraInput } from '../input/camera-input';
-import { getShipForward, getShipRight, getShipUp } from './ship-forward';
+import {
+  Quaternion,
+  Scalar,
+  Vector3,
+  type TransformNode,
+} from "@babylonjs/core";
+import type { CameraInput } from "../input/camera-input";
+import { getShipForward, getShipRight, getShipUp } from "./ship-forward";
 
 /** Outside chase distance presets (Rogue Leader style). */
-export type CameraViewMode = 'standard' | 'close' | 'far' | 'cockpit' | 'cinematic';
+export type CameraViewMode =
+  | "standard"
+  | "close"
+  | "far"
+  | "cockpit"
+  | "cinematic";
 
-const VIEW_PRESETS: Record<Exclude<CameraViewMode, 'cinematic'>, { distance: number; height: number }> = {
-  standard: { distance: 18, height: 4 },
-  close: { distance: 12, height: 3 },
-  far: { distance: 32, height: 8 },
+const VIEW_PRESETS: Record<
+  Exclude<CameraViewMode, "cinematic">,
+  { distance: number; height: number }
+> = {
+  standard: { distance: 12, height: 6 },
+  close: { distance: 10, height: 4 },
+  far: { distance: 40, height: 8 },
   cockpit: { distance: 0, height: 0 },
 };
 
-export const OUTSIDE_VIEW_MODES: Exclude<CameraViewMode, 'cinematic' | 'cockpit'>[] = [
-  'standard',
-  'close',
-  'far',
-];
+export const OUTSIDE_VIEW_MODES: Exclude<
+  CameraViewMode,
+  "cinematic" | "cockpit"
+>[] = ["standard", "close", "far"];
 
 export interface CameraDesiredPose {
   position: Vector3;
@@ -49,7 +61,7 @@ export interface FollowCameraContext {
 
 /** Computes desired chase / cockpit pose from ship transform. */
 export class FollowCameraDriver {
-  readonly kind = 'follow' as const;
+  readonly kind = "follow" as const;
 
   computeDesired(ctx: FollowCameraContext): CameraDesiredPose {
     const pos = ctx.target.getAbsolutePosition();
@@ -60,10 +72,13 @@ export class FollowCameraDriver {
 
     this.updateUserOffsets(ctx);
 
-    if (ctx.viewMode === 'cockpit') {
+    if (ctx.viewMode === "cockpit") {
       const cockpitPos = pos.add(fwd.scale(0.35)).add(up.scale(0.15));
       const lookYaw = Quaternion.RotationAxis(up, ctx.state.lookAroundYaw);
-      const lookPitch = Quaternion.RotationAxis(right, ctx.state.lookAroundPitch);
+      const lookPitch = Quaternion.RotationAxis(
+        right,
+        ctx.state.lookAroundPitch,
+      );
       const lookOffset = lookPitch.multiply(lookYaw);
       return {
         position: cockpitPos,
@@ -73,12 +88,15 @@ export class FollowCameraDriver {
     }
 
     const preset =
-      VIEW_PRESETS[ctx.viewMode as keyof typeof VIEW_PRESETS] ?? VIEW_PRESETS.standard;
+      VIEW_PRESETS[ctx.viewMode as keyof typeof VIEW_PRESETS] ??
+      VIEW_PRESETS.standard;
     const distance = preset.distance + ctx.state.distanceBias;
     const height = preset.height;
 
     const back = fwd.scale(-1);
-    const orbitRight = right.scale(Math.sin(ctx.state.orbitAngle) * distance * 0.35);
+    const orbitRight = right.scale(
+      Math.sin(ctx.state.orbitAngle) * distance * 0.35,
+    );
     const dropDown = up.scale(-ctx.state.dropOffset * 10);
 
     let desiredPos = pos
@@ -89,15 +107,13 @@ export class FollowCameraDriver {
       .add(ctx.shakeOffset);
 
     if (ctx.velocityLag > 0 && ctx.shipVelocity.lengthSquared() > 1) {
-      desiredPos = desiredPos.subtract(
-        ctx.shipVelocity.scale(ctx.velocityLag)
-      );
+      desiredPos = desiredPos.subtract(ctx.shipVelocity.scale(ctx.velocityLag));
     }
 
     const laggedRot = Quaternion.Slerp(
       ctx.prevShipRot,
       rot,
-      Scalar.Clamp(1 - ctx.rotationLag, 0.05, 1)
+      Scalar.Clamp(1 - ctx.rotationLag, 0.05, 1),
     );
 
     return {
@@ -116,18 +132,18 @@ export class FollowCameraDriver {
     state.distanceBias = Scalar.Lerp(state.distanceBias, distInput * 8, blend);
     state.dropOffset = Math.max(0, state.dropOffset - dt * 1.2);
 
-    if (input?.lookAround && viewMode === 'cockpit') {
+    if (input?.lookAround && viewMode === "cockpit") {
       state.lookAroundYaw = Scalar.Clamp(
         state.lookAroundYaw + orbitInput * dt * 2.5,
         -0.8,
-        0.8
+        0.8,
       );
       state.lookAroundPitch = Scalar.Clamp(
         state.lookAroundPitch + distInput * dt * 2.5,
         -0.5,
-        0.5
+        0.5,
       );
-    } else if (viewMode !== 'cockpit') {
+    } else if (viewMode !== "cockpit") {
       const relax = 1 - Math.exp(-4 * dt);
       state.lookAroundYaw = Scalar.Lerp(state.lookAroundYaw, 0, relax);
       state.lookAroundPitch = Scalar.Lerp(state.lookAroundPitch, 0, relax);
@@ -163,7 +179,7 @@ export interface ScriptedCameraContext {
  * full cinematic tooling is wired from mission scripts.
  */
 export class ScriptedCameraDriver {
-  readonly kind = 'scripted' as const;
+  readonly kind = "scripted" as const;
 
   private sequence: CameraSequence | null = null;
   private timeSec = 0;
@@ -223,7 +239,7 @@ export class ScriptedCameraDriver {
     pos: Vector3,
     rot: Quaternion,
     fwd: Vector3,
-    up: Vector3
+    up: Vector3,
   ): CameraDesiredPose {
     const seq = this.sequence!;
     const u = Math.min(1, this.timeSec / Math.max(seq.durationSec, 1e-3));
@@ -243,14 +259,14 @@ export class ScriptedCameraDriver {
     const localT = Scalar.Clamp((u - a.t) / span, 0, 1);
     const right = getShipRight(rot);
 
-    const lerpOffset = (from: CameraSequenceKeyframe, to: CameraSequenceKeyframe) => {
+    const lerpOffset = (
+      from: CameraSequenceKeyframe,
+      to: CameraSequenceKeyframe,
+    ) => {
       const ox = Scalar.Lerp(from.localOffset[0], to.localOffset[0], localT);
       const oy = Scalar.Lerp(from.localOffset[1], to.localOffset[1], localT);
       const oz = Scalar.Lerp(from.localOffset[2], to.localOffset[2], localT);
-      return pos
-        .add(fwd.scale(oz))
-        .add(right.scale(ox))
-        .add(up.scale(oy));
+      return pos.add(fwd.scale(oz)).add(right.scale(ox)).add(up.scale(oy));
     };
 
     return {
@@ -262,7 +278,7 @@ export class ScriptedCameraDriver {
 
 /** Placeholder for spline / dolly rail cameras. */
 export class RailCameraDriver {
-  readonly kind = 'rail' as const;
+  readonly kind = "rail" as const;
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   computeDesired(_ctx: ScriptedCameraContext): CameraDesiredPose | null {

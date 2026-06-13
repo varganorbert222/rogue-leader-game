@@ -1,4 +1,4 @@
-import { Color3, MeshBuilder, Vector3, type LinesMesh, type Scene } from '@babylonjs/core';
+import { Color3, MeshBuilder, Vector3, type AbstractMesh, type LinesMesh, type Scene } from '@babylonjs/core';
 import type { NpcStateId } from '../config/npc-behavior-config';
 import type { WeaponAimDebugInfo } from '../combat/weapon-aim-controller';
 import type { NpcSteeringDebugInfo } from '../ai/behavior-npc-input';
@@ -8,6 +8,7 @@ import { DebugLabelLayer, type DebugLabelSpec } from './debug-labels';
 import {
   addLineSystem,
   buildCubeWireframeLines,
+  buildMeshWireframeLines,
   buildSphereWireframeLines,
 } from './wireframe-primitives';
 
@@ -42,6 +43,12 @@ export interface MeteorDebugSnapshot {
   radius: number;
 }
 
+export interface ColliderDebugSnapshot {
+  ownerId: string;
+  meshes: readonly AbstractMesh[];
+  isPlayer: boolean;
+}
+
 export interface GameDebugFrame {
   playerAim?: WeaponAimDebugInfo;
   paths: { pathId: string; points: Vector3[] }[];
@@ -50,6 +57,7 @@ export interface GameDebugFrame {
   vehicles: VehicleDebugSnapshot[];
   projectiles: ProjectileDebugSnapshot[];
   meteors: MeteorDebugSnapshot[];
+  colliders: ColliderDebugSnapshot[];
 }
 
 const STATE_COLORS: Record<NpcStateId, Color3> = {
@@ -282,6 +290,23 @@ export class GameDebugOverlay {
             position: meteor.position.add(new Vector3(0, meteor.radius + 3, 0)),
           });
         }
+      }
+    }
+
+    if (prefs.overlays.colliderWireframes) {
+      for (const collider of frame.colliders) {
+        const color = collider.isPlayer
+          ? new Color3(0.2, 1, 0.55)
+          : new Color3(1, 0.45, 0.1);
+        collider.meshes.forEach((mesh, index) => {
+          addLineSystem(
+            scene,
+            `dbgCol_${collider.ownerId}_${index}`,
+            buildMeshWireframeLines(mesh),
+            color,
+            this.lineMeshes
+          );
+        });
       }
     }
 

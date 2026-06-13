@@ -26,6 +26,33 @@
       "anchors": {
         "weapons": {},
         "engines": {}
+      },
+      "animations": {
+        "initialState": "folded",
+        "transitions": [
+          {
+            "clip": "sfoil",
+            "speed": 2,
+            "toState": "open"
+          },
+          {
+            "clip": "sfoil",
+            "speed": -2,
+            "toState": "folded"
+          }
+        ]
+      },
+      "abilities": {
+        "sfoil": {
+          "closingBoostMultiplier": 1.6,
+          "sfx": {
+            "basePath": "audio/sfx/xwing",
+            "files": [
+              "xwing_sfoil_01.wav",
+              "xwing_sfoil_02.wav"
+            ]
+          }
+        }
       }
     },
     "tie_fighter": {

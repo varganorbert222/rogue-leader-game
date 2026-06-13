@@ -22,6 +22,8 @@ export interface ShipFlightStatsManifest {
 
 export interface ShipManifestEntry {
   lod?: LodManifestValue;
+  /** Wreck / debris GLB (`*_x_LOD*.glb`). Auto-derived from first LOD path when omitted. */
+  wreck?: string;
   scale: number | [number, number, number];
   colliderRadius: number;
   /** Visual-only export axis fix on the model pivot (default +z / +x). */
@@ -32,6 +34,48 @@ export interface ShipManifestEntry {
   anchors?: ShipAnchorBindings;
   /** Fallback weapon ids keyed by delivery (laser / projectile). */
   defaultWeapons?: Partial<Record<'laser' | 'projectile', string>>;
+  /** glTF skeletal / morph animations and ship-specific abilities. */
+  animations?: ShipAnimationManifest;
+  abilities?: ShipAbilitiesManifest;
+}
+
+export interface ShipAnimationTransitionDef {
+  clip: string;
+  speed: number;
+  toState: string;
+}
+
+export interface ShipAnimationManifest {
+  initialState: string;
+  transitions: ShipAnimationTransitionDef[];
+}
+
+export interface ShipSfoilSfxManifest {
+  /** Directory under `/assets` (default `audio/sfx/xwing`). */
+  basePath?: string;
+  /** Wav file names — one is picked at random per toggle. */
+  files: string[];
+}
+
+export interface ShipSfoilAbilityManifest {
+  /** Uses `animations` when set; otherwise falls back to ship-level `animations`. */
+  animation?: ShipAnimationManifest;
+  /** Folded / closing attack-run speed boost (default 1.6). */
+  closingBoostMultiplier?: number;
+  /**
+   * S-foil sfx — library clip id, list of clip ids (random), or inline wav variants.
+   * @example "xwing_sfoil"
+   * @example ["xwing_sfoil_01", "xwing_sfoil_02"]
+   * @example { "basePath": "audio/sfx/xwing", "files": ["xwing_sfoil_01.wav", "xwing_sfoil_02.wav"] }
+   */
+  sfx?: string | string[] | ShipSfoilSfxManifest;
+  /** Logical states toggled by the S-foil input (defaults below). */
+  foldedState?: string;
+  openState?: string;
+}
+
+export interface ShipAbilitiesManifest {
+  sfoil?: ShipSfoilAbilityManifest;
 }
 
 export interface PropManifestEntry {

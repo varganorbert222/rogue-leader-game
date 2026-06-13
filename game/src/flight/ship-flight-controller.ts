@@ -29,6 +29,7 @@ export class ShipFlightController {
   private flightAssist: FlightAssistOptions = { ...DEFAULT_FLIGHT_ASSIST };
   private rollIdleTime = 0;
   private readonly angular = new AngularRateSmoother();
+  private speedCapMultiplier = 1;
 
   constructor(
     public readonly root: TransformNode,
@@ -39,6 +40,10 @@ export class ShipFlightController {
 
   setFlightAssist(options: Partial<FlightAssistOptions>): void {
     this.flightAssist = { ...this.flightAssist, ...options };
+  }
+
+  setSpeedCapMultiplier(multiplier: number): void {
+    this.speedCapMultiplier = Math.max(0.1, multiplier);
   }
 
   update(dt: number, input: VehicleInput, boundary?: SoftBoundary): void {
@@ -83,7 +88,10 @@ export class ShipFlightController {
     this.root.rotationQuaternion = newRot;
 
     const fwdAfterRot = getShipForward(this.root.rotationQuaternion);
-    const cap = this.stats.maxSpeed * (input.boost ? this.stats.boostMultiplier : 1);
+    const cap =
+      this.stats.maxSpeed *
+      (input.boost ? this.stats.boostMultiplier : 1) *
+      this.speedCapMultiplier;
 
     if (input.throttle > 0) {
       this.speed += input.throttle * this.stats.thrustRate * dt;
@@ -120,5 +128,12 @@ export class ShipFlightController {
 
   getCruiseSpeed(): number {
     return this.stats.cruiseSpeed;
+  }
+
+  resetKinematics(): void {
+    this.velocity.setAll(0);
+    this.speed = this.stats.minSpeed * 1.4;
+    this.rollIdleTime = 0;
+    this.speedCapMultiplier = 1;
   }
 }

@@ -11,6 +11,7 @@ export const SfxClipIds = {
   TieFighterEngine: 'tie_fighter_engine',
   XwingInbound: 'xwing_inbound',
   TieFighterInbound: 'tie_fighter_inbound',
+  XwingSfoil: 'xwing_sfoil',
 } as const;
 
 export type SfxClipId = (typeof SfxClipIds)[keyof typeof SfxClipIds];

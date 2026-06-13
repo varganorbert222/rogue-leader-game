@@ -1,6 +1,6 @@
-import { Quaternion, Vector3, type TransformNode } from '@babylonjs/core';
-import type { GltfShipLoader, LoadedEntity } from '@rogue-leader/engine';
-import type { PropManifestEntry } from '@rogue-leader/engine';
+import { Quaternion, Vector3, type AbstractMesh, type TransformNode } from '@babylonjs/core';
+import type { GltfShipLoader, LoadedEntity, PropManifestEntry } from '@rogue-leader/engine';
+import { setLoadedEntityVisible } from '@rogue-leader/engine';
 import { HealthComponent } from '../entities/health-component';
 
 export interface MeteorConfig {
@@ -24,6 +24,7 @@ export interface MeteorInstance {
   root: TransformNode;
   health: HealthComponent;
   colliderRadius: number;
+  colliderMeshes: readonly AbstractMesh[];
   tumbleAxis: Vector3;
   tumbleSpeed: number;
 }
@@ -63,14 +64,19 @@ function buildVariantIndices(
 export class MeteorField {
   readonly meteors: MeteorInstance[] = [];
   private templates: LoadedEntity[] = [];
+  private ownsTemplates = true;
 
   async spawn(
     loader: GltfShipLoader,
     entry: PropManifestEntry,
     config: MeteorConfig,
-    playerSpawn: Vector3
+    playerSpawn: Vector3,
+    preloadedTemplates?: readonly LoadedEntity[]
   ): Promise<void> {
-    this.templates = await loader.loadPropVariantTemplates(config.prefabId, entry);
+    this.templates = preloadedTemplates?.length
+      ? [...preloadedTemplates]
+      : await loader.loadPropVariantTemplates(config.prefabId, entry);
+    this.ownsTemplates = !preloadedTemplates?.length;
     const variantCount = this.templates.length;
     const rand = seededRandom(config.seed);
     const spawnCount = Math.max(config.count, variantCount);
@@ -100,6 +106,7 @@ export class MeteorField {
 
       const template = this.templates[variantIndices[i]];
       const loaded = loader.cloneProp(template, `meteor_${i}`);
+      setLoadedEntityVisible(loaded, true);
       loaded.root.position = pos;
       const scale =
         config.scaleRange[0] + rand() * (config.scaleRange[1] - config.scaleRange[0]);
@@ -113,6 +120,7 @@ export class MeteorField {
         root: loaded.root,
         health: new HealthComponent(30, 30, 0, 0),
         colliderRadius: loaded.colliderRadius * scale,
+        colliderMeshes: loaded.colliderMeshes,
         tumbleAxis,
         tumbleSpeed,
       });
@@ -141,7 +149,10 @@ export class MeteorField {
   dispose(): void {
     this.meteors.forEach((m) => m.root.dispose());
     this.meteors.length = 0;
-    this.templates.forEach((t) => t.root.dispose());
+    if (this.ownsTemplates) {
+      this.templates.forEach((t) => t.root.dispose());
+    }
     this.templates = [];
+    this.ownsTemplates = true;
   }
 }

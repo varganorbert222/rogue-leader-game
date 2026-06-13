@@ -82,6 +82,13 @@
       "pitchRange": [0.95, 1.05],
       "cooldownMs": 2500,
       "maxVoices": 2
+    },
+    "xwing_sfoil": {
+      "registry": "xwing/sfoil",
+      "volume": 0.9,
+      "volumeRange": [0.92, 1.0],
+      "pitchRange": [0.96, 1.04],
+      "maxVoices": 2
     }
   },
   "aliases": {

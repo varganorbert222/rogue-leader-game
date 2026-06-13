@@ -69,6 +69,7 @@ export function evaluateBindings(
   );
 
   const fireSecondaryPressed = (pulseCounts.get('fireSecondary') ?? 0) > 0;
+  const toggleSfoilPressed = (pulseCounts.get('toggleSfoil') ?? 0) > 0;
   const cameraCycle = pulseCounts.get('cameraCycle') ?? 0;
   const cameraProfileCycle = (pulseCounts.get('cameraProfileCycle') ?? 0) > 0;
 
@@ -80,6 +81,7 @@ export function evaluateBindings(
     boost: evaluateHeldButton(keys, gamepad, config.boost),
     fire: evaluateHeldButton(keys, gamepad, config.firePrimary),
     fireSecondaryPressed,
+    toggleSfoilPressed,
     cameraToggle: (pulseCounts.get('cameraToggle') ?? 0) > 0,
     cameraCycle,
     cameraProfileCycle,
