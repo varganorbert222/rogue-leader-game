@@ -259,4 +259,4 @@ function pickDebrisEffects(scene: Scene, mesh: Mesh): ParticleSystem[] {
   return [ParticleFx.attachDebrisSmoke(scene, mesh), ParticleFx.attachDebrisFire(scene, mesh)];
 }
 
-export { collectMissionShipIds } from '../assets/collect-mission-assets';
+export { collectMissionShipIds } from '../loading/collect-mission-assets';

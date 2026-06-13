@@ -6,7 +6,7 @@ import {
   type AbstractMesh,
   type Material,
 } from '@babylonjs/core';
-import { configureColliderMesh, isVisualColliderMesh } from '@rogue-leader/engine';
+import { configureColliderMesh, isVisualColliderMesh } from '../../loaders/collider-mesh-detector';
 
 interface ColliderWireDebugState {
   savedMaterial: Material | null;

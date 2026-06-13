@@ -14,7 +14,7 @@ import {
   ProjectileMeshPool,
   syncProjectileMeshTransform,
   type PooledProjectileMesh,
-} from './projectile-mesh-pool';
+} from '@rogue-leader/engine';
 
 export interface ProjectileHit {
   point: Vector3;

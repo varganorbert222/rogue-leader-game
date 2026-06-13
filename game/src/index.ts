@@ -131,7 +131,7 @@ export {
 export { VehicleWeaponSystem } from "./weapons/core/vehicle-weapon-system";
 export { MissileWeapon } from "./weapons/missile-weapon";
 export { HarpoonWeapon } from "./weapons/harpoon-weapon";
-export { HealthComponent } from "./entities/health-component";
+export { HealthComponent } from "./actors/health-component";
 export { BoidNpcInput, type EnemyBehavior } from "./ai/boid-npc-input";
 export { BehaviorNpcInput } from "./ai/behavior-npc-input";
 export { NpcStateMachine } from "./ai/npc-state-machine";
@@ -150,9 +150,9 @@ export {
   MissionManager,
   type MissionHudState,
   type MissionLoadState,
-} from "./missions/mission-manager";
-export type { MissionConfig, MissionEndState } from "./missions/mission-types";
-export { MissionEndStates } from "./missions/mission-types";
+} from "./mission/mission-manager";
+export type { MissionConfig, MissionEndState } from "./mission/mission-types";
+export { MissionEndStates } from "./mission/mission-types";
 export {
   SfxClipIds,
   MusicTrackIds,

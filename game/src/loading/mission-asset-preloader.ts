@@ -11,7 +11,7 @@ import {
 } from "@rogue-leader/engine";
 import type { Scene } from "@babylonjs/core";
 import type { WeaponsManifest } from "../config/weapons-manifest";
-import type { MissionConfig } from "../missions/mission-types";
+import type { MissionConfig } from "../mission/mission-types";
 import type { WreckDebrisManager } from "../vfx/wreck-debris-manager";
 import { collectMissionAssetPlan } from "./collect-mission-assets";
 import { ShipTemplatePool } from "./ship-template-pool";

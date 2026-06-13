@@ -51,7 +51,7 @@ import {
   WreckDebrisManager,
   resolveMissionEnvironment,
 } from "../vfx/wreck-debris-manager";
-import { MissionAssetPreloader } from "../assets/mission-asset-preloader";
+import { MissionAssetPreloader } from "../loading/mission-asset-preloader";
 import { Vehicle } from "../vehicles/vehicle";
 import {
   GameAudioBridge,
@@ -64,7 +64,7 @@ import {
   buildSphereBody,
   type SphereBody,
 } from "../collision/collision-system";
-import { HealthComponent } from "../entities/health-component";
+import { HealthComponent } from "../actors/health-component";
 import { GameEventBus, GameEvents } from "../events/game-events";
 import {
   ActorRoles,

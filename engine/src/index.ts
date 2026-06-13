@@ -1,5 +1,5 @@
-export { BabylonHost } from './babylon-host';
-export { createGraphicsEngine, type GraphicsBackend } from './backend';
+export { BabylonHost } from './core/babylon-host';
+export { createGraphicsEngine, type GraphicsBackend } from './core/backend';
 export {
   AudioManager,
   type AudioManifest,
@@ -19,6 +19,24 @@ export { SkyboxLoader, type SkyboxApplyOptions } from './render/skybox-loader';
 export { DebugFloor, type DebugFloorOptions } from './render/debug-floor';
 export { DebugAxes, type DebugAxesOptions } from './render/debug-axes';
 export { TimeOfDayService } from './render/time-of-day';
+export {
+  WireframeLinePool,
+} from './render/debug/wireframe-line-pool';
+export {
+  WireframeShapePool,
+} from './render/debug/wireframe-shape-pool';
+export {
+  LineSegmentCollector,
+} from './render/debug/wireframe-primitives';
+export {
+  ColliderWireframeDebug,
+} from './render/debug/collider-wireframe-debug';
+export {
+  DebugLabelLayer,
+  DebugLabelGizmo,
+  type DebugLabelSpec,
+  type DebugLabelCategory,
+} from './render/debug/debug-labels';
 export {
   loadAssetManifest,
   type AssetManifest,
@@ -118,3 +136,9 @@ export {
   ShipAnimationController,
 } from './animation/ship-animation-controller';
 export { resolveWreckPath } from './loaders/wreck-path';
+export {
+  ProjectileMeshPool,
+  syncProjectileMeshTransform,
+  type PooledProjectileMesh,
+} from './vfx/projectile-mesh-pool';
+export type { ProjectileVisualConfig } from './vfx/projectile-visual';

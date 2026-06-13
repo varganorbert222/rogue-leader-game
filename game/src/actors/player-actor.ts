@@ -7,7 +7,7 @@ import {
 } from '../combat/weapon-aim-controller';
 import type { TargetingConfig } from '../config/combat-config';
 import type { SphereBody } from '../collision/collision-system';
-import type { HealthComponent } from '../entities/health-component';
+import type { HealthComponent } from './health-component';
 import type { CameraController } from '../flight/camera-controller';
 import { RETICLE_INNER_DISTANCE } from '../flight/flight-constants';
 import { projectWorldToScreen } from '../flight/screen-project';

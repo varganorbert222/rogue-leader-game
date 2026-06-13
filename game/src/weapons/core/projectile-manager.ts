@@ -1,7 +1,10 @@
 import type { Scene } from '@babylonjs/core';
 import { CollisionSystem, type SphereBody } from '../../collision/collision-system';
 import { Projectile, type ProjectileHit, type ProjectileSpawnOptions } from './projectile';
-import { ProjectileMeshPool } from './projectile-mesh-pool';
+import {
+  ProjectileMeshPool,
+  syncProjectileMeshTransform,
+} from '@rogue-leader/engine';
 
 import { Vector3 } from '@babylonjs/core';
 import type { ProjectilePassByObserver } from '../../audio/projectile-pass-by';

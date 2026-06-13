@@ -5,8 +5,8 @@ import {
   StandardMaterial,
   Vector3,
 } from '@babylonjs/core';
-import { ObjectPool } from '@rogue-leader/engine';
-import type { ProjectileVisualConfig } from './projectile-config';
+import { ObjectPool } from '../pool/object-pool';
+import type { ProjectileVisualConfig } from './projectile-visual';
 
 export interface PooledProjectileMesh {
   mesh: Mesh;

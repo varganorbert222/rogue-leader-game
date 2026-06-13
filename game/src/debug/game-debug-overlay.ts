@@ -9,11 +9,14 @@ import type { WeaponAimDebugInfo } from "../combat/weapon-aim-controller";
 import type { NpcSteeringDebugInfo } from "../ai/behavior-npc-input";
 import type { WanderZoneDefinition } from "../ai/navigation/nav-types";
 import type { DebugPreferences } from "./debug-preferences";
-import { DebugLabelLayer, type DebugLabelSpec } from "./debug-labels";
-import { ColliderWireframeDebug } from "./collider-wireframe-debug";
-import { LineSegmentCollector } from "./wireframe-primitives";
-import { WireframeLinePool } from "./wireframe-line-pool";
-import { WireframeShapePool } from "./wireframe-shape-pool";
+import {
+  ColliderWireframeDebug,
+  DebugLabelLayer,
+  LineSegmentCollector,
+  WireframeLinePool,
+  WireframeShapePool,
+  type DebugLabelSpec,
+} from "@rogue-leader/engine";
 
 export interface NpcDebugSnapshot {
   id: string;

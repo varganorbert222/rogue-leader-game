@@ -10,7 +10,7 @@ import type {
   PropManifestEntry,
 } from "@rogue-leader/engine";
 import { setLoadedEntityVisible } from "@rogue-leader/engine";
-import { HealthComponent } from "../entities/health-component";
+import { HealthComponent } from "../actors/health-component";
 
 export interface AsteroidConfig {
   prefabId: string;

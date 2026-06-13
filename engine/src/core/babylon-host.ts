@@ -7,7 +7,7 @@ import {
   type AbstractEngine,
 } from '@babylonjs/core';
 import { createGraphicsEngine, type GraphicsBackend } from './backend';
-import { AudioManager } from './audio/audio-manager';
+import { AudioManager } from '../audio/audio-manager';
 
 export class BabylonHost {
   readonly engine: AbstractEngine;

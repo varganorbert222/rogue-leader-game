@@ -1,10 +1,8 @@
 import type { ProjectileBehavior, WeaponHomingConfig } from '../../config/weapons-manifest';
 
-export interface ProjectileVisualConfig {
-  boltLength: number;
-  boltDiameter: number;
-  emissive: [number, number, number];
-}
+import type { ProjectileVisualConfig } from '@rogue-leader/engine';
+
+export type { ProjectileVisualConfig };
 
 export interface ProjectileConfig {
   speed: number;
