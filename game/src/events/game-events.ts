@@ -1,46 +1,47 @@
-import { Vector3 } from '@babylonjs/core';
-import type { EntityDestroyKind } from '../constants/entity-destroy-kind';
-import type { SfxClipId } from '../constants/audio-clips';
+import { Vector3 } from "@babylonjs/core";
+import type { EntityDestroyKind } from "../constants/entity-destroy-kind";
+import type { SfxClipId } from "../constants/audio-clips";
 
 export const GameEventTypes = {
-  WeaponFired: 'WeaponFired',
-  ProjectileHit: 'ProjectileHit',
-  EntityDestroyed: 'EntityDestroyed',
-  PlayerDamaged: 'PlayerDamaged',
-  MeteorImpact: 'MeteorImpact',
-  ShieldHit: 'ShieldHit',
-  BoostStarted: 'BoostStarted',
-  MissionStarted: 'MissionStarted',
-  MissionEnded: 'MissionEnded',
-  MenuOpened: 'MenuOpened',
-  MissileLock: 'MissileLock',
-  MissileLaunched: 'MissileLaunched',
-  HarpoonAttached: 'HarpoonAttached',
-  ProjectileWhoosh: 'ProjectileWhoosh',
-  ShipInbound: 'ShipInbound',
-  SfoilToggled: 'SfoilToggled',
+  WeaponFired: "WeaponFired",
+  ProjectileHit: "ProjectileHit",
+  EntityDestroyed: "EntityDestroyed",
+  PlayerDamaged: "PlayerDamaged",
+  AsteroidImpact: "AsteroidImpact",
+  ShieldHit: "ShieldHit",
+  BoostStarted: "BoostStarted",
+  MissionStarted: "MissionStarted",
+  MissionEnded: "MissionEnded",
+  MenuOpened: "MenuOpened",
+  MissileLock: "MissileLock",
+  MissileLaunched: "MissileLaunched",
+  HarpoonAttached: "HarpoonAttached",
+  ProjectileWhoosh: "ProjectileWhoosh",
+  ShipInbound: "ShipInbound",
+  SfoilToggled: "SfoilToggled",
 } as const;
 
-export type GameEventType = (typeof GameEventTypes)[keyof typeof GameEventTypes];
+export type GameEventType =
+  (typeof GameEventTypes)[keyof typeof GameEventTypes];
 
 export const GameEventPayloadKeys = {
-  Sfx: 'sfx',
-  Kind: 'kind',
-  ShipId: 'shipId',
-  MusicId: 'musicId',
-  MusicSetId: 'musicSetId',
-  PlayerShipId: 'playerShipId',
-  WeaponId: 'weaponId',
-  Behavior: 'behavior',
-  Team: 'team',
-  Faction: 'faction',
-  Delivery: 'delivery',
-  ClipId: 'clipId',
-  Position: 'position',
-  Velocity: 'velocity',
-  SfxClipIds: 'sfxClipIds',
-  SfxFiles: 'sfxFiles',
-  SfxBasePath: 'sfxBasePath',
+  Sfx: "sfx",
+  Kind: "kind",
+  ShipId: "shipId",
+  MusicId: "musicId",
+  MusicSetId: "musicSetId",
+  PlayerShipId: "playerShipId",
+  WeaponId: "weaponId",
+  Behavior: "behavior",
+  Team: "team",
+  Faction: "faction",
+  Delivery: "delivery",
+  ClipId: "clipId",
+  Position: "position",
+  Velocity: "velocity",
+  SfxClipIds: "sfxClipIds",
+  SfxFiles: "sfxFiles",
+  SfxBasePath: "sfxBasePath",
 } as const;
 
 export interface WeaponFiredPayload {
@@ -152,9 +153,9 @@ export const GameEvents = {
     };
   },
 
-  meteorImpact(payload: SpatialSfxPayload = {}): GameEvent {
+  asteroidImpact(payload: SpatialSfxPayload = {}): GameEvent {
     return {
-      type: GameEventTypes.MeteorImpact,
+      type: GameEventTypes.AsteroidImpact,
       payload: asEventPayload(payload),
     };
   },
@@ -195,43 +196,55 @@ export const GameEvents = {
 
 export function readPayloadString(
   payload: Record<string, unknown> | undefined,
-  key: string
+  key: string,
 ): string | undefined {
   const value = payload?.[key];
-  return typeof value === 'string' ? value : undefined;
+  return typeof value === "string" ? value : undefined;
 }
 
 export function readPayloadSfx(
   payload: Record<string, unknown> | undefined,
-  fallback: SfxClipId
+  fallback: SfxClipId,
 ): SfxClipId {
-  return (readPayloadString(payload, GameEventPayloadKeys.Sfx) as SfxClipId | undefined) ?? fallback;
+  return (
+    (readPayloadString(payload, GameEventPayloadKeys.Sfx) as
+      | SfxClipId
+      | undefined) ?? fallback
+  );
 }
 
 export function readPayloadDestroyKind(
-  payload: Record<string, unknown> | undefined
+  payload: Record<string, unknown> | undefined,
 ): EntityDestroyKind | undefined {
-  return readPayloadString(payload, GameEventPayloadKeys.Kind) as EntityDestroyKind | undefined;
+  return readPayloadString(payload, GameEventPayloadKeys.Kind) as
+    | EntityDestroyKind
+    | undefined;
 }
 
 export function readPayloadStringArray(
   payload: Record<string, unknown> | undefined,
-  key: string
+  key: string,
 ): string[] | undefined {
   const value = payload?.[key];
   if (!Array.isArray(value)) return undefined;
-  const strings = value.filter((entry): entry is string => typeof entry === 'string');
+  const strings = value.filter(
+    (entry): entry is string => typeof entry === "string",
+  );
   return strings.length > 0 ? strings : undefined;
 }
 
 export function readPayloadVector3(
   payload: Record<string, unknown> | undefined,
-  key: string
+  key: string,
 ): Vector3 | undefined {
   const value = payload?.[key];
-  if (!value || typeof value !== 'object') return undefined;
+  if (!value || typeof value !== "object") return undefined;
   const v = value as { x?: unknown; y?: unknown; z?: unknown };
-  if (typeof v.x !== 'number' || typeof v.y !== 'number' || typeof v.z !== 'number') {
+  if (
+    typeof v.x !== "number" ||
+    typeof v.y !== "number" ||
+    typeof v.z !== "number"
+  ) {
     return undefined;
   }
   return new Vector3(v.x, v.y, v.z);

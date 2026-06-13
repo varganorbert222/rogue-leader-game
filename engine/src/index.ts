@@ -15,7 +15,7 @@ export type {
   MusicLayerDef,
 } from './audio/audio-types';
 export { SPEED_OF_SOUND, computeDopplerPitch } from './audio/spatial-audio';
-export { SkyboxLoader } from './render/skybox-loader';
+export { SkyboxLoader, type SkyboxApplyOptions } from './render/skybox-loader';
 export { DebugFloor, type DebugFloorOptions } from './render/debug-floor';
 export { DebugAxes, type DebugAxesOptions } from './render/debug-axes';
 export { TimeOfDayService } from './render/time-of-day';
@@ -31,11 +31,14 @@ export {
   type ShipSfoilSfxManifest,
   type ShipAbilitiesManifest,
   type PropManifestEntry,
+  type SkyboxCubemapEntry,
   type SkyboxManifestEntry,
+  type SkyboxPhotodomeEntry,
 } from './loaders/asset-manifest';
 export {
   detectColliderMeshes,
   configureColliderMesh,
+  isVisualColliderMesh,
   filterVisualMeshes,
   filterVisualLodMeshes,
 } from './loaders/collider-mesh-detector';

@@ -1,9 +1,9 @@
-import type { MissionNavigationConfig } from '../ai/navigation/nav-types';
+import type { MissionNavigationConfig } from "../ai/navigation/nav-types";
 
 export interface MissionWaveEnemy {
   shipId: string;
   spawn: [number, number, number];
-  behavior: 'attack' | 'chase' | 'flank';
+  behavior: "attack" | "chase" | "flank";
 }
 
 export interface MissionWave {
@@ -17,6 +17,8 @@ export interface MissionConfig {
   id: string;
   displayName: string;
   skyboxId: string;
+  /** Photodome skybox: 0-based texture index or filename/path fragment from manifest `textures`. */
+  skyboxTexture?: number | string;
   musicId: string;
   /** Adaptive calm ↔ combat score set id from audio manifest. */
   musicSetId?: string;
@@ -35,12 +37,12 @@ export interface MissionConfig {
     radius: number;
     softBoundary: boolean;
   };
-  meteors?: {
+  asteroids?: {
     prefabId: string;
     count: number;
     seed: number;
     spawnRegion: {
-      type: 'sphereShell';
+      type: "sphereShell";
       center: number[];
       innerRadius: number;
       outerRadius: number;
@@ -59,10 +61,10 @@ export interface MissionConfig {
   stubMessage?: string;
 }
 
-export type MissionEndState = 'playing' | 'won' | 'lost';
+export type MissionEndState = "playing" | "won" | "lost";
 
 export const MissionEndStates = {
-  Playing: 'playing',
-  Won: 'won',
-  Lost: 'lost',
+  Playing: "playing",
+  Won: "won",
+  Lost: "lost",
 } as const satisfies Record<string, MissionEndState>;

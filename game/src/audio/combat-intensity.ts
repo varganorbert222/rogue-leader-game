@@ -1,8 +1,8 @@
-import { Vector3 } from '@babylonjs/core';
+import { Vector3 } from "@babylonjs/core";
 import {
   DamageSeverities,
   type DamageSeverity,
-} from '../constants/damage-severity';
+} from "../constants/damage-severity";
 
 export interface CombatIntensitySnapshot {
   enemyCount: number;
@@ -21,7 +21,7 @@ export class CombatIntensityTracker {
     const add =
       severity === DamageSeverities.Hull
         ? 1
-        : severity === DamageSeverities.Meteor
+        : severity === DamageSeverities.Asteroid
           ? 0.85
           : 0.65;
     this.damageBurst = Math.max(this.damageBurst, add);

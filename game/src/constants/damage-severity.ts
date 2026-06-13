@@ -1,7 +1,7 @@
 export const DamageSeverities = {
-  Shield: 'shield',
-  Hull: 'hull',
-  Meteor: 'meteor',
+  Shield: "shield",
+  Hull: "hull",
+  Asteroid: "asteroid",
 } as const;
 
 export type DamageSeverity =

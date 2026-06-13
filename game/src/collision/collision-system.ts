@@ -11,6 +11,28 @@ export interface SphereBody {
   colliderMeshes?: readonly AbstractMesh[];
 }
 
+/** Mesh collider takes precedence; sphere radius is used only without mesh colliders. */
+export function buildSphereBody(body: {
+  id: string;
+  position: Vector3;
+  radius: number;
+  team?: SphereBody['team'];
+  faction?: SphereBody['faction'];
+  velocity?: Vector3;
+  colliderMeshes?: readonly AbstractMesh[];
+}): SphereBody {
+  const meshColliders = body.colliderMeshes?.length ? body.colliderMeshes : undefined;
+  return {
+    id: body.id,
+    position: body.position,
+    team: body.team,
+    faction: body.faction,
+    velocity: body.velocity,
+    radius: meshColliders ? 0 : body.radius,
+    colliderMeshes: meshColliders,
+  };
+}
+
 export interface RaycastHit {
   hit: boolean;
   distance: number;

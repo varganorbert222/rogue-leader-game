@@ -1,14 +1,23 @@
-import { Quaternion, Vector3, type AbstractMesh, type TransformNode } from '@babylonjs/core';
-import type { GltfShipLoader, LoadedEntity, PropManifestEntry } from '@rogue-leader/engine';
-import { setLoadedEntityVisible } from '@rogue-leader/engine';
-import { HealthComponent } from '../entities/health-component';
+import {
+  Quaternion,
+  Vector3,
+  type AbstractMesh,
+  type TransformNode,
+} from "@babylonjs/core";
+import type {
+  GltfShipLoader,
+  LoadedEntity,
+  PropManifestEntry,
+} from "@rogue-leader/engine";
+import { setLoadedEntityVisible } from "@rogue-leader/engine";
+import { HealthComponent } from "../entities/health-component";
 
-export interface MeteorConfig {
+export interface AsteroidConfig {
   prefabId: string;
   count: number;
   seed: number;
   spawnRegion: {
-    type: 'sphereShell';
+    type: "sphereShell";
     center: number[];
     innerRadius: number;
     outerRadius: number;
@@ -19,12 +28,14 @@ export interface MeteorConfig {
   maxAngularSpeed: number;
 }
 
-export interface MeteorInstance {
+export interface AsteroidInstance {
   id: string;
   root: TransformNode;
   health: HealthComponent;
+  /** Sphere fallback radius — 0 when `usesMeshCollider` is true. */
   colliderRadius: number;
   colliderMeshes: readonly AbstractMesh[];
+  usesMeshCollider: boolean;
   tumbleAxis: Vector3;
   tumbleSpeed: number;
 }
@@ -48,7 +59,7 @@ function shuffleInPlace<T>(items: T[], rand: () => number): void {
 function buildVariantIndices(
   spawnCount: number,
   variantCount: number,
-  rand: () => number
+  rand: () => number,
 ): number[] {
   const picks: number[] = Array.from({ length: variantCount }, (_, i) => i);
   shuffleInPlace(picks, rand);
@@ -61,17 +72,17 @@ function buildVariantIndices(
   return picks;
 }
 
-export class MeteorField {
-  readonly meteors: MeteorInstance[] = [];
+export class AsteroidField {
+  readonly asteroids: AsteroidInstance[] = [];
   private templates: LoadedEntity[] = [];
   private ownsTemplates = true;
 
   async spawn(
     loader: GltfShipLoader,
     entry: PropManifestEntry,
-    config: MeteorConfig,
+    config: AsteroidConfig,
     playerSpawn: Vector3,
-    preloadedTemplates?: readonly LoadedEntity[]
+    preloadedTemplates?: readonly LoadedEntity[],
   ): Promise<void> {
     this.templates = preloadedTemplates?.length
       ? [...preloadedTemplates]
@@ -93,34 +104,45 @@ export class MeteorField {
         const phi = Math.acos(2 * v - 1);
         const r =
           config.spawnRegion.innerRadius +
-          rand() * (config.spawnRegion.outerRadius - config.spawnRegion.innerRadius);
+          rand() *
+            (config.spawnRegion.outerRadius - config.spawnRegion.innerRadius);
         pos = center.add(
           new Vector3(
             r * Math.sin(phi) * Math.cos(theta),
             r * Math.sin(phi) * Math.sin(theta),
-            r * Math.cos(phi)
-          )
+            r * Math.cos(phi),
+          ),
         );
         attempts++;
       } while (Vector3.Distance(pos, playerSpawn) < 80 && attempts < 20);
 
       const template = this.templates[variantIndices[i]];
-      const loaded = loader.cloneProp(template, `meteor_${i}`);
+      const loaded = loader.cloneProp(template, `asteroid_${i}`, entry);
       setLoadedEntityVisible(loaded, true);
       loaded.root.position = pos;
       const scale =
-        config.scaleRange[0] + rand() * (config.scaleRange[1] - config.scaleRange[0]);
+        config.scaleRange[0] +
+        rand() * (config.scaleRange[1] - config.scaleRange[0]);
       loaded.root.scaling.scaleInPlace(scale);
 
-      const tumbleAxis = new Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).normalize();
-      const tumbleSpeed = config.slowTumble ? rand() * config.maxAngularSpeed : 0;
+      const tumbleAxis = new Vector3(
+        rand() - 0.5,
+        rand() - 0.5,
+        rand() - 0.5,
+      ).normalize();
+      const tumbleSpeed = config.slowTumble
+        ? rand() * config.maxAngularSpeed
+        : 0;
 
-      this.meteors.push({
-        id: `meteor_${i}`,
+      const usesMeshCollider = loaded.colliderMeshes.length > 0;
+
+      this.asteroids.push({
+        id: `asteroid_${i}`,
         root: loaded.root,
         health: new HealthComponent(30, 30, 0, 0),
-        colliderRadius: loaded.colliderRadius * scale,
+        colliderRadius: usesMeshCollider ? 0 : loaded.colliderRadius * scale,
         colliderMeshes: loaded.colliderMeshes,
+        usesMeshCollider,
         tumbleAxis,
         tumbleSpeed,
       });
@@ -128,10 +150,12 @@ export class MeteorField {
   }
 
   update(dt: number): void {
-    for (const m of this.meteors) {
-      if (m.tumbleSpeed > 0) {
-        const q = Quaternion.RotationAxis(m.tumbleAxis, m.tumbleSpeed * dt);
-        m.root.rotationQuaternion = (m.root.rotationQuaternion ?? Quaternion.Identity())
+    for (const a of this.asteroids) {
+      if (a.tumbleSpeed > 0) {
+        const q = Quaternion.RotationAxis(a.tumbleAxis, a.tumbleSpeed * dt);
+        a.root.rotationQuaternion = (
+          a.root.rotationQuaternion ?? Quaternion.Identity()
+        )
           .multiply(q)
           .normalize();
       }
@@ -139,16 +163,16 @@ export class MeteorField {
   }
 
   remove(id: string): void {
-    const idx = this.meteors.findIndex((m) => m.id === id);
+    const idx = this.asteroids.findIndex((a) => a.id === id);
     if (idx >= 0) {
-      this.meteors[idx].root.dispose();
-      this.meteors.splice(idx, 1);
+      this.asteroids[idx].root.dispose();
+      this.asteroids.splice(idx, 1);
     }
   }
 
   dispose(): void {
-    this.meteors.forEach((m) => m.root.dispose());
-    this.meteors.length = 0;
+    this.asteroids.forEach((a) => a.root.dispose());
+    this.asteroids.length = 0;
     if (this.ownsTemplates) {
       this.templates.forEach((t) => t.root.dispose());
     }

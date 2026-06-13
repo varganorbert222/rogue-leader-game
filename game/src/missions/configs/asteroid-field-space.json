@@ -17,8 +17,8 @@
     "radius": 800,
     "softBoundary": true
   },
-  "meteors": {
-    "prefabId": "meteor",
+  "asteroids": {
+    "prefabId": "asteroid",
     "count": 25,
     "seed": 42001,
     "spawnRegion": {

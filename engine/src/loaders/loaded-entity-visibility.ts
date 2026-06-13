@@ -1,5 +1,5 @@
 import { Mesh, Quaternion } from '@babylonjs/core';
-import { configureColliderMesh, detectColliderMeshes } from './collider-mesh-detector';
+import { configureColliderMesh, detectColliderMeshes, isVisualColliderMesh } from './collider-mesh-detector';
 import type { LoadedEntity } from './gltf-ship-loader';
 
 /** Show or hide every visual mesh on a loaded ship/prop hierarchy. */
@@ -12,6 +12,12 @@ export function setLoadedEntityVisible(loaded: LoadedEntity, visible: boolean): 
   }
 
   for (const mesh of loaded.colliderMeshes) {
+    if (isVisualColliderMesh(mesh)) {
+      mesh.setEnabled(visible);
+      mesh.isVisible = visible;
+      mesh.visibility = visible ? 1 : 0;
+      continue;
+    }
     configureColliderMesh(mesh);
     mesh.setEnabled(visible);
     mesh.isVisible = false;

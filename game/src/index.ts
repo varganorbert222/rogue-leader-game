@@ -7,29 +7,36 @@ export {
   type DebugOverlayToggles,
   type DebugLabelToggles,
   type DebugGameplayToggles,
-} from './debug/debug-preferences';
-export { KeyboardInput } from './input/keyboard-input';
-export { GamepadInput } from './input/gamepad-input';
-export { BoundPlayerInput } from './input/bound-player-input';
-export { startBindingCapture, type BindingCaptureSession } from './input/binding-capture';
+} from "./debug/debug-preferences";
+export { KeyboardInput } from "./input/keyboard-input";
+export { GamepadInput } from "./input/gamepad-input";
+export { BoundPlayerInput } from "./input/bound-player-input";
+export {
+  startBindingCapture,
+  type BindingCaptureSession,
+} from "./input/binding-capture";
 export {
   formatBinding,
   formatKeyboardCode,
   formatGamepadButton,
-} from './input/binding-labels';
-export { listConnectedGamepads, wakeGamepads, type ConnectedGamepadInfo } from './input/gamepad-list';
+} from "./input/binding-labels";
+export {
+  listConnectedGamepads,
+  wakeGamepads,
+  type ConnectedGamepadInfo,
+} from "./input/gamepad-list";
 export {
   gamepadIdsMatch,
   pickPreferredGamepadSlot,
   isPlayStationGamepad,
   usesStandardGamepadLayout,
-} from './input/gamepad-profiles';
+} from "./input/gamepad-profiles";
 export {
   loadFlightPreferences,
   saveFlightPreferences,
   normalizeSelectedGamepadId,
   type FlightPreferences,
-} from './settings/flight-preferences';
+} from "./settings/flight-preferences";
 export {
   loadControlBindings,
   saveControlBindings,
@@ -46,7 +53,7 @@ export {
   type ButtonActionBindings,
   type StickSettings,
   type TriggerSettings,
-} from './settings/control-bindings';
+} from "./settings/control-bindings";
 export {
   applyCapturedBinding,
   isAxisAction,
@@ -54,94 +61,98 @@ export {
   removeGamepadButtonBinding,
   removeKeyboardBinding,
   type BindingPole,
-} from './settings/control-binding-utils';
-export { CombinedInput } from './input/combined-input';
-export type { IInputSource, FlightInput } from './input/i-input-source';
-export type { IPlayerInputSource } from './input/i-player-input-source';
-export type { VehicleInput } from './input/vehicle-input';
-export type { CombatInput } from './input/combat-input';
-export type { CameraInput } from './input/camera-input';
-export type { PlayerInput } from './input/player-input';
+} from "./settings/control-binding-utils";
+export { CombinedInput } from "./input/combined-input";
+export type { IInputSource, FlightInput } from "./input/i-input-source";
+export type { IPlayerInputSource } from "./input/i-player-input-source";
+export type { VehicleInput } from "./input/vehicle-input";
+export type { CombatInput } from "./input/combat-input";
+export type { CameraInput } from "./input/camera-input";
+export type { PlayerInput } from "./input/player-input";
 export {
   playerInputFromFlightInput,
   flightInputFromPlayerInput,
   mergePlayerInputs,
-} from './input/player-input';
-export type { NpcInput, NpcInputContext, NpcInputResult } from './input/npc-input';
-export { Vehicle, type VehicleSpawnOptions } from './vehicles/vehicle';
-export type { Actor, ActorRole } from './actors/actor';
-export { ActorWorld } from './actors/actor-world';
-export { PlayerActor } from './actors/player-actor';
-export { NpcActor } from './actors/npc-actor';
+} from "./input/player-input";
+export type {
+  NpcInput,
+  NpcInputContext,
+  NpcInputResult,
+} from "./input/npc-input";
+export { Vehicle, type VehicleSpawnOptions } from "./vehicles/vehicle";
+export type { Actor, ActorRole } from "./actors/actor";
+export { ActorWorld } from "./actors/actor-world";
+export { PlayerActor } from "./actors/player-actor";
+export { NpcActor } from "./actors/npc-actor";
 export {
   CameraController,
   type CameraViewMode,
   type CameraDriverKind,
-} from './flight/camera-controller';
+} from "./flight/camera-controller";
 export {
   CAMERA_SPRING_PROFILES,
   DEFAULT_CAMERA_SPRING_PROFILE,
   cycleCameraSpringProfile,
   type CameraSpringProfile,
   type CameraSpringProfileId,
-} from './flight/camera-profile';
+} from "./flight/camera-profile";
 export {
   FollowCameraDriver,
   ScriptedCameraDriver,
   RailCameraDriver,
   type CameraSequence,
   type CameraSequenceKeyframe,
-} from './flight/camera-drivers';
+} from "./flight/camera-drivers";
 export {
   MIN_FLIGHT_SPEED,
   RETICLE_INNER_DISTANCE,
   RETICLE_OUTER_DISTANCE,
   YAW_VISUAL_BANK_DEG,
-} from './flight/flight-constants';
-export { getShipBankAngle } from './flight/flight-assist';
-export { getShipForward, shipRotationFromHeading } from './flight/ship-forward';
-export { computeRogueFlightAxes } from './flight/rogue-flight-controls';
+} from "./flight/flight-constants";
+export { getShipBankAngle } from "./flight/flight-assist";
+export { getShipForward, shipRotationFromHeading } from "./flight/ship-forward";
+export { computeRogueFlightAxes } from "./flight/rogue-flight-controls";
 export {
   DEFAULT_FLIGHT_ASSIST,
   type FlightAssistOptions,
-} from './flight/flight-assist';
-export { CombatSystem, type ProjectileHit } from './weapons/combat-system';
+} from "./flight/flight-assist";
+export { CombatSystem, type ProjectileHit } from "./weapons/combat-system";
 export type {
   ResolvedWeaponDefinition,
   StubWeaponDefinition,
   WeaponDelivery,
   WeaponBehavior,
   WeaponFireGroup,
-} from './weapons/core/weapon-definition';
+} from "./weapons/core/weapon-definition";
 export {
   loadWeaponsManifest,
   type WeaponsManifest,
-} from './config/weapons-manifest';
-export { VehicleWeaponSystem } from './weapons/core/vehicle-weapon-system';
-export { MissileWeapon } from './weapons/missile-weapon';
-export { HarpoonWeapon } from './weapons/harpoon-weapon';
-export { HealthComponent } from './entities/health-component';
-export { BoidNpcInput, type EnemyBehavior } from './ai/boid-npc-input';
-export { BehaviorNpcInput } from './ai/behavior-npc-input';
-export { NpcStateMachine } from './ai/npc-state-machine';
-export { RadarSystem } from './combat/radar-system';
-export { updateWeaponAimForObserver } from './combat/weapon-aim-controller';
+} from "./config/weapons-manifest";
+export { VehicleWeaponSystem } from "./weapons/core/vehicle-weapon-system";
+export { MissileWeapon } from "./weapons/missile-weapon";
+export { HarpoonWeapon } from "./weapons/harpoon-weapon";
+export { HealthComponent } from "./entities/health-component";
+export { BoidNpcInput, type EnemyBehavior } from "./ai/boid-npc-input";
+export { BehaviorNpcInput } from "./ai/behavior-npc-input";
+export { NpcStateMachine } from "./ai/npc-state-machine";
+export { RadarSystem } from "./combat/radar-system";
+export { updateWeaponAimForObserver } from "./combat/weapon-aim-controller";
 export {
   loadNpcBehaviorConfig,
   DEFAULT_NPC_BEHAVIOR_CONFIG,
   type NpcBehaviorConfig,
   type NpcStateId,
-} from './config/npc-behavior-config';
-export { GameDebugOverlay } from './debug/game-debug-overlay';
-export { CollisionSystem } from './collision/collision-system';
-export { MeteorField } from './hazards/meteor-field';
+} from "./config/npc-behavior-config";
+export { GameDebugOverlay } from "./debug/game-debug-overlay";
+export { CollisionSystem, buildSphereBody } from "./collision/collision-system";
+export { AsteroidField } from "./hazards/asteroid-field";
 export {
   MissionManager,
   type MissionHudState,
   type MissionLoadState,
-} from './missions/mission-manager';
-export type { MissionConfig, MissionEndState } from './missions/mission-types';
-export { MissionEndStates } from './missions/mission-types';
+} from "./missions/mission-manager";
+export type { MissionConfig, MissionEndState } from "./missions/mission-types";
+export { MissionEndStates } from "./missions/mission-types";
 export {
   SfxClipIds,
   MusicTrackIds,
@@ -166,7 +177,7 @@ export {
   type MissionId,
   type EntityDestroyKind,
   type DamageSeverity,
-} from './constants';
+} from "./constants";
 export {
   GameEventTypes,
   GameEventPayloadKeys,
@@ -174,9 +185,15 @@ export {
   GameEventBus,
   type GameEventType,
   type GameEvent,
-} from './events/game-events';
-export { ShipAudioCatalog } from './audio/ship-audio-map';
-export { ShipEngineAudioManager, type ShipEngineAudioSource } from './audio/ship-engine-audio';
-export { WeaponHitSfxResolver } from './audio/weapon-hit-sfx';
-export { GameAudioBridge, type GameAudioUpdateContext } from './audio/game-audio-bridge';
-export { CombatIntensityTracker } from './audio/combat-intensity';
+} from "./events/game-events";
+export { ShipAudioCatalog } from "./audio/ship-audio-map";
+export {
+  ShipEngineAudioManager,
+  type ShipEngineAudioSource,
+} from "./audio/ship-engine-audio";
+export { WeaponHitSfxResolver } from "./audio/weapon-hit-sfx";
+export {
+  GameAudioBridge,
+  type GameAudioUpdateContext,
+} from "./audio/game-audio-bridge";
+export { CombatIntensityTracker } from "./audio/combat-intensity";

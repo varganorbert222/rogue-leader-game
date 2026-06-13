@@ -33,8 +33,13 @@ function isColliderMeshName(name: string): boolean {
 }
 
 function isColliderMesh(mesh: Mesh): boolean {
+  if (mesh.metadata?.usesVisualCollider === true) return false;
   if (mesh.metadata?.isColliderMesh === true) return true;
   return isColliderMeshName(mesh.name);
+}
+
+export function isVisualColliderMesh(mesh: AbstractMesh): boolean {
+  return mesh.metadata?.usesVisualCollider === true;
 }
 
 /** Hide collider-only geometry while keeping transforms active for collision. */
@@ -85,4 +90,28 @@ export function filterVisualLodMeshes(
 ): AbstractMesh[][] {
   if (!colliders.length) return lodMeshes.map((group) => [...group]);
   return lodMeshes.map((group) => filterVisualMeshes(group, colliders));
+}
+
+/** Use visible render meshes as collision geometry (asteroids stay visible). */
+export function applyVisualMeshColliders(loaded: {
+  meshes: readonly AbstractMesh[];
+  colliderMeshes: Mesh[];
+}): void {
+  loaded.colliderMeshes.length = 0;
+  for (const mesh of loaded.meshes) {
+    if (!(mesh instanceof Mesh)) continue;
+    mesh.isPickable = false;
+    mesh.checkCollisions = false;
+    mesh.metadata = { ...(mesh.metadata ?? {}), usesVisualCollider: true };
+    loaded.colliderMeshes.push(mesh);
+  }
+}
+
+export function applyPropColliderPolicy(
+  loaded: { meshes: readonly AbstractMesh[]; colliderMeshes: Mesh[] },
+  entry: { colliderSource?: "named" | "visual" },
+): void {
+  if (entry.colliderSource === "visual") {
+    applyVisualMeshColliders(loaded);
+  }
 }

@@ -1,10 +1,10 @@
-import type { AssetManifest, ShipManifestEntry } from '@rogue-leader/engine';
-import type { WeaponsManifest } from '../config/weapons-manifest';
-import type { MissionConfig } from '../missions/mission-types';
-import { ShipAudioCatalog } from '../audio/ship-audio-map';
-import { SfxClipIds } from '../constants/audio-clips';
-import { resolveShipSfoilSfx } from '../audio/sfoil-sfx';
-import { resolveFaction } from '../combat/faction';
+import type { AssetManifest, ShipManifestEntry } from "@rogue-leader/engine";
+import type { WeaponsManifest } from "../config/weapons-manifest";
+import type { MissionConfig } from "../missions/mission-types";
+import { ShipAudioCatalog } from "../audio/ship-audio-map";
+import { SfxClipIds } from "../constants/audio-clips";
+import { resolveShipSfoilSfx } from "../audio/sfoil-sfx";
+import { resolveFaction } from "../combat/faction";
 
 export interface SfoilFileVariantSet {
   basePath: string;
@@ -13,8 +13,9 @@ export interface SfoilFileVariantSet {
 
 export interface MissionAssetPlan {
   shipIds: readonly string[];
-  meteorPrefabId?: string;
+  asteroidPrefabId?: string;
   skyboxId: string;
+  skyboxTexture?: number | string;
   musicId: string;
   musicSetId?: string;
   audioClipIds: readonly string[];
@@ -37,7 +38,7 @@ export function collectMissionShipIds(config: {
 export function collectMissionAssetPlan(
   config: MissionConfig,
   manifest: AssetManifest,
-  weaponsManifest: WeaponsManifest
+  weaponsManifest: WeaponsManifest,
 ): MissionAssetPlan {
   const shipIds = collectMissionShipIds(config);
   const clipIds = new Set<string>([
@@ -64,12 +65,12 @@ export function collectMissionAssetPlan(
     collectWeaponClips(entry, weaponsManifest, clipIds);
 
     const sfoilSfx = resolveShipSfoilSfx(entry.abilities?.sfoil?.sfx);
-    if (sfoilSfx?.kind === 'clip') {
+    if (sfoilSfx?.kind === "clip") {
       clipIds.add(sfoilSfx.clipId);
-    } else if (sfoilSfx?.kind === 'clips') {
+    } else if (sfoilSfx?.kind === "clips") {
       for (const id of sfoilSfx.clipIds) clipIds.add(id);
-    } else if (sfoilSfx?.kind === 'files') {
-      const key = `${sfoilSfx.basePath}|${sfoilSfx.files.join(',')}`;
+    } else if (sfoilSfx?.kind === "files") {
+      const key = `${sfoilSfx.basePath}|${sfoilSfx.files.join(",")}`;
       sfoilVariantMap.set(key, {
         basePath: sfoilSfx.basePath,
         files: sfoilSfx.files,
@@ -83,8 +84,9 @@ export function collectMissionAssetPlan(
 
   return {
     shipIds,
-    meteorPrefabId: config.meteors?.prefabId,
+    asteroidPrefabId: config.asteroids?.prefabId,
     skyboxId: config.skyboxId,
+    skyboxTexture: config.skyboxTexture,
     musicId: config.musicId,
     musicSetId: config.musicSetId,
     audioClipIds: [...clipIds],
@@ -95,7 +97,7 @@ export function collectMissionAssetPlan(
 function collectWeaponClips(
   entry: ShipManifestEntry,
   weaponsManifest: WeaponsManifest,
-  clipIds: Set<string>
+  clipIds: Set<string>,
 ): void {
   const weaponIds = new Set<string>();
   for (const weaponId of Object.values(entry.defaultWeapons ?? {})) {

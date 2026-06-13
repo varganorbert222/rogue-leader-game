@@ -78,18 +78,34 @@ export interface ShipAbilitiesManifest {
   sfoil?: ShipSfoilAbilityManifest;
 }
 
+/** Use the prop's own visible mesh geometry for hit tests (e.g. asteroids). */
+export type PropColliderSource = "named" | "visual";
+
 export interface PropManifestEntry {
   lod?: LodManifestValue;
   /** GLB paths for visual variants — each loaded once, then picked at random when spawning. */
   variants?: string[];
   scale: number | [number, number];
   colliderRadius: number;
+  /** `named` = `collider` / `collider_*` nodes; `visual` = render meshes (asteroids). */
+  colliderSource?: PropColliderSource;
 }
 
-export interface SkyboxManifestEntry {
+export interface SkyboxCubemapEntry {
   type: 'cubemap';
   faces: string[];
 }
+
+export interface SkyboxPhotodomeEntry {
+  type: 'photodome';
+  /** Equirectangular spheremap textures (e.g. `*_01.png` … `*_N.png`). */
+  textures: string[];
+  resolution?: number;
+  size?: number;
+  useDirectMapping?: boolean;
+}
+
+export type SkyboxManifestEntry = SkyboxCubemapEntry | SkyboxPhotodomeEntry;
 
 export interface AssetManifest {
   ships: Record<string, ShipManifestEntry>;

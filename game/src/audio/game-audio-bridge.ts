@@ -1,5 +1,5 @@
-import type { Vector3 } from '@babylonjs/core';
-import type { AudioManager, PlayOneShotOptions } from '@rogue-leader/engine';
+import type { Vector3 } from "@babylonjs/core";
+import type { AudioManager, PlayOneShotOptions } from "@rogue-leader/engine";
 import {
   EntityDestroyKinds,
   Factions,
@@ -7,7 +7,7 @@ import {
   SfxClipIds,
   DEFAULT_PLAYER_SHIP_ID,
   DamageSeverities,
-} from '../constants';
+} from "../constants";
 import {
   GameEventPayloadKeys,
   GameEventTypes,
@@ -17,20 +17,20 @@ import {
   readPayloadStringArray,
   readPayloadVector3,
   type GameEventBus,
-} from '../events/game-events';
+} from "../events/game-events";
 import {
   CombatIntensityTracker,
   type CombatIntensitySnapshot,
-} from './combat-intensity';
-import { InboundFlybyDetector } from './inbound-flyby-detector';
-import { ShipAudioCatalog } from './ship-audio-map';
+} from "./combat-intensity";
+import { InboundFlybyDetector } from "./inbound-flyby-detector";
+import { ShipAudioCatalog } from "./ship-audio-map";
 import {
   ShipEngineAudioManager,
   type ShipEngineAudioSource,
-} from './ship-engine-audio';
-import { resolveEngineAudioConfig } from './engine-audio-config';
+} from "./ship-engine-audio";
+import { resolveEngineAudioConfig } from "./engine-audio-config";
 
-export type { ShipEngineAudioSource } from './ship-engine-audio';
+export type { ShipEngineAudioSource } from "./ship-engine-audio";
 
 export interface GameAudioUpdateContext extends CombatIntensitySnapshot {
   listenerPosition: Vector3;
@@ -43,7 +43,7 @@ export interface GameAudioUpdateContext extends CombatIntensitySnapshot {
 
 function spatialOptions(
   payload: Record<string, unknown> | undefined,
-  extra?: Partial<PlayOneShotOptions>
+  extra?: Partial<PlayOneShotOptions>,
 ): PlayOneShotOptions {
   const position = readPayloadVector3(payload, GameEventPayloadKeys.Position);
   const velocity = readPayloadVector3(payload, GameEventPayloadKeys.Velocity);
@@ -62,25 +62,30 @@ export class GameAudioBridge {
 
   constructor(
     private readonly audio: AudioManager,
-    events: GameEventBus
+    events: GameEventBus,
   ) {
     events.on(GameEventTypes.WeaponFired, (e) => {
       const configured = readPayloadString(e.payload, GameEventPayloadKeys.Sfx);
       const faction =
-        readPayloadString(e.payload, GameEventPayloadKeys.Faction) ?? Factions.Rebel;
-      const clipId = configured ?? ShipAudioCatalog.cannonFireClipForFaction(faction);
+        readPayloadString(e.payload, GameEventPayloadKeys.Faction) ??
+        Factions.Rebel;
+      const clipId =
+        configured ?? ShipAudioCatalog.cannonFireClipForFaction(faction);
       this.audio.playOneShot(clipId, spatialOptions(e.payload));
     });
 
     events.on(GameEventTypes.ProjectileHit, (e) => {
       this.audio.playOneShot(
         readPayloadSfx(e.payload, SfxClipIds.BulletHit),
-        spatialOptions(e.payload)
+        spatialOptions(e.payload),
       );
     });
 
     events.on(GameEventTypes.ProjectileWhoosh, (e) => {
-      this.audio.playOneShot(SfxClipIds.BulletWhoosh, spatialOptions(e.payload));
+      this.audio.playOneShot(
+        SfxClipIds.BulletWhoosh,
+        spatialOptions(e.payload),
+      );
     });
 
     events.on(GameEventTypes.EntityDestroyed, (e) => {
@@ -96,7 +101,7 @@ export class GameAudioBridge {
       this.intensity.notifyDamage(DamageSeverities.Shield);
       this.audio.playOneShot(
         SfxClipIds.BulletHit,
-        spatialOptions(e.payload, { volume: 0.55 })
+        spatialOptions(e.payload, { volume: 0.55 }),
       );
     });
 
@@ -104,27 +109,36 @@ export class GameAudioBridge {
       this.intensity.notifyDamage(DamageSeverities.Hull);
       this.audio.playOneShot(
         SfxClipIds.BulletHit,
-        spatialOptions(e.payload, { volume: 0.7 })
+        spatialOptions(e.payload, { volume: 0.7 }),
       );
     });
 
-    events.on(GameEventTypes.MeteorImpact, (e) => {
-      this.intensity.notifyDamage(DamageSeverities.Meteor);
+    events.on(GameEventTypes.AsteroidImpact, (e) => {
+      this.intensity.notifyDamage(DamageSeverities.Asteroid);
       this.audio.playOneShot(
         SfxClipIds.AsteroidExplosion,
-        spatialOptions(e.payload)
+        spatialOptions(e.payload),
       );
     });
 
     events.on(GameEventTypes.SfoilToggled, (e) => {
-      const files = readPayloadStringArray(e.payload, GameEventPayloadKeys.SfxFiles);
-      const basePath = readPayloadString(e.payload, GameEventPayloadKeys.SfxBasePath);
+      const files = readPayloadStringArray(
+        e.payload,
+        GameEventPayloadKeys.SfxFiles,
+      );
+      const basePath = readPayloadString(
+        e.payload,
+        GameEventPayloadKeys.SfxBasePath,
+      );
       if (files?.length && basePath) {
         this.audio.playRandomFile(basePath, files, spatialOptions(e.payload));
         return;
       }
 
-      const clipIds = readPayloadStringArray(e.payload, GameEventPayloadKeys.SfxClipIds);
+      const clipIds = readPayloadStringArray(
+        e.payload,
+        GameEventPayloadKeys.SfxClipIds,
+      );
       if (clipIds?.length) {
         const clipId = clipIds[Math.floor(Math.random() * clipIds.length)];
         this.audio.playOneShot(clipId, spatialOptions(e.payload));
@@ -132,7 +146,8 @@ export class GameAudioBridge {
       }
 
       const clip =
-        readPayloadString(e.payload, GameEventPayloadKeys.Sfx) ?? SfxClipIds.XwingSfoil;
+        readPayloadString(e.payload, GameEventPayloadKeys.Sfx) ??
+        SfxClipIds.XwingSfoil;
       this.audio.playOneShot(clip, spatialOptions(e.payload));
     });
 
@@ -146,9 +161,14 @@ export class GameAudioBridge {
         readPayloadString(e.payload, GameEventPayloadKeys.PlayerShipId) ??
         DEFAULT_PLAYER_SHIP_ID;
       this.engines.setPlayerShip(shipId);
-      this.engines.setConfig(resolveEngineAudioConfig(this.audio.getEngineAudioConfig()));
+      this.engines.setConfig(
+        resolveEngineAudioConfig(this.audio.getEngineAudioConfig()),
+      );
 
-      const musicSetId = readPayloadString(e.payload, GameEventPayloadKeys.MusicSetId);
+      const musicSetId = readPayloadString(
+        e.payload,
+        GameEventPayloadKeys.MusicSetId,
+      );
       const musicId =
         readPayloadString(e.payload, GameEventPayloadKeys.MusicId) ??
         MusicTrackIds.AsteroidFieldCombat;
@@ -174,7 +194,10 @@ export class GameAudioBridge {
   update(dt: number, context?: GameAudioUpdateContext): void {
     if (!this.missionActive || !context) return;
 
-    this.audio.updateListener(context.listenerPosition, context.listenerVelocity);
+    this.audio.updateListener(
+      context.listenerPosition,
+      context.listenerVelocity,
+    );
 
     const intensity = this.intensity.update(dt, context);
     if (this.audio.isDynamicMusicActive()) {
@@ -186,14 +209,14 @@ export class GameAudioBridge {
       context.playerSpeedRatio,
       context.playerPosition,
       context.playerVelocity,
-      context.npcEngines
+      context.npcEngines,
     );
   }
 
   processInbound(
-    npcs: Parameters<InboundFlybyDetector['update']>[0],
+    npcs: Parameters<InboundFlybyDetector["update"]>[0],
     playerPos: Vector3,
-    playerFaction: import('../combat/faction').FactionId
+    playerFaction: import("../combat/faction").FactionId,
   ): void {
     if (!this.missionActive) return;
     const cues = this.inbound.update(npcs, playerPos, playerFaction);
@@ -205,7 +228,12 @@ export class GameAudioBridge {
     }
   }
 
-  applySettings(master: number, music: number, sfx: number, muted: boolean): void {
+  applySettings(
+    master: number,
+    music: number,
+    sfx: number,
+    muted: boolean,
+  ): void {
     this.audio.setMasterVolume(master);
     this.audio.setMusicVolume(music);
     this.audio.setSfxVolume(sfx);

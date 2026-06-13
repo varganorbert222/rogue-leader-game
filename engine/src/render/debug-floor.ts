@@ -11,7 +11,7 @@ export interface DebugFloorOptions {
   boundaryRadius?: number;
 }
 
-/** XZ wireframe grid for spatial orientation during development. */
+/** XZ line grid for spatial orientation during development. */
 export class DebugFloor {
   private readonly meshes: LinesMesh[] = [];
 

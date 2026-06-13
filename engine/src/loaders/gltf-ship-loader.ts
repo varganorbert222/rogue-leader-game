@@ -6,37 +6,47 @@ import {
   SceneLoader,
   TransformNode,
   Vector3,
-} from '@babylonjs/core';
-import '@babylonjs/loaders/glTF';
-import type { ShipManifestEntry, PropManifestEntry } from './asset-manifest';
-import { warnMissingOnce } from './asset-manifest';
+} from "@babylonjs/core";
+import "@babylonjs/loaders/glTF";
+import type { ShipManifestEntry, PropManifestEntry } from "./asset-manifest";
+import { warnMissingOnce } from "./asset-manifest";
 import {
   detectColliderMeshes,
   filterVisualLodMeshes,
   filterVisualMeshes,
-} from './collider-mesh-detector';
-import { detectFirePoints } from './firepoint-detector';
-import { detectShipAnchors, type ShipAnchors } from './ship-anchor-detector';
-import { LodShipLoader, type LodProgressCallback } from './lod-ship-loader';
-import { createLodRuntimeState, type LodRuntimeState } from './lod-runtime';
-import { DEFAULT_CULL_SCREEN_PERCENT } from './lod-config';
+  applyPropColliderPolicy,
+} from "./collider-mesh-detector";
+import { detectFirePoints } from "./firepoint-detector";
+import { detectShipAnchors, type ShipAnchors } from "./ship-anchor-detector";
+import { LodShipLoader, type LodProgressCallback } from "./lod-ship-loader";
+import { createLodRuntimeState, type LodRuntimeState } from "./lod-runtime";
+import { DEFAULT_CULL_SCREEN_PERCENT } from "./lod-config";
 
 function createPlaceholderLodRuntime(
   root: TransformNode,
-  lodMeshes: AbstractMesh[][]
+  lodMeshes: AbstractMesh[][],
 ): LodRuntimeState {
-  return createLodRuntimeState(root, lodMeshes, [], DEFAULT_CULL_SCREEN_PERCENT);
+  return createLodRuntimeState(
+    root,
+    lodMeshes,
+    [],
+    DEFAULT_CULL_SCREEN_PERCENT,
+  );
 }
-import { attachVisualPivot } from './visual-pivot';
+import { attachVisualPivot } from "./visual-pivot";
+import { attachGltfImportToParent } from "./gltf-import-utils";
 import {
   cloneLoadedEntityRoot,
   collectDescendantMeshes,
   findVisualRoot,
   remapLodMeshGroups,
-} from './clone-entity-utils';
-import { disableMeshBackfaceCulling } from '../render/mesh-material-utils';
-import { applyModelAxisCorrection, resolveShipVisualOptions } from './ship-axis-convention';
-import type { ShipVisualOptions } from './ship-axis-convention';
+} from "./clone-entity-utils";
+import { disableMeshBackfaceCulling } from "../render/mesh-material-utils";
+import {
+  applyModelAxisCorrection,
+  resolveShipVisualOptions,
+} from "./ship-axis-convention";
+import type { ShipVisualOptions } from "./ship-axis-convention";
 
 export interface LoadedEntity {
   root: TransformNode;
@@ -52,7 +62,7 @@ export interface LoadedEntity {
   visual: ShipVisualOptions;
   lodRuntime: LodRuntimeState;
   isPlaceholder: boolean;
-  animationGroups: import('@babylonjs/core').AnimationGroup[];
+  animationGroups: import("@babylonjs/core").AnimationGroup[];
 }
 
 function finalizeLoadedEntity(
@@ -63,15 +73,18 @@ function finalizeLoadedEntity(
   colliderRadius: number,
   extras: Omit<
     LoadedEntity,
-    | 'root'
-    | 'visualRoot'
-    | 'meshes'
-    | 'lodMeshes'
-    | 'colliderRadius'
-    | 'colliderMeshes'
-    | 'lodRuntime'
-    | 'animationGroups'
-  > & { lodRuntime?: LodRuntimeState; animationGroups?: import('@babylonjs/core').AnimationGroup[] }
+    | "root"
+    | "visualRoot"
+    | "meshes"
+    | "lodMeshes"
+    | "colliderRadius"
+    | "colliderMeshes"
+    | "lodRuntime"
+    | "animationGroups"
+  > & {
+    lodRuntime?: LodRuntimeState;
+    animationGroups?: import("@babylonjs/core").AnimationGroup[];
+  },
 ): LoadedEntity {
   const colliderMeshes = detectColliderMeshes(root);
   const visualMeshes = filterVisualMeshes(meshes, colliderMeshes);
@@ -82,11 +95,15 @@ function finalizeLoadedEntity(
           root,
           visualLodMeshes,
           extras.lodRuntime.screenThresholds,
-          extras.lodRuntime.cullScreenPercent
+          extras.lodRuntime.cullScreenPercent,
         )
       : createPlaceholderLodRuntime(root, visualLodMeshes);
 
-  const { lodRuntime: _ignored, animationGroups: _animIgnored, ...rest } = extras;
+  const {
+    lodRuntime: _ignored,
+    animationGroups: _animIgnored,
+    ...rest
+  } = extras;
 
   return {
     root,
@@ -107,7 +124,7 @@ export class GltfShipLoader {
   constructor(
     private readonly scene: Scene,
     private readonly baseUrl: string,
-    private readonly lodLoader: LodShipLoader
+    private readonly lodLoader: LodShipLoader,
   ) {}
 
   setLodProgressCallback(callback?: LodProgressCallback): void {
@@ -119,7 +136,7 @@ export class GltfShipLoader {
       id,
       entry.lod,
       entry.scale,
-      this.lodProgressCallback
+      this.lodProgressCallback,
     );
     if (result) {
       const visualRoot = attachVisualPivot(result.root, this.scene);
@@ -138,7 +155,7 @@ export class GltfShipLoader {
           lodRuntime: result.lodRuntime,
           animationGroups: result.animationGroups,
           isPlaceholder: false,
-        }
+        },
       );
     }
 
@@ -152,11 +169,11 @@ export class GltfShipLoader {
       id,
       entry.lod,
       scale,
-      this.lodProgressCallback
+      this.lodProgressCallback,
     );
     if (result) {
       const visualRoot = attachVisualPivot(result.root, this.scene);
-      return finalizeLoadedEntity(
+      const loaded = finalizeLoadedEntity(
         result.root,
         visualRoot,
         result.meshes,
@@ -169,18 +186,20 @@ export class GltfShipLoader {
           lodRuntime: result.lodRuntime,
           animationGroups: result.animationGroups,
           isPlaceholder: false,
-        }
+        },
       );
+      applyPropColliderPolicy(loaded, entry);
+      return loaded;
     }
 
     warnMissingOnce(`prop:${id}`);
-    return this.createPlaceholderMeteor(entry.colliderRadius);
+    return this.createPlaceholderAsteroid(entry);
   }
 
   /** Preload every configured variant GLB once for randomized spawning. */
   async loadPropVariantTemplates(
     id: string,
-    entry: PropManifestEntry
+    entry: PropManifestEntry,
   ): Promise<LoadedEntity[]> {
     const paths = entry.variants;
     if (!paths?.length) {
@@ -189,7 +208,11 @@ export class GltfShipLoader {
 
     const templates: LoadedEntity[] = [];
     for (const path of paths) {
-      const variantId = path.split('/').pop()?.replace(/\.glb$/i, '') ?? id;
+      const variantId =
+        path
+          .split("/")
+          .pop()
+          ?.replace(/\.glb$/i, "") ?? id;
       templates.push(await this.loadPropMesh(variantId, path, entry));
     }
 
@@ -200,12 +223,16 @@ export class GltfShipLoader {
     return templates;
   }
 
-  cloneProp(template: LoadedEntity, instanceId: string): LoadedEntity {
+  cloneProp(
+    template: LoadedEntity,
+    instanceId: string,
+    entry: PropManifestEntry,
+  ): LoadedEntity {
     const root = cloneLoadedEntityRoot(template.root, instanceId);
     const visualRoot = findVisualRoot(root);
     const allMeshes = collectDescendantMeshes(root);
     const lodMeshes = this.resolveClonedLodMeshes(template, root, allMeshes);
-    return finalizeLoadedEntity(
+    const loaded = finalizeLoadedEntity(
       root,
       visualRoot,
       allMeshes,
@@ -218,8 +245,10 @@ export class GltfShipLoader {
         lodRuntime: template.lodRuntime,
         isPlaceholder: template.isPlaceholder,
         animationGroups: [],
-      }
+      },
     );
+    applyPropColliderPolicy(loaded, entry);
+    return loaded;
   }
 
   cloneShip(template: LoadedEntity, instanceId: string): LoadedEntity {
@@ -240,14 +269,14 @@ export class GltfShipLoader {
         lodRuntime: template.lodRuntime,
         isPlaceholder: template.isPlaceholder,
         animationGroups: [],
-      }
+      },
     );
   }
 
   private resolveClonedLodMeshes(
     template: LoadedEntity,
     clonedRoot: TransformNode,
-    allMeshes: AbstractMesh[]
+    allMeshes: AbstractMesh[],
   ): AbstractMesh[][] {
     if (template.lodMeshes.length === 0) {
       return [allMeshes];
@@ -256,7 +285,7 @@ export class GltfShipLoader {
     const remapped = remapLodMeshGroups(
       template.lodMeshes,
       template.root,
-      clonedRoot
+      clonedRoot,
     );
     if (remapped.some((group) => group.length > 0)) {
       return remapped;
@@ -269,23 +298,23 @@ export class GltfShipLoader {
   private async loadPropMesh(
     id: string,
     glbPath: string,
-    entry: PropManifestEntry
+    entry: PropManifestEntry,
   ): Promise<LoadedEntity> {
     const url = `${this.baseUrl}/${glbPath}`;
     try {
-      const result = await SceneLoader.ImportMeshAsync('', url, '', this.scene);
-      if (result.meshes.length === 0) {
-        throw new Error('empty mesh');
+      const result = await SceneLoader.ImportMeshAsync("", url, "", this.scene);
+      if (
+        result.meshes.length === 0 &&
+        (result.transformNodes?.length ?? 0) === 0
+      ) {
+        throw new Error("empty mesh");
       }
       const root = new TransformNode(`${id}_root`, this.scene);
-      const meshes = result.meshes.filter((m) => m instanceof AbstractMesh) as AbstractMesh[];
-      meshes.forEach((m) => {
-        m.parent = root;
-      });
+      const meshes = attachGltfImportToParent(result, root);
       const scale = Array.isArray(entry.scale) ? entry.scale[1] : entry.scale;
       root.scaling.set(scale, scale, scale);
       const visualRoot = attachVisualPivot(root, this.scene);
-      return finalizeLoadedEntity(
+      const loaded = finalizeLoadedEntity(
         root,
         visualRoot,
         meshes,
@@ -298,22 +327,35 @@ export class GltfShipLoader {
           lodRuntime: createPlaceholderLodRuntime(root, [meshes]),
           animationGroups: result.animationGroups ?? [],
           isPlaceholder: false,
-        }
+        },
       );
+      applyPropColliderPolicy(loaded, entry);
+      return loaded;
     } catch {
       warnMissingOnce(`prop:${id}`);
-      return this.createPlaceholderMeteor(entry.colliderRadius);
+      return this.createPlaceholderAsteroid(entry);
     }
   }
 
-  private createPlaceholderShip(id: string, entry: ShipManifestEntry): LoadedEntity {
+  private createPlaceholderShip(
+    id: string,
+    entry: ShipManifestEntry,
+  ): LoadedEntity {
     const radius = entry.colliderRadius;
     const root = new TransformNode(`placeholder_${id}`, this.scene);
     const visualRoot = new TransformNode(`${id}_visual`, this.scene);
     visualRoot.parent = root;
-    const body = MeshBuilder.CreateBox(`${id}_body`, { width: 2, height: 0.6, depth: 3 }, this.scene);
+    const body = MeshBuilder.CreateBox(
+      `${id}_body`,
+      { width: 2, height: 0.6, depth: 3 },
+      this.scene,
+    );
     body.parent = visualRoot;
-    const nose = MeshBuilder.CreateCylinder(`${id}_nose`, { diameterTop: 0, diameterBottom: 0.8, height: 1.2 }, this.scene);
+    const nose = MeshBuilder.CreateCylinder(
+      `${id}_nose`,
+      { diameterTop: 0, diameterBottom: 0.8, height: 1.2 },
+      this.scene,
+    );
     nose.rotation.x = Math.PI / 2;
     nose.position.z = -2;
     nose.parent = visualRoot;
@@ -332,29 +374,29 @@ export class GltfShipLoader {
         lodRuntime: createPlaceholderLodRuntime(root, [[body, nose]]),
         animationGroups: [],
         isPlaceholder: true,
-      }
+      },
     );
   }
 
-  private createPlaceholderMeteor(radius: number): LoadedEntity {
-    const root = new TransformNode('placeholder_meteor', this.scene);
+  private createPlaceholderAsteroid(entry: PropManifestEntry): LoadedEntity {
+    const radius = entry.colliderRadius;
+    const root = new TransformNode("placeholder_asteroid", this.scene);
     const visualRoot = attachVisualPivot(root, this.scene);
-    const mesh = MeshBuilder.CreateIcoSphere('meteor', { radius: 1, subdivisions: 2 }, this.scene);
-    mesh.parent = visualRoot;
-    return finalizeLoadedEntity(
-      root,
-      visualRoot,
-      [mesh],
-      [[mesh]],
-      radius,
-      {
-        firePoints: { fires: [], engines: [] },
-        anchors: { engines: [], weapons: [] },
-        visual: resolveShipVisualOptions(),
-        lodRuntime: createPlaceholderLodRuntime(root, [[mesh]]),
-        animationGroups: [],
-        isPlaceholder: true,
-      }
+    const mesh = MeshBuilder.CreateIcoSphere(
+      "asteroid",
+      { radius: 1, subdivisions: 2 },
+      this.scene,
     );
+    mesh.parent = visualRoot;
+    const loaded = finalizeLoadedEntity(root, visualRoot, [mesh], [[mesh]], radius, {
+      firePoints: { fires: [], engines: [] },
+      anchors: { engines: [], weapons: [] },
+      visual: resolveShipVisualOptions(),
+      lodRuntime: createPlaceholderLodRuntime(root, [[mesh]]),
+      animationGroups: [],
+      isPlaceholder: true,
+    });
+    applyPropColliderPolicy(loaded, entry);
+    return loaded;
   }
 }

@@ -59,7 +59,7 @@ export class DebugPanelComponent implements OnInit {
         playerRadarRing: true,
         vehicleWireframes: true,
         projectileGizmos: true,
-        meteorWireframes: true,
+        asteroidWireframes: true,
         colliderWireframes: false,
       },
       labels: {
@@ -69,7 +69,7 @@ export class DebugPanelComponent implements OnInit {
         navWaypoints: true,
         navPaths: true,
         wanderZones: true,
-        meteors: true,
+        asteroids: true,
         npcActors: true,
       },
       gameplay: { invincible: true },

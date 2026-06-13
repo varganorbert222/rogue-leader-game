@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'rogue-leader-debug';
+const STORAGE_KEY = "rogue-leader-debug";
 
 export interface DebugOverlayToggles {
   worldAxes: boolean;
@@ -13,7 +13,7 @@ export interface DebugOverlayToggles {
   playerRadarRing: boolean;
   vehicleWireframes: boolean;
   projectileGizmos: boolean;
-  meteorWireframes: boolean;
+  asteroidWireframes: boolean;
   colliderWireframes: boolean;
 }
 
@@ -24,7 +24,7 @@ export interface DebugLabelToggles {
   navWaypoints: boolean;
   navPaths: boolean;
   wanderZones: boolean;
-  meteors: boolean;
+  asteroids: boolean;
   npcActors: boolean;
 }
 
@@ -54,7 +54,7 @@ export const DEFAULT_DEBUG_PREFERENCES: DebugPreferences = {
     playerRadarRing: true,
     vehicleWireframes: true,
     projectileGizmos: true,
-    meteorWireframes: true,
+    asteroidWireframes: true,
     colliderWireframes: false,
   },
   labels: {
@@ -64,7 +64,7 @@ export const DEFAULT_DEBUG_PREFERENCES: DebugPreferences = {
     navWaypoints: true,
     navPaths: true,
     wanderZones: true,
-    meteors: true,
+    asteroids: true,
     npcActors: true,
   },
   gameplay: {
@@ -73,7 +73,7 @@ export const DEFAULT_DEBUG_PREFERENCES: DebugPreferences = {
 };
 
 export function loadDebugPreferences(): DebugPreferences {
-  if (typeof localStorage === 'undefined') {
+  if (typeof localStorage === "undefined") {
     return cloneDebugPreferences(DEFAULT_DEBUG_PREFERENCES);
   }
 
@@ -88,22 +88,24 @@ export function loadDebugPreferences(): DebugPreferences {
 }
 
 export function saveDebugPreferences(
-  partial: Partial<DebugPreferences>
+  partial: Partial<DebugPreferences>,
 ): DebugPreferences {
   const next = mergeDebugPreferences(loadDebugPreferences(), partial);
-  if (typeof localStorage !== 'undefined') {
+  if (typeof localStorage !== "undefined") {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   }
   return next;
 }
 
-export function cloneDebugPreferences(prefs: DebugPreferences): DebugPreferences {
+export function cloneDebugPreferences(
+  prefs: DebugPreferences,
+): DebugPreferences {
   return mergeDebugPreferences(DEFAULT_DEBUG_PREFERENCES, prefs);
 }
 
 function mergeDebugPreferences(
   base: DebugPreferences,
-  partial: Partial<DebugPreferences>
+  partial: Partial<DebugPreferences>,
 ): DebugPreferences {
   return {
     masterEnabled: partial.masterEnabled ?? base.masterEnabled,
