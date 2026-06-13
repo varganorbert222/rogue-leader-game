@@ -81,7 +81,7 @@ export type {
 } from "./player/input/npc-input";
 export { Vehicle, type VehicleSpawnOptions } from "./vehicles/vehicle";
 export type { Actor, ActorRole } from "./actors/actor";
-export { ActorWorld } from "./actors/actor-world";
+export { ActorRegistry } from "./actors/actor-registry";
 export { PlayerActor } from "./actors/player-actor";
 export { NpcActor } from "./actors/npc-actor";
 export {
@@ -116,27 +116,27 @@ export {
   DEFAULT_FLIGHT_ASSIST,
   type FlightAssistOptions,
 } from "./flight/flight-assist";
-export { CombatSystem, type ProjectileHit } from "./weapons/combat-system";
+export { CombatSystem, type ProjectileHit } from "./combat/systems/combat-system";
 export type {
   ResolvedWeaponDefinition,
   StubWeaponDefinition,
   WeaponDelivery,
   WeaponBehavior,
   WeaponFireGroup,
-} from "./weapons/core/weapon-definition";
+} from "./combat/weapons/weapon-definition";
 export {
   loadWeaponsManifest,
   type WeaponsManifest,
 } from "./data/config/weapons-manifest";
-export { VehicleWeaponSystem } from "./weapons/core/vehicle-weapon-system";
-export { MissileWeapon } from "./weapons/missile-weapon";
-export { HarpoonWeapon } from "./weapons/harpoon-weapon";
+export { VehicleWeaponSystem } from "./combat/weapons/vehicle-weapon-system";
+export { MissileWeapon } from "./combat/weapons/missile-weapon";
+export { HarpoonWeapon } from "./combat/weapons/harpoon-weapon";
 export { HealthComponent } from "./actors/health-component";
 export { BoidNpcInput, type EnemyBehavior } from "./ai/boid-npc-input";
 export { BehaviorNpcInput } from "./ai/behavior-npc-input";
 export { NpcStateMachine } from "./ai/npc-state-machine";
-export { RadarSystem } from "./combat/radar-system";
-export { updateWeaponAimForObserver } from "./combat/weapon-aim-controller";
+export { RadarSystem } from "./combat/targeting/radar-system";
+export { updateWeaponAimForObserver } from "./combat/targeting/weapon-aim-controller";
 export {
   loadNpcBehaviorConfig,
   DEFAULT_NPC_BEHAVIOR_CONFIG,
@@ -146,8 +146,12 @@ export {
 export { GameDebugOverlay } from "./debug/game-debug-overlay";
 export { CollisionSystem, buildSphereBody } from "./collision/collision-system";
 export { AsteroidField } from "./hazards/asteroid-field";
-export { MissionManager } from "./mission/mission-manager";
-export type { MissionHudState, MissionLoadState } from "./mission/mission-hud";
+export { MissionManager } from "./mission/session/mission-manager";
+export { MissionBootstrap } from "./mission/bootstrap/mission-bootstrap";
+export { MissionSimulationCoordinator } from "./mission/simulation/coordinator/mission-simulation-coordinator";
+export { MissionWorld } from "./mission/simulation/world/mission-world";
+export type { MissionRuntimeContext } from "./mission/simulation/mission-runtime-context";
+export type { MissionHudState, MissionLoadState } from "./mission/presentation/mission-hud-state";
 export type { MissionConfig, MissionEndState } from "./mission/mission-types";
 export { MissionEndStates } from "./mission/mission-types";
 export {
@@ -182,7 +186,7 @@ export {
   GameEventBus,
   type GameEventType,
   type GameEvent,
-} from "./events/game-events";
+} from "./core/events/game-events";
 export { ShipAudioCatalog } from "./audio/ship-audio-map";
 export {
   ShipEngineAudioManager,

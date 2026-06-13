@@ -6,7 +6,7 @@ import {
 } from '@rogue-leader/engine';
 import { resolveShipSfoilSfx, sfoilSfxToEventPayload, type SfoilSfxPlayRequest } from '../audio/sfoil-sfx';
 import type { ShipFlightController } from '../flight/ship-flight-controller';
-import type { VehicleWeaponSystem } from '../weapons/core/vehicle-weapon-system';
+import type { VehicleWeaponSystem } from '../combat/weapons/vehicle-weapon-system';
 
 const DEFAULT_FOLDED_STATE = 'folded';
 const DEFAULT_OPEN_STATE = 'open';

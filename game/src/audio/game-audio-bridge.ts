@@ -17,7 +17,7 @@ import {
   readPayloadStringArray,
   readPayloadVector3,
   type GameEventBus,
-} from "../events/game-events";
+} from "../core/events/game-events";
 import {
   CombatIntensityTracker,
   type CombatIntensitySnapshot,

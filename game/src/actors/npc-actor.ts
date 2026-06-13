@@ -1,6 +1,6 @@
 import { Vector3 } from '@babylonjs/core';
 import type { FactionId } from '../combat/faction';
-import { TargetingSystem, type TargetEntity } from '../combat/targeting-system';
+import { TargetingSystem, type TargetEntity } from '../combat/targeting/targeting-system';
 import {
   BehaviorNpcInput,
   type NpcSteeringDebugInfo,

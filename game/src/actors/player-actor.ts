@@ -1,10 +1,10 @@
 import { Quaternion, type Scene, Vector3 } from '@babylonjs/core';
 import type { FactionId } from '../combat/faction';
-import { TargetingSystem, type TargetEntity } from '../combat/targeting-system';
+import { TargetingSystem, type TargetEntity } from '../combat/targeting/targeting-system';
 import {
   updateWeaponAimForObserver,
   type WeaponAimDebugInfo,
-} from '../combat/weapon-aim-controller';
+} from '../combat/targeting/weapon-aim-controller';
 import type { TargetingConfig } from '../data/config/combat-config';
 import type { SphereBody } from '../collision/collision-system';
 import type { HealthComponent } from './health-component';
@@ -14,10 +14,10 @@ import { projectWorldToScreen } from '../flight/screen-project';
 import { getShipForward } from '../flight/ship-forward';
 import type { SoftBoundary } from '../flight/soft-boundary';
 import type { PlayerInput } from '../player/input/player-input';
-import type { CombatSystem } from '../weapons/combat-system';
+import type { CombatSystem } from '../combat/systems/combat-system';
 import type { Vehicle } from '../vehicles/vehicle';
-import type { GameEventBus } from '../events/game-events';
-import { GameEvents } from '../events/game-events';
+import type { GameEventBus } from '../core/events/game-events';
+import { GameEvents } from '../core/events/game-events';
 import { sfoilSfxToEventPayload } from '../audio/sfoil-sfx';
 import type { Actor, ActorRole } from './actor';
 

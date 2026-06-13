@@ -21,8 +21,8 @@ import { YAW_VISUAL_BANK_DEG } from '../flight/flight-constants';
 import { ShipFlightController } from '../flight/ship-flight-controller';
 import type { SoftBoundary } from '../flight/soft-boundary';
 import type { VehicleInput } from '../player/input/vehicle-input';
-import type { CombatTeam } from '../weapons/core/combat-team';
-import type { VehicleWeaponSystem } from '../weapons/core/vehicle-weapon-system';
+import type { CombatTeam } from '../combat/weapons/combat-team';
+import type { VehicleWeaponSystem } from '../combat/weapons/vehicle-weapon-system';
 import type { SfoilSfxPlayRequest } from '../audio/sfoil-sfx';
 import { ShipSfoilController } from './ship-sfoil-controller';
 

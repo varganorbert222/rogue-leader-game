@@ -1,5 +1,5 @@
 import type { EngineVfxProfile } from '@rogue-leader/engine';
-import type { ProjectileVisualConfig } from '../../weapons/core/projectile-config';
+import type { ProjectileVisualConfig } from '../../combat/projectiles/projectile-config';
 
 export type WeaponDelivery = 'laser' | 'projectile';
 export type LaserBehavior = 'standard' | 'disabling' | 'ion';
