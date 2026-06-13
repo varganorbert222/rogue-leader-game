@@ -17,8 +17,12 @@ export interface LodConfig {
   cullScreenPercent?: number;
   /** Base GLB when `mode` is `none` or full-auto (defaults to first `paths` entry). */
   basePath?: string;
-  /** Qualities for auto-generated levels after base (full-auto mode). */
+  /** Qualities for auto-generated levels after base (full-auto / opt-in simplify). */
   autoQualities?: number[];
+  /** Probe `_LOD1`, `_LOD2`, … siblings when only LOD0 is listed (default true). */
+  discoverSiblingLods?: boolean;
+  /** Generate simplified LODs from LOD0 when no manual `_LODX` files exist (opt-in). */
+  enableAutoSimplify?: boolean;
 }
 
 export type LodManifestValue = string[] | LodConfig;
@@ -34,6 +38,9 @@ export interface ResolvedLodPlan {
   levels: ResolvedLodLevel[];
   screenThresholds: number[];
   cullScreenPercent: number;
+  discoverSiblingLods: boolean;
+  enableAutoSimplify: boolean;
+  autoQualities: number[];
 }
 
 export const DEFAULT_CULL_SCREEN_PERCENT = 2;
@@ -67,6 +74,9 @@ export function resolveLodPlan(lod: LodManifestValue | undefined): ResolvedLodPl
       levels: [],
       screenThresholds: [],
       cullScreenPercent: DEFAULT_CULL_SCREEN_PERCENT,
+      discoverSiblingLods: true,
+      enableAutoSimplify: false,
+      autoQualities: DEFAULT_AUTO_QUALITIES,
     };
   }
 
@@ -77,11 +87,17 @@ export function resolveLodPlan(lod: LodManifestValue | undefined): ResolvedLodPl
       levels,
       screenThresholds: defaultScreenThresholds(levels.length),
       cullScreenPercent: DEFAULT_CULL_SCREEN_PERCENT,
+      discoverSiblingLods: true,
+      enableAutoSimplify: false,
+      autoQualities: DEFAULT_AUTO_QUALITIES,
     };
   }
 
   const cullScreenPercent = lod.cullScreenPercent ?? DEFAULT_CULL_SCREEN_PERCENT;
   const mode = lod.mode ?? 'manual';
+  const discoverSiblingLods = lod.discoverSiblingLods ?? true;
+  const autoQualities = lod.autoQualities ?? DEFAULT_AUTO_QUALITIES;
+  const enableAutoSimplify = lod.enableAutoSimplify ?? mode === 'auto';
 
   if (mode === 'none') {
     const basePath = lod.basePath ?? lod.paths?.[0];
@@ -91,6 +107,9 @@ export function resolveLodPlan(lod: LodManifestValue | undefined): ResolvedLodPl
       levels,
       screenThresholds: [],
       cullScreenPercent,
+      discoverSiblingLods,
+      enableAutoSimplify: lod.enableAutoSimplify ?? false,
+      autoQualities,
     };
   }
 
@@ -116,6 +135,9 @@ export function resolveLodPlan(lod: LodManifestValue | undefined): ResolvedLodPl
       levels,
       screenThresholds: lod.screenThresholds ?? defaultScreenThresholds(levels.length),
       cullScreenPercent,
+      discoverSiblingLods,
+      enableAutoSimplify,
+      autoQualities,
     };
   }
 
@@ -127,6 +149,9 @@ export function resolveLodPlan(lod: LodManifestValue | undefined): ResolvedLodPl
         levels: [],
         screenThresholds: [],
         cullScreenPercent,
+        discoverSiblingLods,
+        enableAutoSimplify: false,
+        autoQualities,
       };
     }
     const qualities = lod.autoQualities ?? DEFAULT_AUTO_QUALITIES;
@@ -139,6 +164,9 @@ export function resolveLodPlan(lod: LodManifestValue | undefined): ResolvedLodPl
       levels,
       screenThresholds: lod.screenThresholds ?? defaultScreenThresholds(levels.length),
       cullScreenPercent,
+      discoverSiblingLods,
+      enableAutoSimplify: true,
+      autoQualities: qualities,
     };
   }
 
@@ -149,5 +177,8 @@ export function resolveLodPlan(lod: LodManifestValue | undefined): ResolvedLodPl
     levels,
     screenThresholds: lod.screenThresholds ?? defaultScreenThresholds(levels.length),
     cullScreenPercent,
+    discoverSiblingLods,
+    enableAutoSimplify: lod.enableAutoSimplify ?? false,
+    autoQualities,
   };
 }

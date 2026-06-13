@@ -18,7 +18,9 @@ export function setLoadedEntityVisible(loaded: LoadedEntity, visible: boolean): 
       mesh.visibility = visible ? 1 : 0;
       continue;
     }
-    configureColliderMesh(mesh);
+    if (mesh instanceof Mesh) {
+      configureColliderMesh(mesh);
+    }
     mesh.setEnabled(visible);
     mesh.isVisible = false;
     mesh.visibility = 0;

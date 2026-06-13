@@ -7,7 +7,7 @@ import type {
 import {
   SkyboxLoader,
   preloadVfxTextures,
-  setLoadedEntityVisible,
+  preparePropInstanceTemplate,
 } from "@rogue-leader/engine";
 import type { Scene } from "@babylonjs/core";
 import type { WeaponsManifest } from "../data/config/weapons-manifest";
@@ -68,7 +68,7 @@ export class MissionAssetPreloader {
           .loadPropVariantTemplates(plan.asteroidPrefabId, asteroidEntry)
           .then((templates) => {
             for (const template of templates) {
-              setLoadedEntityVisible(template, false);
+              preparePropInstanceTemplate(template);
             }
             this.asteroidTemplates = templates;
           });

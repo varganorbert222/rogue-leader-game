@@ -20,7 +20,11 @@ import { detectFirePoints } from "./firepoint-detector";
 import { detectShipAnchors, type ShipAnchors } from "./ship-anchor-detector";
 import { LodShipLoader, type LodProgressCallback } from "./lod-ship-loader";
 import { createLodRuntimeState, type LodRuntimeState } from "./lod-runtime";
-import { DEFAULT_CULL_SCREEN_PERCENT } from "./lod-config";
+import { DEFAULT_CULL_SCREEN_PERCENT, defaultScreenThresholds } from "./lod-config";
+import {
+  applyBabylonCullOnly,
+  applyBabylonScreenCoverageLod,
+} from "./lod-babylon";
 
 function createPlaceholderLodRuntime(
   root: TransformNode,
@@ -28,7 +32,7 @@ function createPlaceholderLodRuntime(
 ): LodRuntimeState {
   return createLodRuntimeState(
     root,
-    lodMeshes,
+    lodMeshes[0] ?? [],
     [],
     DEFAULT_CULL_SCREEN_PERCENT,
   );
@@ -47,6 +51,11 @@ import {
   optimizeLoadedEntityMeshes,
 } from '../render/mesh-batching';
 import {
+  preparePropInstanceTemplate,
+  spawnPropInstancesFromTemplate,
+} from './prop-instance-spawn';
+import { PropInstanceGroup } from '../render/prop-instance-group';
+import {
   applyModelAxisCorrection,
   resolveShipVisualOptions,
 } from "./ship-axis-convention";
@@ -60,7 +69,7 @@ export interface LoadedEntity {
   lodMeshes: AbstractMesh[][];
   colliderRadius: number;
   /** Invisible `collider` / `collider_*` meshes — follow animated parents for hit tests. */
-  colliderMeshes: Mesh[];
+  colliderMeshes: AbstractMesh[];
   firePoints: ReturnType<typeof detectFirePoints>;
   anchors: ShipAnchors;
   visual: ShipVisualOptions;
@@ -93,15 +102,25 @@ function finalizeLoadedEntity(
   const colliderMeshes = detectColliderMeshes(root);
   const visualMeshes = filterVisualMeshes(meshes, colliderMeshes);
   const visualLodMeshes = filterVisualLodMeshes(lodMeshes, colliderMeshes);
-  const lodRuntime =
-    extras.lodRuntime != null
-      ? createLodRuntimeState(
-          root,
-          visualLodMeshes,
-          extras.lodRuntime.screenThresholds,
-          extras.lodRuntime.cullScreenPercent,
-        )
-      : createPlaceholderLodRuntime(root, visualLodMeshes);
+
+  const screenThresholds =
+    extras.lodRuntime?.screenThresholds ??
+    defaultScreenThresholds(visualLodMeshes.length);
+  const cullScreenPercent =
+    extras.lodRuntime?.cullScreenPercent ?? DEFAULT_CULL_SCREEN_PERCENT;
+
+  if (visualLodMeshes.length > 1) {
+    applyBabylonScreenCoverageLod(visualLodMeshes, screenThresholds, cullScreenPercent);
+  } else if (visualLodMeshes[0]?.length) {
+    applyBabylonCullOnly(visualLodMeshes[0], cullScreenPercent);
+  }
+
+  const lodRuntime = createLodRuntimeState(
+    root,
+    visualLodMeshes[0] ?? [],
+    screenThresholds,
+    cullScreenPercent,
+  );
 
   const {
     lodRuntime: _ignored,
@@ -228,6 +247,40 @@ export class GltfShipLoader {
     }
 
     return templates;
+  }
+
+  /** Hide template meshes and keep them enabled for `createInstance()`. */
+  preparePropInstanceTemplate(template: LoadedEntity): void {
+    preparePropInstanceTemplate(template);
+  }
+
+  /**
+   * Create a per-variant instance group. All spawns from the group batch into the same draw calls.
+   */
+  createPropInstanceGroup(
+    template: LoadedEntity,
+    groupName: string,
+    entry: PropManifestEntry,
+  ): PropInstanceGroup {
+    const scene = template.root.getScene();
+    if (!scene) {
+      throw new Error(`Cannot create prop instance group "${groupName}": template has no scene`);
+    }
+    return PropInstanceGroup.create(scene, groupName, template, entry);
+  }
+
+  /**
+   * Spawn a single prop instance (prefer {@link createPropInstanceGroup} for many props of the same variant).
+   */
+  instanceProp(
+    template: LoadedEntity,
+    instanceId: string,
+    entry: PropManifestEntry,
+  ): LoadedEntity {
+    if (template.isPlaceholder) {
+      return this.cloneProp(template, instanceId, entry);
+    }
+    return spawnPropInstancesFromTemplate(template, instanceId, entry);
   }
 
   cloneProp(

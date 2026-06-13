@@ -88,7 +88,7 @@ export function collectMissionDebugFrame(
     asteroids: needsAsteroidDebugData(prefs)
       ? ctx.asteroidField.asteroids.map((asteroid) => ({
           id: asteroid.id,
-          position: asteroid.position.clone(),
+          position: asteroid.root.position.clone(),
           radius: asteroid.colliderRadius,
           usesMeshCollider: asteroid.usesMeshCollider,
         }))
@@ -121,6 +121,16 @@ export function collectColliderDebugSnapshots(
       meshes: npc.vehicle.colliderMeshes,
       isPlayer: false,
       kind: "ship" as const,
+    });
+  }
+
+  for (const asteroid of asteroidField.asteroids) {
+    if (!asteroid.colliderMeshes.length) continue;
+    colliders.push({
+      ownerId: asteroid.id,
+      meshes: asteroid.colliderMeshes,
+      isPlayer: false,
+      kind: "asteroid" as const,
     });
   }
 

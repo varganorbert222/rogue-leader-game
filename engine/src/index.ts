@@ -61,6 +61,7 @@ export {
   detectColliderMeshes,
   configureColliderMesh,
   isVisualColliderMesh,
+  hasColliderGeometry,
   filterVisualMeshes,
   filterVisualLodMeshes,
 } from './loaders/collider-mesh-detector';
@@ -92,6 +93,10 @@ export {
 export type { TrailMesh } from '@babylonjs/core/Meshes/trailMesh';
 export { GltfShipLoader, type LoadedEntity } from './loaders/gltf-ship-loader';
 export {
+  preparePropInstanceTemplate,
+  spawnPropInstancesFromTemplate,
+} from './loaders/prop-instance-spawn';
+export {
   refreshLoadedEntityColliders,
   resetLoadedEntityTransform,
   setLoadedEntityVisible,
@@ -115,6 +120,11 @@ export {
   updateLodByScreenCoverage,
   type LodRuntimeState,
 } from './loaders/lod-runtime';
+export {
+  applyBabylonScreenCoverageLod,
+  applyBabylonCullOnly,
+  resolveThresholdsForLevelCount,
+} from './loaders/lod-babylon';
 export { computeScreenCoveragePercent } from './render/screen-coverage';
 export { applyMeshAlphaCutoff, disableMeshBackfaceCulling } from './render/mesh-material-utils';
 export {
@@ -123,10 +133,8 @@ export {
   optimizeLoadedEntityMeshes,
 } from './render/mesh-batching';
 export {
-  ThinInstanceBatch,
-  composeThinInstanceTransform,
-  type ThinInstanceTransform,
-} from './render/thin-instance-batch';
+  PropInstanceGroup,
+} from './render/prop-instance-group';
 export { detectFirePoints, refreshFirePoints, type FirePoints } from './loaders/firepoint-detector';
 export {
   detectWeaponMounts,

@@ -6,7 +6,11 @@ import {
   type AbstractMesh,
   type Material,
 } from '@babylonjs/core';
-import { configureColliderMesh, isVisualColliderMesh } from '../../loaders/collider-mesh-detector';
+import {
+  configureColliderMesh,
+  hasColliderGeometry,
+  isVisualColliderMesh,
+} from '../../loaders/collider-mesh-detector';
 
 interface ColliderWireDebugState {
   savedMaterial: Material | null;
@@ -19,7 +23,7 @@ interface ColliderWireDebugState {
 
 const META_KEY = 'colliderWireDebug';
 
-function readState(mesh: Mesh): ColliderWireDebugState {
+function readState(mesh: AbstractMesh): ColliderWireDebugState {
   const existing = mesh.metadata?.[META_KEY] as ColliderWireDebugState | undefined;
   if (existing) return existing;
 
@@ -48,7 +52,7 @@ export class ColliderWireframeDebug {
       for (const collider of colliders) {
         const color = collider.isPlayer ? colors.player : colors.other;
         for (const mesh of collider.meshes) {
-          if (!(mesh instanceof Mesh) || mesh.isDisposed() || !mesh.isEnabled()) continue;
+          if (!hasColliderGeometry(mesh) || !mesh.isEnabled()) continue;
           keep.add(mesh);
           this.enable(mesh, color);
         }
@@ -81,7 +85,7 @@ export class ColliderWireframeDebug {
     this.activeMeshes.clear();
   }
 
-  private enable(mesh: Mesh, color: Color3): void {
+  private enable(mesh: AbstractMesh, color: Color3): void {
     const state = readState(mesh);
 
     if (state.isVisual) {
@@ -110,7 +114,7 @@ export class ColliderWireframeDebug {
   }
 
   private disable(mesh: AbstractMesh): void {
-    if (!(mesh instanceof Mesh) || mesh.isDisposed()) return;
+    if (!hasColliderGeometry(mesh)) return;
 
     const state = mesh.metadata?.[META_KEY] as ColliderWireDebugState | undefined;
     if (!state) return;
@@ -126,6 +130,8 @@ export class ColliderWireframeDebug {
     mesh.material = state.savedMaterial;
     mesh.isVisible = state.savedIsVisible;
     mesh.visibility = state.savedVisibility;
-    configureColliderMesh(mesh);
+    if (mesh instanceof Mesh) {
+      configureColliderMesh(mesh);
+    }
   }
 }

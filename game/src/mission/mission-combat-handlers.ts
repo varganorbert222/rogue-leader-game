@@ -1,7 +1,6 @@
 import { Vector3, type Scene } from "@babylonjs/core";
 import {
   ParticleFx,
-  updateLodByScreenCoverage,
   type AssetManifest,
   type BabylonHost,
 } from "@rogue-leader/engine";
@@ -63,10 +62,11 @@ export function collectProjectileTargets(
     targets.push(
       buildSphereBody({
         id: asteroid.id,
-        position: asteroid.position,
+        position: asteroid.root.position,
         radius: asteroid.colliderRadius,
         team: "neutral",
         faction: "neutral",
+        colliderMeshes: asteroid.colliderMeshes,
       }),
     );
   }
@@ -152,11 +152,11 @@ export function destroyMissionAsteroid(
   ctx: Pick<MissionCombatHandlerContext, "host" | "events" | "asteroidField">,
   asteroid: AsteroidInstance,
 ): void {
-  ParticleFx.explosion(ctx.host.scene, asteroid.position);
+  ParticleFx.explosion(ctx.host.scene, asteroid.root.position);
   ctx.events.emit(
     GameEvents.entityDestroyed({
       kind: EntityDestroyKinds.Asteroid,
-      position: asteroid.position.clone(),
+      position: asteroid.root.position.clone(),
     }),
   );
   ctx.asteroidField.remove(asteroid.id);
@@ -182,10 +182,11 @@ export function checkAsteroidCollisions(
   for (const asteroid of ctx.asteroidField.asteroids) {
     const aBody = buildSphereBody({
       id: asteroid.id,
-      position: asteroid.position,
+      position: asteroid.root.position,
       radius: asteroid.colliderRadius,
       team: "neutral",
       faction: "neutral",
+      colliderMeshes: asteroid.colliderMeshes,
     });
     if (ctx.collision.sphereOverlap(playerBody, aBody)) {
       if (!ctx.debugPreferences.gameplay.invincible) {
@@ -208,11 +209,6 @@ export function checkAsteroidCollisions(
   return asteroidHitCooldown;
 }
 
-export function updateMissionLod(scene: Scene, world: ActorWorld): void {
-  if (world.player) {
-    updateLodByScreenCoverage(scene, world.player.vehicle.lodRuntime);
-  }
-  for (const npc of world.npcActors) {
-    updateLodByScreenCoverage(scene, npc.vehicle.lodRuntime);
-  }
+export function updateMissionLod(_scene: Scene, _world: ActorWorld): void {
+  // Babylon switches LOD each frame via mesh.useLODScreenCoverage.
 }

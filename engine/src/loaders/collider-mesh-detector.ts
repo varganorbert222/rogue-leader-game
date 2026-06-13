@@ -42,6 +42,11 @@ export function isVisualColliderMesh(mesh: AbstractMesh): boolean {
   return mesh.metadata?.usesVisualCollider === true;
 }
 
+/** Any render/collider mesh with real geometry (includes Babylon 7 InstancedMesh). */
+export function hasColliderGeometry(mesh: AbstractMesh): boolean {
+  return !mesh.isDisposed() && mesh.getTotalVertices() > 0;
+}
+
 /** Hide collider-only geometry while keeping transforms active for collision. */
 export function configureColliderMesh(mesh: Mesh): void {
   mesh.isVisible = false;
@@ -95,11 +100,11 @@ export function filterVisualLodMeshes(
 /** Use visible render meshes as collision geometry (asteroids stay visible). */
 export function applyVisualMeshColliders(loaded: {
   meshes: readonly AbstractMesh[];
-  colliderMeshes: Mesh[];
+  colliderMeshes: AbstractMesh[];
 }): void {
   loaded.colliderMeshes.length = 0;
   for (const mesh of loaded.meshes) {
-    if (!(mesh instanceof Mesh)) continue;
+    if (!hasColliderGeometry(mesh)) continue;
     mesh.isPickable = false;
     mesh.checkCollisions = false;
     mesh.metadata = { ...(mesh.metadata ?? {}), usesVisualCollider: true };
@@ -108,7 +113,7 @@ export function applyVisualMeshColliders(loaded: {
 }
 
 export function applyPropColliderPolicy(
-  loaded: { meshes: readonly AbstractMesh[]; colliderMeshes: Mesh[] },
+  loaded: { meshes: readonly AbstractMesh[]; colliderMeshes: AbstractMesh[] },
   entry: { colliderSource?: "named" | "visual" },
 ): void {
   if (entry.colliderSource === "visual") {
