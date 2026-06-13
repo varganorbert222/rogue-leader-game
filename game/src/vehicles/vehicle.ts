@@ -195,8 +195,10 @@ export class Vehicle {
     this.sfoil?.dispose();
     this.weapons.setFireEnabled(false);
     this.flight.resetKinematics();
+    this.root.rotationQuaternion = Quaternion.Identity();
+    this.root.rotation.setAll(0);
     setLoadedEntityVisible(this.loadedEntity, false);
-    this.root.position.y = -5000;
+    this.root.position.set(0, -5000, 0);
   }
 }
 
@@ -204,6 +206,13 @@ function setupVisualBankPivot(
   visualRoot: TransformNode,
   _invertForwardRoll: boolean
 ): TransformNode | undefined {
+  const existing = visualRoot
+    .getChildTransformNodes(false)
+    .find((node) => node.name.endsWith('_bank'));
+  if (existing) {
+    return existing;
+  }
+
   const bank = new TransformNode(`${visualRoot.name}_bank`, visualRoot.getScene());
   bank.parent = visualRoot;
   for (const child of [...visualRoot.getChildren()]) {

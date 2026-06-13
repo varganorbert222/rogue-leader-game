@@ -65,7 +65,11 @@ export {
   type EngineVfxProfile,
 } from './vfx/engine-vfx';
 export { GltfShipLoader, type LoadedEntity } from './loaders/gltf-ship-loader';
-export { setLoadedEntityVisible } from './loaders/loaded-entity-visibility';
+export {
+  refreshLoadedEntityColliders,
+  resetLoadedEntityTransform,
+  setLoadedEntityVisible,
+} from './loaders/loaded-entity-visibility';
 export {
   LodShipLoader,
   type LodLoadProgress,

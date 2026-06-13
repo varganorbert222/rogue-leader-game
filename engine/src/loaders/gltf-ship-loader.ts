@@ -28,6 +28,12 @@ function createPlaceholderLodRuntime(
   return createLodRuntimeState(root, lodMeshes, [], DEFAULT_CULL_SCREEN_PERCENT);
 }
 import { attachVisualPivot } from './visual-pivot';
+import {
+  cloneLoadedEntityRoot,
+  collectDescendantMeshes,
+  findVisualRoot,
+  remapLodMeshGroups,
+} from './clone-entity-utils';
 import { disableMeshBackfaceCulling } from '../render/mesh-material-utils';
 import { applyModelAxisCorrection, resolveShipVisualOptions } from './ship-axis-convention';
 import type { ShipVisualOptions } from './ship-axis-convention';
@@ -195,29 +201,21 @@ export class GltfShipLoader {
   }
 
   cloneProp(template: LoadedEntity, instanceId: string): LoadedEntity {
-    const root = template.root.clone(instanceId, null) as TransformNode;
-    const visualRoot =
-      (root.getChildTransformNodes().find((n) => n.name.endsWith('_visual')) as
-        | TransformNode
-        | undefined) ?? root;
-    const meshes = root.getChildMeshes(false) as AbstractMesh[];
-    const lodMeshes = template.lodMeshes.length > 1 ? template.lodMeshes : [meshes];
+    const root = cloneLoadedEntityRoot(template.root, instanceId);
+    const visualRoot = findVisualRoot(root);
+    const allMeshes = collectDescendantMeshes(root);
+    const lodMeshes = this.resolveClonedLodMeshes(template, root, allMeshes);
     return finalizeLoadedEntity(
       root,
       visualRoot,
-      meshes,
+      allMeshes,
       lodMeshes,
       template.colliderRadius,
       {
         firePoints: { fires: [], engines: [] },
         anchors: { engines: [], weapons: [] },
         visual: template.visual,
-        lodRuntime: createLodRuntimeState(
-          root,
-          lodMeshes,
-          template.lodRuntime.screenThresholds,
-          template.lodRuntime.cullScreenPercent
-        ),
+        lodRuntime: template.lodRuntime,
         isPlaceholder: template.isPlaceholder,
         animationGroups: [],
       }
@@ -225,33 +223,47 @@ export class GltfShipLoader {
   }
 
   cloneShip(template: LoadedEntity, instanceId: string): LoadedEntity {
-    const root = template.root.clone(instanceId, null) as TransformNode;
-    const visualRoot =
-      (root.getChildTransformNodes().find((n) => n.name.endsWith('_visual')) as
-        | TransformNode
-        | undefined) ?? root;
-    const meshes = root.getChildMeshes(false) as AbstractMesh[];
-    const lodMeshes = template.lodMeshes.length > 1 ? template.lodMeshes : [meshes];
+    const root = cloneLoadedEntityRoot(template.root, instanceId);
+    const visualRoot = findVisualRoot(root);
+    const allMeshes = collectDescendantMeshes(root);
+    const lodMeshes = this.resolveClonedLodMeshes(template, root, allMeshes);
     return finalizeLoadedEntity(
       root,
       visualRoot,
-      meshes,
+      allMeshes,
       lodMeshes,
       template.colliderRadius,
       {
-        firePoints: template.firePoints,
-        anchors: template.anchors,
+        firePoints: detectFirePoints(visualRoot),
+        anchors: detectShipAnchors(visualRoot),
         visual: template.visual,
-        lodRuntime: createLodRuntimeState(
-          root,
-          lodMeshes,
-          template.lodRuntime.screenThresholds,
-          template.lodRuntime.cullScreenPercent
-        ),
+        lodRuntime: template.lodRuntime,
         isPlaceholder: template.isPlaceholder,
         animationGroups: [],
       }
     );
+  }
+
+  private resolveClonedLodMeshes(
+    template: LoadedEntity,
+    clonedRoot: TransformNode,
+    allMeshes: AbstractMesh[]
+  ): AbstractMesh[][] {
+    if (template.lodMeshes.length === 0) {
+      return [allMeshes];
+    }
+
+    const remapped = remapLodMeshGroups(
+      template.lodMeshes,
+      template.root,
+      clonedRoot
+    );
+    if (remapped.some((group) => group.length > 0)) {
+      return remapped;
+    }
+
+    const colliderMeshes = detectColliderMeshes(clonedRoot);
+    return [filterVisualMeshes(allMeshes, colliderMeshes)];
   }
 
   private async loadPropMesh(

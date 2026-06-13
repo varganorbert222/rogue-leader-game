@@ -33,6 +33,7 @@ export function updateLodByScreenCoverage(
 ): void {
   const { lodMeshes, screenThresholds, cullScreenPercent, root, boundsMeshes } = state;
   if (lodMeshes.length === 0) return;
+  if (boundsMeshes.length === 0) return;
 
   const screenPct = computeScreenCoveragePercent(scene, root, boundsMeshes);
 

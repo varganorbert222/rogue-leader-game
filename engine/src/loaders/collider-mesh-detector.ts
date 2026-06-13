@@ -22,9 +22,19 @@ function walkSceneNodes(
   }
 }
 
-function isColliderMeshName(name: string): boolean {
+function colliderLeafName(name: string): string {
   const normalized = normalizeAnchorNodeName(name).toLowerCase();
-  return normalized === 'collider' || normalized.startsWith(COLLIDER_PREFIX);
+  return normalized.split('.').pop() ?? normalized;
+}
+
+function isColliderMeshName(name: string): boolean {
+  const leaf = colliderLeafName(name);
+  return leaf === 'collider' || leaf.startsWith(COLLIDER_PREFIX);
+}
+
+function isColliderMesh(mesh: Mesh): boolean {
+  if (mesh.metadata?.isColliderMesh === true) return true;
+  return isColliderMeshName(mesh.name);
 }
 
 /** Hide collider-only geometry while keeping transforms active for collision. */
@@ -50,7 +60,7 @@ export function detectColliderMeshes(root: TransformNode): Mesh[] {
 
   walkSceneNodes(root, (node) => {
     if (!(node instanceof Mesh)) return;
-    if (!isColliderMeshName(node.name)) return;
+    if (!isColliderMesh(node)) return;
     if (seen.has(node)) return;
     seen.add(node);
     configureColliderMesh(node);
