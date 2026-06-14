@@ -2,11 +2,11 @@ import {
   Color3,
   Mesh,
   MeshBuilder,
-  Quaternion,
   StandardMaterial,
   Vector3,
   type Scene,
 } from '@babylonjs/core';
+import { quaternionFromAxisLH } from '../../math/babylon-orientation';
 
 function colorKey(color: Color3): string {
   return `${color.r.toFixed(3)}_${color.g.toFixed(3)}_${color.b.toFixed(3)}`;
@@ -75,10 +75,7 @@ export class WireframeShapePool {
     const t = Math.max(thickness, 0.02);
     mesh.position.copyFrom(midpoint);
     mesh.scaling.set(t, t, length * 0.5);
-    mesh.rotationQuaternion = Quaternion.FromLookDirectionLH(
-      delta.normalize(),
-      Vector3.Up(),
-    );
+    mesh.rotationQuaternion = quaternionFromAxisLH(delta);
   }
 
   /** Oriented cylinder between two points. */
@@ -103,10 +100,7 @@ export class WireframeShapePool {
     const r = Math.max(radius, 0.02);
     mesh.position.copyFrom(midpoint);
     mesh.scaling.set(r, r, length * 0.5);
-    mesh.rotationQuaternion = Quaternion.FromLookDirectionLH(
-      delta.normalize(),
-      Vector3.Up(),
-    );
+    mesh.rotationQuaternion = quaternionFromAxisLH(delta);
   }
 
   releaseUnused(activeKeys: Set<string>): void {

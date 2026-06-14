@@ -1,4 +1,5 @@
 import { Vector3, type AbstractMesh, type Scene, type TransformNode } from '@babylonjs/core';
+import { ensureMeshWorldMatrix } from './mesh-world-utils';
 
 /** World-space distance (meters) from the active camera to the entity bounds center. */
 export function computeCameraDistanceMeters(
@@ -23,7 +24,7 @@ export function computeCameraDistanceMeters(
 
   for (const mesh of meshes) {
     if (mesh.isDisposed()) continue;
-    mesh.computeWorldMatrix(true);
+    ensureMeshWorldMatrix(mesh);
     const box = mesh.getBoundingInfo().boundingBox;
     min = Vector3.Minimize(min, box.minimumWorld);
     max = Vector3.Maximize(max, box.maximumWorld);

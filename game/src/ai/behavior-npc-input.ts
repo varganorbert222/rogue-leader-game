@@ -1,6 +1,6 @@
 import { Vector3 } from '@babylonjs/core';
+import { randomSign } from '@rogue-leader/engine';
 import type { NpcBehaviorConfig, NpcStateId } from '../data/config/npc-behavior-config';
-import { directionToVehicleInput } from '../flight/flight-steering';
 import { getShipForward } from '../flight/ship-forward';
 import type { NpcInput, NpcInputContext, NpcInputResult } from '../player/input/npc-input';
 import {
@@ -8,6 +8,8 @@ import {
   computeCohesion,
   computeSeparation,
 } from './boid-forces';
+import { tickBehaviorNpcFireGate } from './combat-ai-utils';
+import type { EnemyBehavior } from './enemy-behavior';
 import type { FlockNavigationKit } from './navigation/mission-navigation';
 import type { FlockCombatRole } from './navigation/nav-types';
 import {
@@ -15,7 +17,13 @@ import {
   isInsideAnyZone,
 } from './navigation/zone-utils';
 import { NpcStateMachine } from './npc-state-machine';
-import type { EnemyBehavior } from './boid-npc-input';
+import {
+  blendFlockSteering,
+  computeDirectionToTarget,
+  computeEnemyApproachDirection,
+  normalizeSteerDirection,
+  steeringToVehicleInput,
+} from './steering-utils';
 
 export interface NpcSteeringDebugInfo {
   state: NpcStateId;
@@ -29,7 +37,7 @@ const WEIGHT_WANDER_GUARD_CHASE = 0.1;
 
 function stateMachineConfigForRole(
   config: NpcBehaviorConfig,
-  role: FlockCombatRole
+  role: FlockCombatRole,
 ): NpcBehaviorConfig {
   if (role === 'patrol_only') {
     return { ...config, transitions: [] };
@@ -62,14 +70,14 @@ export class BehaviorNpcInput implements NpcInput {
     private readonly config: NpcBehaviorConfig,
     private readonly navigation: FlockNavigationKit,
     private readonly behaviorStyle: EnemyBehavior = 'attack',
-    combatRole?: FlockCombatRole
+    combatRole?: FlockCombatRole,
   ) {
     this.combatRole = combatRole ?? navigation.combatRole ?? 'hunter';
     this.stateMachine = new NpcStateMachine(
-      stateMachineConfigForRole(config, this.combatRole)
+      stateMachineConfigForRole(config, this.combatRole),
     );
     if (behaviorStyle === 'flank') {
-      this.flankSide = Math.random() > 0.5 ? 1 : -1;
+      this.flankSide = randomSign();
     }
   }
 
@@ -79,12 +87,11 @@ export class BehaviorNpcInput implements NpcInput {
 
   update(dt: number, context: NpcInputContext): NpcInputResult {
     const pos = context.vehiclePosition;
-    const toPlayer = context.playerPosition.clone().subtract(pos);
-    const playerDist = toPlayer.length();
-    const playerDir =
-      playerDist > 0.01
-        ? toPlayer.normalize()
-        : getShipForward(context.vehicleRotation);
+    const { direction: playerDir, distance: playerDist } = computeDirectionToTarget(
+      pos,
+      context.playerPosition,
+      getShipForward(context.vehicleRotation),
+    );
 
     const wanderZones = this.navigation.wander?.getZoneDefinitions() ?? [];
     const inZone =
@@ -92,7 +99,7 @@ export class BehaviorNpcInput implements NpcInput {
 
     const effectiveHostileDist = this.effectiveHostileDistance(
       playerDist,
-      inZone
+      inZone,
     );
     const state = this.stateMachine.update({ hostileDistance: effectiveHostileDist });
     const stateParams = this.stateMachine.getStateParams();
@@ -123,44 +130,49 @@ export class BehaviorNpcInput implements NpcInput {
         navMode = 'direct';
       }
     } else {
-      primaryDir = this.computeCombatDirection(state, playerDir, playerDist);
+      primaryDir = computeEnemyApproachDirection(
+        this.behaviorStyle,
+        playerDir,
+        playerDist,
+        this.flankSide,
+        'combat',
+        state,
+      );
       navMode = 'direct';
     }
 
-    if (primaryDir.lengthSquared() < 1e-4) {
-      primaryDir = playerDir.clone();
-    } else {
-      primaryDir.normalize();
-    }
+    primaryDir = normalizeSteerDirection(primaryDir, playerDir);
 
     const separation = computeSeparation(
       pos,
       context.vehicleColliderRadius,
-      context.flockMates
+      context.flockMates,
     );
     const alignment = computeAlignment(pos, context.flockMates);
     const cohesion = computeCohesion(pos, context.flockCenter);
 
-    const playerChaseWeight = this.playerChaseWeight(state, inZone);
+    const moveDir = blendFlockSteering(
+      primaryDir,
+      separation,
+      alignment,
+      cohesion,
+      playerDir,
+      {
+        separation: stateParams.separationWeight,
+        alignment: stateParams.alignmentWeight,
+        cohesion: stateParams.cohesionWeight,
+        playerChase: this.playerChaseWeight(state, inZone),
+      },
+    );
 
-    const moveDir = primaryDir
-      .clone()
-      .add(separation.scale(stateParams.separationWeight))
-      .add(alignment.scale(stateParams.alignmentWeight))
-      .add(cohesion.scale(stateParams.cohesionWeight))
-      .add(playerDir.scale(playerChaseWeight));
+    const steerDir = normalizeSteerDirection(moveDir, primaryDir);
 
-    const steerDir = moveDir.lengthSquared() < 1e-4 ? primaryDir : moveDir.normalize();
-
-    const fwd = getShipForward(context.vehicleRotation);
-    const alignmentDot = Vector3.Dot(fwd, steerDir);
-    const targetSpeed =
-      context.cruiseSpeed * stateParams.speedFactor * (0.7 + alignmentDot * 0.3);
-    const speedDelta = targetSpeed - context.vehicleSpeed;
-    const vehicle = directionToVehicleInput(
+    const vehicle = steeringToVehicleInput(
       context.vehicleRotation,
       steerDir,
-      speedDelta
+      context.cruiseSpeed,
+      context.vehicleSpeed,
+      stateParams.speedFactor,
     );
 
     this.lastDebug = {
@@ -170,10 +182,19 @@ export class BehaviorNpcInput implements NpcInput {
       mode: navMode,
     };
 
-    this.fireCooldown -= dt;
-    const wantsFire = this.shouldFire(state, playerDist, inZone);
+    const fire = tickBehaviorNpcFireGate(
+      this.fireCooldown,
+      dt,
+      playerDist,
+      this.config,
+      this.combatRole,
+      state,
+      inZone,
+      this.behaviorStyle,
+    );
+    this.fireCooldown = fire.cooldownSec;
 
-    return { vehicle, wantsFire };
+    return { vehicle, wantsFire: fire.wantsFire };
   }
 
   private effectiveHostileDistance(playerDist: number, inZone: boolean): number {
@@ -192,41 +213,5 @@ export class BehaviorNpcInput implements NpcInput {
       return inZone ? WEIGHT_WANDER_GUARD_CHASE : 0;
     }
     return WEIGHT_PLAYER_CHASE;
-  }
-
-  private shouldFire(
-    state: NpcStateId,
-    playerDist: number,
-    inZone: boolean
-  ): boolean {
-    if (this.fireCooldown > 0) return false;
-    if (this.combatRole === 'patrol_only') return false;
-
-    if (this.combatRole === 'wander_guard') {
-      if (state !== 'chase' || !inZone) return false;
-      if (playerDist > this.config.fireRange * 0.65) return false;
-      this.fireCooldown = 1.4;
-      return true;
-    }
-
-    if (state !== 'attack' || playerDist >= this.config.fireRange) return false;
-    this.fireCooldown = this.behaviorStyle === 'attack' ? 0.8 : 1.2;
-    return true;
-  }
-
-  private computeCombatDirection(
-    state: NpcStateId,
-    playerDir: Vector3,
-    playerDist: number
-  ): Vector3 {
-    if (this.behaviorStyle === 'flank' && playerDist > 60) {
-      const right = Vector3.Cross(Vector3.Up(), playerDir).normalize();
-      const flankScale = state === 'attack' ? 0.5 : 0.35;
-      return playerDir.add(right.scale(this.flankSide * flankScale)).normalize();
-    }
-    if (this.behaviorStyle === 'chase' || state === 'chase') {
-      return playerDir.clone();
-    }
-    return playerDir.scale(state === 'attack' ? 1 : 0.85).normalize();
   }
 }

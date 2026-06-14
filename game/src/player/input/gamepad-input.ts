@@ -1,3 +1,4 @@
+import { clamp } from '@rogue-leader/engine';
 import {
   gamepadIdsMatch,
   isCameraTogglePressed,
@@ -16,6 +17,7 @@ import type { FlightInput, IInputSource } from './i-input-source';
 import { ZERO_FLIGHT_INPUT } from './i-input-source';
 import type { IPlayerInputSource } from './i-player-input-source';
 import { playerInputFromFlightInput, type PlayerInput } from './player-input';
+import { applyRadialDeadzone } from './analog-curve';
 
 const DEADZONE = 0.12;
 
@@ -118,7 +120,7 @@ export class GamepadInput implements IPlayerInputSource {
     const yaw = zHeld ? 0 : stickX * 0.75;
 
     const { rTrigger, lTrigger } = readGamepadTriggers(pad);
-    const throttle = ScalarClamp(rTrigger - lTrigger, -1, 1);
+    const throttle = clamp(rTrigger - lTrigger, -1, 1);
 
     const toggle = this.cameraToggleQueued;
     const fireSecondaryPressed = this.fireSecondaryQueued;
@@ -226,12 +228,6 @@ export class GamepadInput implements IPlayerInputSource {
   }
 
   private applyDeadzone(v: number): number {
-    if (Math.abs(v) < DEADZONE) return 0;
-    const sign = v < 0 ? -1 : 1;
-    return sign * ((Math.abs(v) - DEADZONE) / (1 - DEADZONE));
+    return applyRadialDeadzone(v, DEADZONE);
   }
-}
-
-function ScalarClamp(v: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, v));
 }

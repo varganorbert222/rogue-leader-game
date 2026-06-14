@@ -11,7 +11,11 @@ import {
   ParticleFx,
   WreckLoader,
   applyMeshAlphaCutoff,
+  ensureMeshWorldMatrix,
+  ensureNodeWorldMatrix,
   filterDebrisPieceMeshes,
+  randomInRange,
+  randomVector3InRange,
   type AssetManifest,
   type ShipManifestEntry,
   type WreckTemplate,
@@ -174,7 +178,7 @@ export class WreckDebrisManager {
     instance.setEnabled(true);
     instance.position = kinematics.position.clone();
     instance.rotationQuaternion = kinematics.rotationQuaternion.clone();
-    instance.computeWorldMatrix(true);
+    ensureNodeWorldMatrix(instance);
 
     const pieceMeshes = filterDebrisPieceMeshes(
       instance.getChildMeshes(false).filter((mesh): mesh is Mesh => mesh instanceof Mesh)
@@ -188,7 +192,7 @@ export class WreckDebrisManager {
     const inheritedVelocity = kinematics.velocity.clone();
 
     for (const mesh of pieceMeshes) {
-      mesh.computeWorldMatrix(true);
+      ensureMeshWorldMatrix(mesh);
       const worldPos = mesh.getAbsolutePosition().clone();
       const worldRot = mesh.absoluteRotationQuaternion?.clone() ?? Quaternion.Identity();
       const worldScale = mesh.absoluteScaling?.clone() ?? Vector3.One();
@@ -212,13 +216,12 @@ export class WreckDebrisManager {
       }
       outward.normalize();
 
-      const impulseMag =
-        EXPLOSION_IMPULSE_MIN + Math.random() * (EXPLOSION_IMPULSE_MAX - EXPLOSION_IMPULSE_MIN);
+      const impulseMag = randomInRange(EXPLOSION_IMPULSE_MIN, EXPLOSION_IMPULSE_MAX);
       const velocity = inheritedVelocity
         .add(outward.scale(impulseMag))
-        .add(randomVector3(0.5, 2.5));
+        .add(randomVector3InRange(0.5, 2.5));
 
-      const angularVelocity = randomVector3(-4, 4);
+      const angularVelocity = randomVector3InRange(-4, 4);
       const particleSystems = pickDebrisEffects(this.scene, mesh);
 
       this.pieces.push({
@@ -226,7 +229,7 @@ export class WreckDebrisManager {
         velocity,
         angularVelocity,
         age: 0,
-        lifetime: DEBRIS_LIFETIME_SEC + Math.random() * DEBRIS_LIFETIME_JITTER_SEC,
+        lifetime: DEBRIS_LIFETIME_SEC + randomInRange(0, DEBRIS_LIFETIME_JITTER_SEC),
         baseScale: worldScale.clone(),
         particleSystems,
       });
@@ -242,15 +245,6 @@ export class WreckDebrisManager {
     piece.node.setEnabled(false);
     this.debrisNodePool.release(piece.node);
   }
-}
-
-function randomVector3(min: number, max: number): Vector3 {
-  const span = max - min;
-  return new Vector3(
-    min + Math.random() * span,
-    min + Math.random() * span,
-    min + Math.random() * span
-  );
 }
 
 function pickDebrisEffects(scene: Scene, mesh: Mesh): ParticleSystem[] {

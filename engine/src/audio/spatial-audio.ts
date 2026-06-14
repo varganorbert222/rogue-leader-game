@@ -1,4 +1,5 @@
 import { Vector3, type Sound } from '@babylonjs/core';
+import { clampPitchMultiplier } from '../math';
 import { applySoundPitch } from './sound-variation';
 import type { AudioClipDef, AudioLibraryCategory } from './audio-types';
 
@@ -101,7 +102,7 @@ export function computeDopplerPitch(
   listenerVel: Vector3,
   speedOfSound = SPEED_OF_SOUND
 ): number {
-  const offset = listenerPos.subtract(sourcePos);
+  const offset = listenerPos.clone().subtract(sourcePos);
   const distSq = offset.lengthSquared();
   if (distSq < 1e-4) return 1;
 
@@ -110,5 +111,5 @@ export function computeDopplerPitch(
   const radialSpeed = Vector3.Dot(relativeVel, dir);
   const denom = speedOfSound - radialSpeed;
   if (Math.abs(denom) < 1) return 1;
-  return Math.max(0.5, Math.min(2, speedOfSound / denom));
+  return clampPitchMultiplier(speedOfSound / denom);
 }

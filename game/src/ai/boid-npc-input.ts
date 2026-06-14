@@ -1,5 +1,6 @@
-import { Quaternion, Vector3 } from '@babylonjs/core';
-import { directionToVehicleInput } from '../flight/flight-steering';
+import { Vector3 } from '@babylonjs/core';
+import { randomSign } from '@rogue-leader/engine';
+import type { NpcBehaviorConfig, NpcStateId } from '../data/config/npc-behavior-config';
 import { getShipForward } from '../flight/ship-forward';
 import type { NpcInput, NpcInputContext, NpcInputResult } from '../player/input/npc-input';
 import {
@@ -7,8 +8,17 @@ import {
   computeCohesion,
   computeSeparation,
 } from './boid-forces';
+import { tickBoidFireGate } from './combat-ai-utils';
+import type { EnemyBehavior } from './enemy-behavior';
+import {
+  blendFlockSteering,
+  computeDirectionToTarget,
+  computeEnemyApproachDirection,
+  normalizeSteerDirection,
+  steeringToVehicleInput,
+} from './steering-utils';
 
-export type EnemyBehavior = 'attack' | 'chase' | 'flank';
+export type { EnemyBehavior } from './enemy-behavior';
 
 const THREAT_ENTER_RADIUS = 95;
 const THREAT_EXIT_RADIUS = 130;
@@ -29,82 +39,91 @@ export class BoidNpcInput implements NpcInput {
 
   constructor(public readonly behavior: EnemyBehavior) {
     if (behavior === 'flank') {
-      this.flankSide = Math.random() > 0.5 ? 1 : -1;
+      this.flankSide = randomSign();
     }
   }
 
   update(dt: number, context: NpcInputContext): NpcInputResult {
-    const pos = context.vehiclePosition;
-    const toPlayer = context.playerPosition.clone().subtract(pos);
-    const playerDist = toPlayer.length();
-    const playerDir =
-      playerDist > 0.01
-        ? toPlayer.normalize()
-        : getShipForward(context.vehicleRotation);
+    const { direction: playerDir, distance: playerDist } = computeDirectionToTarget(
+      context.vehiclePosition,
+      context.playerPosition,
+      getShipForward(context.vehicleRotation),
+    );
 
     this.updateDefensiveState(playerDist, dt);
 
     const separation = computeSeparation(
-      pos,
+      context.vehiclePosition,
       context.vehicleColliderRadius,
-      context.flockMates
+      context.flockMates,
     );
     let moveDir: Vector3;
 
     if (this.defensive) {
-      moveDir = this.computeDefensiveDirection(playerDir, playerDist);
-      moveDir = this.blendSteering(
+      moveDir = computeEnemyApproachDirection(
+        this.behavior,
+        playerDir,
+        playerDist,
+        this.flankSide,
+        'defensive',
+      );
+      moveDir = blendFlockSteering(
         moveDir,
         separation,
         Vector3.Zero(),
         Vector3.Zero(),
         playerDir,
-        WEIGHT_SEPARATION_DEFENSIVE,
-        0,
-        0,
-        0
+        {
+          separation: WEIGHT_SEPARATION_DEFENSIVE,
+          alignment: 0,
+          cohesion: 0,
+          playerChase: 0,
+        },
       );
     } else {
-      const alignment = computeAlignment(pos, context.flockMates);
-      const cohesion = computeCohesion(pos, context.flockCenter);
-      const flockInterest = this.computeFlockBehaviorDirection(playerDir, playerDist);
-      moveDir = this.blendSteering(
+      const alignment = computeAlignment(context.vehiclePosition, context.flockMates);
+      const cohesion = computeCohesion(context.vehiclePosition, context.flockCenter);
+      const flockInterest = computeEnemyApproachDirection(
+        this.behavior,
+        playerDir,
+        playerDist,
+        this.flankSide,
+        'flock',
+      );
+      moveDir = blendFlockSteering(
         flockInterest,
         separation,
         alignment,
         cohesion,
         playerDir,
-        WEIGHT_SEPARATION_FLOCK,
-        WEIGHT_ALIGNMENT,
-        WEIGHT_COHESION,
-        WEIGHT_PLAYER_FLOCK
+        {
+          separation: WEIGHT_SEPARATION_FLOCK,
+          alignment: WEIGHT_ALIGNMENT,
+          cohesion: WEIGHT_COHESION,
+          playerChase: WEIGHT_PLAYER_FLOCK,
+        },
       );
     }
 
-    if (moveDir.lengthSquared() < 1e-4) {
-      moveDir = playerDir;
-    } else {
-      moveDir.normalize();
-    }
+    moveDir = normalizeSteerDirection(moveDir, playerDir);
 
-    const fwd = getShipForward(context.vehicleRotation);
-    const alignment = Vector3.Dot(fwd, moveDir);
-    const targetSpeed = context.cruiseSpeed * (0.7 + alignment * 0.3);
-    const speedDelta = targetSpeed - context.vehicleSpeed;
-    const vehicle = directionToVehicleInput(context.vehicleRotation, moveDir, speedDelta);
+    const vehicle = steeringToVehicleInput(
+      context.vehicleRotation,
+      moveDir,
+      context.cruiseSpeed,
+      context.vehicleSpeed,
+    );
 
-    this.fireCooldown -= dt;
-    let wantsFire = false;
-    if (this.fireCooldown <= 0 && playerDist < 120) {
-      this.fireCooldown = this.defensive
-        ? this.behavior === 'attack'
-          ? 0.8
-          : 1.2
-        : 1.4;
-      wantsFire = true;
-    }
+    const fire = tickBoidFireGate(
+      this.fireCooldown,
+      dt,
+      playerDist,
+      this.behavior,
+      this.defensive,
+    );
+    this.fireCooldown = fire.cooldownSec;
 
-    return { vehicle, wantsFire };
+    return { vehicle, wantsFire: fire.wantsFire };
   }
 
   private updateDefensiveState(playerDist: number, dt: number): void {
@@ -121,43 +140,4 @@ export class BoidNpcInput implements NpcInput {
       }
     }
   }
-
-  private computeDefensiveDirection(playerDir: Vector3, playerDist: number): Vector3 {
-    if (this.behavior === 'flank' && playerDist > 60) {
-      const right = Vector3.Cross(Vector3.Up(), playerDir).normalize();
-      return playerDir.add(right.scale(this.flankSide * 0.6)).normalize();
-    }
-    return playerDir.clone();
-  }
-
-  private computeFlockBehaviorDirection(playerDir: Vector3, playerDist: number): Vector3 {
-    if (this.behavior === 'flank' && playerDist > 80) {
-      const right = Vector3.Cross(Vector3.Up(), playerDir).normalize();
-      return playerDir.add(right.scale(this.flankSide * 0.35)).normalize();
-    }
-    if (this.behavior === 'chase') {
-      return playerDir.clone();
-    }
-    return playerDir.scale(0.85).add(Vector3.Up().scale(0.05)).normalize();
-  }
-
-  private blendSteering(
-    primary: Vector3,
-    separation: Vector3,
-    alignment: Vector3,
-    cohesion: Vector3,
-    playerDir: Vector3,
-    wSep: number,
-    wAli: number,
-    wCoh: number,
-    wPlayer: number
-  ): Vector3 {
-    return primary
-      .clone()
-      .add(separation.scale(wSep))
-      .add(alignment.scale(wAli))
-      .add(cohesion.scale(wCoh))
-      .add(playerDir.scale(wPlayer));
-  }
 }
-

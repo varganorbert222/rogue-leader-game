@@ -8,7 +8,12 @@ import type {
   PropInstanceGroup,
   PropManifestEntry,
 } from '@rogue-leader/engine';
-import { setLoadedEntityVisible } from '@rogue-leader/engine';
+import {
+  randomInRange,
+  randomPointInSphericalShell,
+  randomTumbleAxis,
+  setLoadedEntityVisible,
+} from '@rogue-leader/engine';
 import { HealthComponent } from '../ecs/components/health-component';
 import { Role } from '../ecs/components/role-tag';
 import type { World } from '../ecs/world';
@@ -104,20 +109,11 @@ export class AsteroidSpawnService {
       let pos: Vector3;
       let attempts = 0;
       do {
-        const u = rand();
-        const v = rand();
-        const theta = 2 * Math.PI * u;
-        const phi = Math.acos(2 * v - 1);
-        const r =
-          config.spawnRegion.innerRadius +
-          rand() *
-            (config.spawnRegion.outerRadius - config.spawnRegion.innerRadius);
-        pos = center.add(
-          new Vector3(
-            r * Math.sin(phi) * Math.cos(theta),
-            r * Math.sin(phi) * Math.sin(theta),
-            r * Math.cos(phi),
-          ),
+        pos = randomPointInSphericalShell(
+          center,
+          config.spawnRegion.innerRadius,
+          config.spawnRegion.outerRadius,
+          rand,
         );
         attempts++;
       } while (Vector3.Distance(pos, playerSpawn) < 80 && attempts < 20);
@@ -131,16 +127,10 @@ export class AsteroidSpawnService {
         : loader.instanceProp(template, instanceId, entry);
       setLoadedEntityVisible(loaded, true);
       loaded.root.position = pos;
-      const scale =
-        config.scaleRange[0] +
-        rand() * (config.scaleRange[1] - config.scaleRange[0]);
+      const scale = randomInRange(config.scaleRange[0], config.scaleRange[1], rand);
       loaded.root.scaling.scaleInPlace(scale);
 
-      const tumbleAxis = new Vector3(
-        rand() - 0.5,
-        rand() - 0.5,
-        rand() - 0.5,
-      ).normalize();
+      const tumbleAxis = randomTumbleAxis(rand);
       const tumbleSpeed = config.slowTumble
         ? rand() * config.maxAngularSpeed
         : 0;

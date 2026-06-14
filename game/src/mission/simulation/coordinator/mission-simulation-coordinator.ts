@@ -3,7 +3,6 @@ import type { GltfShipLoader } from '@rogue-leader/engine';
 import { CombatTeams } from '../../../data/constants';
 import { GameEvents } from '../../../core/events/game-events';
 import { collectHostileTargets } from '../../../ecs/queries/combat-queries';
-import { getShipPosition } from '../../../ecs/queries/ship-queries';
 import { runNpcSystem } from '../../../ecs/systems/npc-system';
 import { runPlayerSystem } from '../../../ecs/systems/player-system';
 import type { EntityId } from '../../../ecs/entity-id';
@@ -92,7 +91,7 @@ export class MissionSimulationCoordinator {
 
     if (world.has(playerId, 'flight')) {
       this.runtime.combat.updatePassByObserver({
-        position: getShipPosition(world, playerId),
+        position: this.runtime.camera.getCamera().position.clone(),
         team: CombatTeams.Player,
       });
     }

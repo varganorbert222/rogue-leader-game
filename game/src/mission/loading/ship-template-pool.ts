@@ -1,5 +1,10 @@
 import type { AssetManifest, GltfShipLoader, LoadedEntity } from '@rogue-leader/engine';
-import { resetLoadedEntityTransform, refreshLoadedEntityColliders, setLoadedEntityVisible } from '@rogue-leader/engine';
+import {
+  prepareLoadedEntityForAcquire,
+  prepareLoadedEntityForPool,
+  resetLoadedEntityTransform,
+  setLoadedEntityVisible,
+} from '@rogue-leader/engine';
 
 const MAX_INSTANCES_PER_SHIP = 256;
 const POOL_HIDE_Y = -5000;
@@ -40,20 +45,18 @@ export class ShipTemplatePool {
     if (reused && !reused.root.isDisposed()) {
       reused.root.name = `${instanceId}_root`;
       resetLoadedEntityTransform(reused);
-      refreshLoadedEntityColliders(reused);
-      setLoadedEntityVisible(reused, true);
+      prepareLoadedEntityForAcquire(reused);
       return reused;
     }
     const loaded = this.cloneNpcShip(shipId, instanceId, loader);
     resetLoadedEntityTransform(loaded);
-    refreshLoadedEntityColliders(loaded);
-    setLoadedEntityVisible(loaded, true);
+    prepareLoadedEntityForAcquire(loaded);
     return loaded;
   }
 
   releaseNpcShip(shipId: string, loaded: LoadedEntity): void {
     if (loaded.root.isDisposed()) return;
-    setLoadedEntityVisible(loaded, false);
+    prepareLoadedEntityForPool(loaded);
     loaded.root.position.set(0, POOL_HIDE_Y, 0);
 
     const pool = this.instances.get(shipId) ?? [];

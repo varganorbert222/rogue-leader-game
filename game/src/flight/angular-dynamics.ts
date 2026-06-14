@@ -1,4 +1,5 @@
 import { INPUT_DEADZONE } from './flight-assist';
+import { approachScalar, expDecayFactor } from '@rogue-leader/engine';
 
 /** First-order angular rate model — shared by player and NPC flight. */
 export interface AngularDynamicsConfig {
@@ -54,7 +55,7 @@ export class AngularRateSmoother {
     this.yaw = approach(this.yaw, targetYaw, config.responseYaw, dt);
     this.roll = approach(this.roll, targetRoll, config.responseRoll, dt);
 
-    const damp = Math.exp(-config.damping * dt);
+    const damp = expDecayFactor(config.damping, dt);
     if (Math.abs(targetPitch) < INPUT_DEADZONE) {
       this.pitch *= damp;
     }
@@ -70,6 +71,5 @@ export class AngularRateSmoother {
 }
 
 function approach(current: number, target: number, response: number, dt: number): number {
-  const blend = 1 - Math.exp(-response * dt);
-  return current + (target - current) * blend;
+  return approachScalar(current, target, response, dt);
 }

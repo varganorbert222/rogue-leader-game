@@ -1,5 +1,5 @@
 import { Quaternion, Scalar, Vector3, type TransformNode } from '@babylonjs/core';
-import { shipRotationFromHeading } from './ship-forward';
+import { expSmoothingFactor, quaternionFromForwardLH } from '@rogue-leader/engine';
 
 export interface SoftBoundary {
   center: Vector3;
@@ -23,9 +23,13 @@ export function applySoftBoundary(
   const toCenter = boundary.center.clone().subtract(root.position).normalize();
 
   const rot = root.rotationQuaternion ?? Quaternion.Identity();
-  const targetRot = shipRotationFromHeading(toCenter);
+  const targetRot = quaternionFromForwardLH(toCenter);
   const steerRate = Scalar.Clamp(2 + overshootRatio * 6, 2, 10);
-  root.rotationQuaternion = Quaternion.Slerp(rot, targetRot, 1 - Math.exp(-steerRate * dt)).normalize();
+  root.rotationQuaternion = Quaternion.Slerp(
+    rot,
+    targetRot,
+    expSmoothingFactor(steerRate, dt),
+  ).normalize();
 
   const pull = offset.normalize().scale(-(dist - boundary.radius) * 6 * dt);
   root.position.addInPlace(pull);

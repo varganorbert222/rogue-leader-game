@@ -1,15 +1,20 @@
-import { Matrix, Quaternion, Scalar, Vector3 } from '@babylonjs/core';
+import { Matrix, Quaternion, Vector3 } from '@babylonjs/core';
+import {
+  angleBetweenUnitVectors,
+  clamp,
+  isNearZero,
+  safeNormalize,
+} from '@rogue-leader/engine';
 
 /** Slerp between unit directions with a max angular step (rad). */
 export function rotateTowardDirection(
   current: Vector3,
   desired: Vector3,
-  maxAngleRad: number
+  maxAngleRad: number,
 ): Vector3 {
-  const from = current.normalize();
-  const to = desired.normalize();
-  const dot = Scalar.Clamp(Vector3.Dot(from, to), -1, 1);
-  const angle = Math.acos(dot);
+  const from = safeNormalize(current, Vector3.Forward());
+  const to = safeNormalize(desired, from);
+  const angle = angleBetweenUnitVectors(from, to);
   if (angle < 1e-6) {
     return to.clone();
   }
@@ -25,11 +30,11 @@ export function isTargetInAimHemisphere(
   axisOrigin: Vector3,
   axisDirection: Vector3,
   targetPos: Vector3,
-  minDot = 0
+  minDot = 0,
 ): boolean {
   const axis = axisDirection.normalize();
   const toTarget = targetPos.subtract(axisOrigin);
-  if (toTarget.lengthSquared() < 1e-6) {
+  if (isNearZero(toTarget)) {
     return false;
   }
   return Vector3.Dot(axis, toTarget.normalize()) > minDot;
@@ -40,12 +45,12 @@ export function computeConvergenceDirection(
   mountPos: Vector3,
   axisOrigin: Vector3,
   axisDirection: Vector3,
-  convergenceDistance: number
+  convergenceDistance: number,
 ): Vector3 {
   const axis = axisDirection.normalize();
   const convergencePoint = axisOrigin.add(axis.scale(convergenceDistance));
   const toPoint = convergencePoint.subtract(mountPos);
-  if (toPoint.lengthSquared() < 1e-6) {
+  if (isNearZero(toPoint)) {
     return axis.clone();
   }
   return toPoint.normalize();
@@ -57,12 +62,12 @@ export function computeLeadDirection(
   targetPos: Vector3,
   targetVel: Vector3,
   projectileSpeed: number,
-  shooterVel: Vector3 = Vector3.Zero()
+  shooterVel: Vector3 = Vector3.Zero(),
 ): Vector3 {
   const relPos = targetPos.subtract(origin);
   const distSq = relPos.lengthSquared();
-  if (distSq < 1e-6) {
-    return relPos.normalize();
+  if (isNearZero(relPos)) {
+    return safeNormalize(relPos, Vector3.Forward());
   }
 
   if (projectileSpeed < 1e-4) {
@@ -102,7 +107,7 @@ export function computeLeadDirection(
   }
 
   const intercept = relPos.add(relVel.scale(interceptTime));
-  if (intercept.lengthSquared() < 1e-6) {
+  if (isNearZero(intercept)) {
     return relPos.normalize();
   }
   return intercept.normalize();
@@ -112,11 +117,11 @@ export function computeLeadDirection(
 export function clampToDeflectionCone(
   restForward: Vector3,
   desiredDir: Vector3,
-  maxDeflectionRad: number
+  maxDeflectionRad: number,
 ): Vector3 {
   const forward = restForward.normalize();
   const desired = desiredDir.normalize();
-  const dot = Scalar.Clamp(Vector3.Dot(forward, desired), -1, 1);
+  const dot = clamp(Vector3.Dot(forward, desired), -1, 1);
 
   if (dot <= 0) {
     return forward.clone();
@@ -129,7 +134,7 @@ export function clampToDeflectionCone(
   }
 
   const axis = Vector3.Cross(forward, desired);
-  if (axis.lengthSquared() < 1e-8) {
+  if (isNearZero(axis, 1e-8)) {
     return forward;
   }
 

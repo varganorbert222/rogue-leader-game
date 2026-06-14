@@ -1,5 +1,5 @@
 import { Vector3, type TransformNode } from '@babylonjs/core';
-import { detectWeaponMounts } from '@rogue-leader/engine';
+import { degToRad, detectWeaponMounts } from '@rogue-leader/engine';
 import type { ShipAnchors, ShipManifestEntry } from '@rogue-leader/engine';
 import type { GameEventBus } from '../../core/events/game-events';
 import type { WeaponsManifest } from '../../data/config/weapons-manifest';
@@ -66,8 +66,8 @@ export class VehicleWeaponSystem {
     targeting: TargetingConfig,
     dt: number
   ): void {
-    const maxRad = (targeting.maxDeflectionDeg * Math.PI) / 180;
-    const aimSpeedRad = (targeting.weaponAimSpeedDeg * Math.PI) / 180;
+    const maxRad = degToRad(targeting.maxDeflectionDeg);
+    const aimSpeedRad = degToRad(targeting.weaponAimSpeedDeg);
     const useAutoAim =
       target != null &&
       target.distance <= targeting.autoAimRange &&

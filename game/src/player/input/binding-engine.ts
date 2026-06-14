@@ -1,3 +1,4 @@
+import { clamp } from '@rogue-leader/engine';
 import type { FlightInput } from './i-input-source';
 import { readGamepadTriggers } from './gamepad-profiles';
 import type {
@@ -8,6 +9,7 @@ import type {
   StickSettings,
   TriggerSettings,
 } from '../settings/control-bindings';
+import { applyAxisCurve } from './analog-curve';
 
 export interface BindingInputState {
   keys: ReadonlySet<string>;
@@ -111,7 +113,7 @@ function evaluateDigitalAxis(
       value -= 1;
     }
   }
-  return Math.max(-1, Math.min(1, value));
+  return clamp(value, -1, 1);
 }
 
 function evaluateHeldButton(
@@ -134,11 +136,11 @@ function mergeAxis(
   curve: AxisCurveSettings,
   stickDeadzone: number
 ): number {
-  const analogValue = applyCurve(analog, curve);
+  const analogValue = applyAxisCurve(analog, curve);
   if (Math.abs(analogValue) > stickDeadzone * 0.5) {
     return analogValue;
   }
-  return applyCurve(digital, curve);
+  return applyAxisCurve(digital, curve);
 }
 
 function readStickAxis(
@@ -154,22 +156,7 @@ function readStickAxis(
   return value;
 }
 
-function readThrottleAxis(pad: Gamepad, settings: TriggerSettings): number {
+function readThrottleAxis(pad: Gamepad, _settings: TriggerSettings): number {
   const { rTrigger, lTrigger } = readGamepadTriggers(pad);
   return rTrigger - lTrigger;
-}
-
-function applyCurve(value: number, settings: AxisCurveSettings): number {
-  let v = value;
-  if (settings.invert) {
-    v = -v;
-  }
-  const dz = Math.max(0, Math.min(0.45, settings.deadzone));
-  if (Math.abs(v) <= dz) {
-    return 0;
-  }
-  const sign = Math.sign(v);
-  const normalized = (Math.abs(v) - dz) / (1 - dz);
-  const curved = Math.pow(normalized, Math.max(0.5, settings.exponent));
-  return sign * curved * settings.sensitivity;
 }

@@ -5,7 +5,7 @@ import {
   Vector3,
 } from '@babylonjs/core';
 import type { LoadedEntity, ShipManifestEntry } from '@rogue-leader/engine';
-import { setLoadedEntityVisible } from '@rogue-leader/engine';
+import { degToRad, powSmoothingFactor, prepareLoadedEntityForPool } from '@rogue-leader/engine';
 import type { FactionId } from '../../combat/faction';
 import { computeEngineSpeedRatio } from '../../audio/engine-audio-config';
 import type { SfoilSfxPlayRequest } from '../../audio/sfoil-sfx';
@@ -33,7 +33,7 @@ import type { WeaponsComponent } from '../components/weapons-component';
 import type { EntityId } from '../entity-id';
 import type { World } from '../world';
 
-const YAW_VISUAL_BANK_RAD = (YAW_VISUAL_BANK_DEG * Math.PI) / 180;
+const YAW_VISUAL_BANK_RAD = degToRad(YAW_VISUAL_BANK_DEG);
 
 export function isShipEntity(world: World, id: EntityId): boolean {
   return world.has(id, 'flight') && world.has(id, 'shipIdentity');
@@ -45,6 +45,10 @@ export function getShipRoot(world: World, id: EntityId): TransformNode {
 
 export function getShipPosition(world: World, id: EntityId): Vector3 {
   return getShipRoot(world, id).position;
+}
+
+export function getShipWorldPosition(world: World, id: EntityId): Vector3 {
+  return getShipRoot(world, id).getAbsolutePosition();
 }
 
 export function getShipVelocity(world: World, id: EntityId): Vector3 {
@@ -108,7 +112,7 @@ function updateVisualYawBank(
 
   const hasYaw = Math.abs(yaw) >= INPUT_DEADZONE;
   const target = hasYaw ? Scalar.Clamp(yaw, -1, 1) * YAW_VISUAL_BANK_RAD : 0;
-  const blend = hasYaw ? 1 - Math.pow(0.00005, dt) : 1 - Math.pow(0.001, dt);
+  const blend = hasYaw ? powSmoothingFactor(0.00005, dt) : powSmoothingFactor(0.001, dt);
   flight.visualBank = Scalar.Lerp(flight.visualBank, target, blend);
   const rollAngle = flight.invertForwardRoll
     ? -flight.visualBank
@@ -146,7 +150,7 @@ export function prepareShipForPool(world: World, id: EntityId): void {
   const root = flight.controller.root;
   root.rotationQuaternion = Quaternion.Identity();
   root.rotation.setAll(0);
-  setLoadedEntityVisible(ship.loadedEntity, false);
+  prepareLoadedEntityForPool(ship.loadedEntity);
   root.position.set(0, -5000, 0);
 }
 

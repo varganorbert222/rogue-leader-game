@@ -4,6 +4,11 @@ import {
   Vector3,
   type TransformNode,
 } from "@babylonjs/core";
+import {
+  expSmoothingFactor,
+  lerpAngleRad,
+  quaternionLookAt,
+} from "@rogue-leader/engine";
 import type { CameraInput } from "../player/input/camera-input";
 import { getShipForward, getShipRight, getShipUp } from "./ship-forward";
 
@@ -35,14 +40,32 @@ export interface CameraDesiredPose {
   orientation: Quaternion;
   /** When true, skip velocity / rotation lag (cockpit). */
   directAttach?: boolean;
+  /** When true, snap spring rig to the chase pose (orbit → follow handoff). */
+  snapSpring?: boolean;
 }
 
+/** Outside chase: horizontal orbit speed at full stick (rad/s). */
+const ORBIT_YAW_SPEED = 2.75;
+/** Seconds without orbit input before recentering to follow chase. */
+const ORBIT_IDLE_DELAY_SEC = 2.5;
+/** Recenter speed after idle (1/s, exponential). */
+const ORBIT_RECENTER_SPEED = 2.8;
+const ORBIT_INPUT_DEADZONE = 0.08;
+
+/** Default chase camera vs user-driven orbit around the ship. */
+export type OutsideCameraBehavior = "follow" | "orbit";
+
 export interface FollowCameraState {
-  orbitAngle: number;
+  /** Active outside-view behavior (follow = legacy chase cam). */
+  behavior: OutsideCameraBehavior;
+  /** Yaw orbit around ship up (radians, orbit mode only). */
+  orbitYaw: number;
   distanceBias: number;
   dropOffset: number;
   lookAroundYaw: number;
   lookAroundPitch: number;
+  /** Seconds since last orbit input while in orbit mode. */
+  orbitIdleSec: number;
 }
 
 export interface FollowCameraContext {
@@ -69,6 +92,7 @@ export class FollowCameraDriver {
     const fwd = getShipForward(rot);
     const right = getShipRight(rot);
     const up = getShipUp(rot);
+    const behaviorBeforeUpdate = ctx.state.behavior;
 
     this.updateUserOffsets(ctx);
 
@@ -94,31 +118,56 @@ export class FollowCameraDriver {
     const height = preset.height;
 
     const back = fwd.scale(-1);
-    const orbitRight = right.scale(
-      Math.sin(ctx.state.orbitAngle) * distance * 0.35,
-    );
     const dropDown = up.scale(-ctx.state.dropOffset * 10);
 
-    let desiredPos = pos
-      .add(back.scale(distance))
-      .add(up.scale(height))
-      .add(orbitRight)
-      .add(dropDown)
-      .add(ctx.shakeOffset);
+    let desiredPos: Vector3;
+    let desiredRot: Quaternion;
 
-    if (ctx.velocityLag > 0 && ctx.shipVelocity.lengthSquared() > 1) {
-      desiredPos = desiredPos.subtract(ctx.shipVelocity.scale(ctx.velocityLag));
+    if (ctx.state.behavior === "orbit") {
+      const chaseOffset = back.scale(distance).add(up.scale(height));
+      const orbitRot = Quaternion.RotationAxis(up, ctx.state.orbitYaw);
+      const orbitalOffset = chaseOffset.applyRotationQuaternion(orbitRot);
+
+      desiredPos = pos.add(orbitalOffset).add(dropDown).add(ctx.shakeOffset);
+
+      if (ctx.velocityLag > 0 && ctx.shipVelocity.lengthSquared() > 1) {
+        desiredPos = desiredPos.subtract(ctx.shipVelocity.scale(ctx.velocityLag));
+      }
+
+      const toShip = pos.subtract(desiredPos);
+      desiredRot =
+        toShip.lengthSquared() > 1e-6
+          ? quaternionLookAt(desiredPos, pos, up)
+          : Quaternion.Slerp(
+              ctx.prevShipRot,
+              rot,
+              Scalar.Clamp(1 - ctx.rotationLag, 0.05, 1),
+            );
+    } else {
+      desiredPos = pos
+        .add(back.scale(distance))
+        .add(up.scale(height))
+        .add(dropDown)
+        .add(ctx.shakeOffset);
+
+      if (ctx.velocityLag > 0 && ctx.shipVelocity.lengthSquared() > 1) {
+        desiredPos = desiredPos.subtract(ctx.shipVelocity.scale(ctx.velocityLag));
+      }
+
+      desiredRot = Quaternion.Slerp(
+        ctx.prevShipRot,
+        rot,
+        Scalar.Clamp(1 - ctx.rotationLag, 0.05, 1),
+      );
     }
 
-    const laggedRot = Quaternion.Slerp(
-      ctx.prevShipRot,
-      rot,
-      Scalar.Clamp(1 - ctx.rotationLag, 0.05, 1),
-    );
+    const snapSpring =
+      behaviorBeforeUpdate === "orbit" && ctx.state.behavior === "follow";
 
     return {
       position: desiredPos,
-      orientation: laggedRot,
+      orientation: desiredRot,
+      snapSpring,
     };
   }
 
@@ -126,9 +175,33 @@ export class FollowCameraDriver {
     const { input, dt, state, viewMode, inputResponse } = ctx;
     const orbitInput = input?.cameraOrbit ?? 0;
     const distInput = input?.cameraDistance ?? 0;
-    const blend = 1 - Math.exp(-inputResponse * dt);
+    const blend = expSmoothingFactor(inputResponse, dt);
+    const hasOrbitInput =
+      viewMode !== "cockpit" && Math.abs(orbitInput) > ORBIT_INPUT_DEADZONE;
 
-    state.orbitAngle = Scalar.Lerp(state.orbitAngle, orbitInput * 0.9, blend);
+    if (hasOrbitInput) {
+      state.behavior = "orbit";
+      state.orbitIdleSec = 0;
+      state.orbitYaw += orbitInput * ORBIT_YAW_SPEED * dt;
+    } else if (viewMode !== "cockpit" && state.behavior === "orbit") {
+      state.orbitIdleSec += dt;
+      if (state.orbitIdleSec >= ORBIT_IDLE_DELAY_SEC) {
+        const recenter = expSmoothingFactor(ORBIT_RECENTER_SPEED, dt);
+        state.orbitYaw = lerpAngleRad(state.orbitYaw, 0, recenter);
+        if (Math.abs(state.orbitYaw) < 1e-4) {
+          state.orbitYaw = 0;
+          state.behavior = "follow";
+          state.orbitIdleSec = 0;
+        }
+      }
+    } else if (viewMode !== "cockpit") {
+      state.orbitIdleSec = 0;
+    } else {
+      state.behavior = "follow";
+      state.orbitIdleSec = 0;
+      state.orbitYaw = 0;
+    }
+
     state.distanceBias = Scalar.Lerp(state.distanceBias, distInput * 8, blend);
     state.dropOffset = Math.max(0, state.dropOffset - dt * 1.2);
 
@@ -144,7 +217,7 @@ export class FollowCameraDriver {
         0.5,
       );
     } else if (viewMode !== "cockpit") {
-      const relax = 1 - Math.exp(-4 * dt);
+      const relax = expSmoothingFactor(4, dt);
       state.lookAroundYaw = Scalar.Lerp(state.lookAroundYaw, 0, relax);
       state.lookAroundPitch = Scalar.Lerp(state.lookAroundPitch, 0, relax);
     }

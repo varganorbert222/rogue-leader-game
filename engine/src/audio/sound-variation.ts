@@ -1,12 +1,11 @@
 import type { Sound } from '@babylonjs/core';
+import { clampPitchMultiplier, randomInRange } from '../math';
 
-export function randomInRange(min: number, max: number): number {
-  return min + Math.random() * (max - min);
-}
+export { randomInRange };
 
 /** Best-effort pitch via HTML5 playbackRate or Web Audio playbackRate. */
 export function applySoundPitch(sound: Sound, pitch: number): void {
-  const clamped = Math.max(0.5, Math.min(2, pitch));
+  const clamped = clampPitchMultiplier(pitch);
   const internal = sound as unknown as {
     _htmlAudioElement?: HTMLAudioElement;
     _soundPanner?: { _soundSource?: AudioBufferSourceNode };

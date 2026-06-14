@@ -18,6 +18,7 @@ import {
   findVisualRoot,
 } from './clone-entity-utils';
 import { createLodRuntimeState } from './lod-runtime';
+import { ensureMeshWorldMatrix } from '../render/mesh-world-utils';
 import { DEFAULT_CULL_DISTANCE, DEFAULT_CULL_SCREEN_PERCENT } from './lod-config';
 import { prepareLodMeshGroups } from './lod-babylon';
 
@@ -266,7 +267,7 @@ export function spawnPropInstancesFromTemplate(
 
   for (const mesh of loaded.colliderMeshes) {
     if (isVisualColliderMesh(mesh)) {
-      mesh.computeWorldMatrix(true);
+      ensureMeshWorldMatrix(mesh);
       continue;
     }
     if (mesh instanceof Mesh) configureColliderMesh(mesh);

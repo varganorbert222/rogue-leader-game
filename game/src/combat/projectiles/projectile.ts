@@ -1,12 +1,12 @@
 import { Vector3, type Mesh, type Scene } from '@babylonjs/core';
-import type { CollisionSystem, SphereBody } from '../../collision/collision-system';
+import { closestPointOnSegment } from '@rogue-leader/engine';
+import { buildSphereBody, type CollisionSystem, type SphereBody } from '../../collision/collision-system';
 import { areFactionsHostile } from '../faction';
 import type { FactionId } from '../faction';
 import type { CombatTeam } from '../weapons/combat-team';
 import type { ProjectileConfig } from './projectile-config';
 import { ProjectileBehaviors } from '../../data/constants/weapon-behaviors';
 import {
-  closestPointOnSegment,
   detectProjectileNearMiss,
   type ProjectilePassByObserver,
 } from '../../audio/projectile-pass-by';
@@ -112,7 +112,7 @@ export class Projectile {
     const step = velocity.scale(dt);
     const stepLen = step.length();
     const prev = this.mesh.position.clone();
-    const next = prev.add(step);
+    const next = prev.clone().add(step);
     this.distanceTraveled += stepLen;
 
     if (
@@ -131,12 +131,12 @@ export class Projectile {
       onPassBy(this.weaponId, closestPointOnSegment(prev, next, passByObserver.position), velocity);
     }
 
-    const projectileBody: SphereBody = {
+    const projectileBody = buildSphereBody({
       id: `projectile_${this.team}`,
       position: next,
       radius: this.config.hitRadius,
       team: this.team,
-    };
+    });
 
     let closest = stepLen + 1;
     let hitTarget: SphereBody | undefined;

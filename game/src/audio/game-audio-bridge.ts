@@ -18,10 +18,13 @@ import {
   readPayloadVector3,
   type GameEventBus,
 } from "../core/events/game-events";
-import {
-  CombatIntensityTracker,
+import { CombatIntensityTracker,
   type CombatIntensitySnapshot,
 } from "./combat-intensity";
+import {
+  BULLET_WHOOSH_BASE_PATH,
+  BULLET_WHOOSH_FILES,
+} from "./bullet-whoosh-sfx";
 import { InboundFlybyDetector } from "./inbound-flyby-detector";
 import { ShipAudioCatalog } from "./ship-audio-map";
 import {
@@ -82,8 +85,9 @@ export class GameAudioBridge {
     });
 
     events.on(GameEventTypes.ProjectileWhoosh, (e) => {
-      this.audio.playOneShot(
-        SfxClipIds.BulletWhoosh,
+      this.audio.playRandomFile(
+        BULLET_WHOOSH_BASE_PATH,
+        BULLET_WHOOSH_FILES,
         spatialOptions(e.payload),
       );
     });
@@ -214,12 +218,12 @@ export class GameAudioBridge {
   }
 
   processInbound(
-    npcs: Parameters<InboundFlybyDetector["update"]>[0],
-    playerPos: Vector3,
+    world: Parameters<InboundFlybyDetector["update"]>[0],
+    listenerPos: Vector3,
     playerFaction: import("../combat/faction").FactionId,
   ): void {
     if (!this.missionActive) return;
-    const cues = this.inbound.update(npcs, playerPos, playerFaction);
+    const cues = this.inbound.update(world, listenerPos, playerFaction);
     for (const cue of cues) {
       this.audio.playOneShot(cue.clipId, {
         position: cue.position,

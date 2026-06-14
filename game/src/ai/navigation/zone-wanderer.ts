@@ -1,4 +1,5 @@
 import { Vector3 } from '@babylonjs/core';
+import { randomUnitVector } from '@rogue-leader/engine';
 import type { WanderZoneDefinition } from './nav-types';
 
 /** Picks random targets inside one or more spherical zones. */
@@ -50,16 +51,4 @@ export class ZoneWanderer {
     const dist = Math.cbrt(Math.random()) * zone.radius;
     return center.add(dir.scale(dist));
   }
-}
-
-function randomUnitVector(): Vector3 {
-  const u = Math.random();
-  const v = Math.random();
-  const theta = 2 * Math.PI * u;
-  const phi = Math.acos(2 * v - 1);
-  return new Vector3(
-    Math.sin(phi) * Math.cos(theta),
-    Math.cos(phi),
-    Math.sin(phi) * Math.sin(theta)
-  );
 }

@@ -1,4 +1,5 @@
 import { Quaternion, Vector3 } from '@babylonjs/core';
+import { quaternionFromForwardLH } from '@rogue-leader/engine';
 
 /** Physics / gameplay nose direction (+Z in engine space). */
 export function getShipForward(rotation: Quaternion): Vector3 {
@@ -15,5 +16,5 @@ export function getShipUp(rotation: Quaternion): Vector3 {
 
 /** Align physics +Z (nose) with world heading. */
 export function shipRotationFromHeading(heading: Vector3): Quaternion {
-  return Quaternion.FromLookDirectionLH(heading.clone().normalize().scale(-1), Vector3.Up());
+  return quaternionFromForwardLH(heading);
 }

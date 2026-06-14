@@ -2,6 +2,8 @@ import { buildSphereBody, type SphereBody } from '../../../collision/collision-s
 
 import { Role } from '../../../ecs/components/role-tag';
 
+import { entityToSphereBody } from '../../../ecs/queries/combat-queries';
+
 import { getShipPosition } from '../../../ecs/queries/ship-queries';
 
 import { GameEvents } from '../../../core/events/game-events';
@@ -26,51 +28,9 @@ export function updatePlayerAsteroidCollisions(
 
   if (cooldownSec > 0) return cooldownSec;
 
-
-
-  const playerFaction = world.get(playerId, 'faction');
-
+  const playerBody = entityToSphereBody(world, playerId);
   const playerHealth = world.get(playerId, 'health');
-
-  const collider = world.get(playerId, 'collider');
-
-  const shipIdentity = world.get(playerId, 'shipIdentity');
-
-  if (
-
-    playerFaction === undefined ||
-
-    !playerHealth ||
-
-    !collider ||
-
-    !shipIdentity
-
-  ) {
-
-    return cooldownSec;
-
-  }
-
-
-
-  const playerBody: SphereBody = {
-
-    id: playerId,
-
-    position: getShipPosition(world, playerId),
-
-    radius: collider.radius,
-
-    team: shipIdentity.combatTeam,
-
-    faction: playerFaction,
-
-    colliderMeshes: collider.meshes,
-
-  };
-
-
+  if (!playerBody || !playerHealth) return cooldownSec;
 
   for (const asteroidId of world.queryByRole(Role.Asteroid)) {
 

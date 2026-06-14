@@ -1,34 +1,10 @@
 import { Mesh, TransformNode, type AbstractMesh } from '@babylonjs/core';
-import { normalizeAnchorNodeName } from './ship-anchor-detector';
+import { meshLookupLeafKey, walkSceneNodes } from './scene-graph-utils';
 
 const COLLIDER_PREFIX = 'collider_';
 
-function walkSceneNodes(
-  root: TransformNode,
-  visit: (node: TransformNode | AbstractMesh) => void
-): void {
-  const stack: TransformNode[] = [root];
-  while (stack.length > 0) {
-    const current = stack.pop()!;
-    for (const child of current.getChildren()) {
-      if (child instanceof Mesh) {
-        visit(child);
-        stack.push(child);
-      } else if (child instanceof TransformNode) {
-        visit(child);
-        stack.push(child);
-      }
-    }
-  }
-}
-
-function colliderLeafName(name: string): string {
-  const normalized = normalizeAnchorNodeName(name).toLowerCase();
-  return normalized.split('.').pop() ?? normalized;
-}
-
 function isColliderMeshName(name: string): boolean {
-  const leaf = colliderLeafName(name);
+  const leaf = meshLookupLeafKey(name);
   return leaf === 'collider' || leaf.startsWith(COLLIDER_PREFIX);
 }
 

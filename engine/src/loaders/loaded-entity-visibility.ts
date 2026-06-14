@@ -1,6 +1,8 @@
 import { Mesh, Quaternion } from '@babylonjs/core';
+import { clearLoadedEntityWireDebugMetadata } from '../render/debug/collider-wireframe-debug';
 import { configureColliderMesh, detectColliderMeshes, isVisualColliderMesh } from './collider-mesh-detector';
 import type { LoadedEntity } from './gltf-ship-loader';
+import { invalidateLodRuntime } from './lod-runtime';
 
 /** Show or hide every visual mesh on a loaded ship/prop hierarchy. */
 export function setLoadedEntityVisible(loaded: LoadedEntity, visible: boolean): void {
@@ -46,4 +48,19 @@ export function resetLoadedEntityTransform(loaded: LoadedEntity): void {
   loaded.root.position.setAll(0);
   loaded.root.rotationQuaternion = Quaternion.Identity();
   loaded.root.rotation.setAll(0);
+}
+
+/** Re-enable hierarchy, refresh colliders, and reset LOD after pool acquire. */
+export function prepareLoadedEntityForAcquire(loaded: LoadedEntity): void {
+  loaded.root.setEnabled(true);
+  clearLoadedEntityWireDebugMetadata(loaded);
+  refreshLoadedEntityColliders(loaded);
+  setLoadedEntityVisible(loaded, true);
+  invalidateLodRuntime(loaded.lodRuntime);
+}
+
+/** Hide a pooled ship and clear collider debug overlay state. */
+export function prepareLoadedEntityForPool(loaded: LoadedEntity): void {
+  clearLoadedEntityWireDebugMetadata(loaded);
+  setLoadedEntityVisible(loaded, false);
 }

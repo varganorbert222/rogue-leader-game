@@ -1,6 +1,34 @@
 export { BabylonHost } from './core/babylon-host';
 export { createGraphicsEngine, type GraphicsBackend } from './core/backend';
 export {
+  clamp,
+  clampSymmetric,
+  clampPitchMultiplier,
+  degToRad,
+  radToDeg,
+  wrapAngleRad,
+  lerpAngleRad,
+  expSmoothingFactor,
+  approachScalar,
+  expDecayFactor,
+  powSmoothingFactor,
+  isNearZero,
+  safeNormalize,
+  angleBetweenUnitVectors,
+  angularOffsetDeg,
+  closestPointOnSegment,
+  quaternionFromForwardLH,
+  quaternionLookAt,
+  quaternionFromAxisLH,
+  randomInRange,
+  randomSign,
+  randomUnitVector,
+  randomUnitVectorZUp,
+  randomPointInSphericalShell,
+  randomVector3InRange,
+  randomTumbleAxis,
+} from './math';
+export {
   AudioManager,
   type AudioManifest,
   type LoopTransformOptions,
@@ -35,6 +63,8 @@ export {
 } from './render/debug/wireframe-primitives';
 export {
   ColliderWireframeDebug,
+  clearLoadedEntityWireDebugMetadata,
+  clearMeshColliderWireDebug,
 } from './render/debug/collider-wireframe-debug';
 export {
   DebugLabelLayer,
@@ -96,7 +126,10 @@ export {
   preparePropInstanceTemplate,
   spawnPropInstancesFromTemplate,
 } from './loaders/prop-instance-spawn';
+export { meshLookupKey, meshLookupLeafKey, walkSceneNodes, collectDescendantMeshes, buildMeshLookupMap, mapMeshesByLookupKey } from './loaders/scene-graph-utils';
 export {
+  prepareLoadedEntityForAcquire,
+  prepareLoadedEntityForPool,
   refreshLoadedEntityColliders,
   resetLoadedEntityTransform,
   setLoadedEntityVisible,
@@ -138,6 +171,7 @@ export {
 } from './loaders/lod-babylon';
 export { computeScreenCoveragePercent } from './render/screen-coverage';
 export { computeCameraDistanceMeters } from './render/lod-distance';
+export { ensureMeshWorldMatrix, ensureNodeWorldMatrix } from './render/mesh-world-utils';
 export { applyMeshAlphaCutoff, disableMeshBackfaceCulling } from './render/mesh-material-utils';
 export {
   shareMaterialsFromTemplate,

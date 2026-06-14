@@ -3,14 +3,17 @@ import {
   Color4,
   Mesh,
   StandardMaterial,
+  TransformNode,
   type AbstractMesh,
   type Material,
 } from '@babylonjs/core';
 import {
   configureColliderMesh,
+  detectColliderMeshes,
   hasColliderGeometry,
   isVisualColliderMesh,
 } from '../../loaders/collider-mesh-detector';
+import type { LoadedEntity } from '../../loaders/gltf-ship-loader';
 
 interface ColliderWireDebugState {
   savedMaterial: Material | null;
@@ -22,6 +25,43 @@ interface ColliderWireDebugState {
 }
 
 const META_KEY = 'colliderWireDebug';
+
+/** Drop stale debug overlay state left on pooled ship collider meshes. */
+export function clearMeshColliderWireDebug(mesh: AbstractMesh): void {
+  const state = mesh.metadata?.[META_KEY] as ColliderWireDebugState | undefined;
+  if (!state) return;
+
+  if (state.isVisual) {
+    if (state.edgesOn) {
+      mesh.disableEdgesRendering();
+    }
+  } else {
+    mesh.material = state.savedMaterial;
+    mesh.isVisible = state.savedIsVisible;
+    mesh.visibility = state.savedVisibility;
+    if (mesh instanceof Mesh) {
+      configureColliderMesh(mesh);
+    }
+  }
+
+  const meta = { ...(mesh.metadata ?? {}) };
+  delete meta[META_KEY];
+  mesh.metadata = Object.keys(meta).length > 0 ? meta : null;
+}
+
+/** Clear wire debug metadata on every collider mesh under a loaded entity. */
+export function clearLoadedEntityWireDebugMetadata(loaded: LoadedEntity): void {
+  const seen = new Set<AbstractMesh>();
+  for (const mesh of loaded.colliderMeshes) {
+    seen.add(mesh);
+    clearMeshColliderWireDebug(mesh);
+  }
+  for (const mesh of detectColliderMeshes(loaded.root)) {
+    if (!seen.has(mesh)) {
+      clearMeshColliderWireDebug(mesh);
+    }
+  }
+}
 
 function readState(mesh: AbstractMesh): ColliderWireDebugState {
   const existing = mesh.metadata?.[META_KEY] as ColliderWireDebugState | undefined;
@@ -52,7 +92,7 @@ export class ColliderWireframeDebug {
       for (const collider of colliders) {
         const color = collider.isPlayer ? colors.player : colors.other;
         for (const mesh of collider.meshes) {
-          if (!hasColliderGeometry(mesh) || !mesh.isEnabled()) continue;
+          if (!hasColliderGeometry(mesh)) continue;
           keep.add(mesh);
           this.enable(mesh, color);
         }
@@ -86,6 +126,8 @@ export class ColliderWireframeDebug {
   }
 
   private enable(mesh: AbstractMesh, color: Color3): void {
+    this.ensureNodeHierarchyEnabled(mesh);
+    mesh.setEnabled(true);
     const state = readState(mesh);
 
     if (state.isVisual) {
@@ -132,6 +174,14 @@ export class ColliderWireframeDebug {
     mesh.visibility = state.savedVisibility;
     if (mesh instanceof Mesh) {
       configureColliderMesh(mesh);
+    }
+  }
+
+  private ensureNodeHierarchyEnabled(mesh: AbstractMesh): void {
+    let current: AbstractMesh | TransformNode | null = mesh;
+    while (current) {
+      current.setEnabled(true);
+      current = current.parent as TransformNode | null;
     }
   }
 }

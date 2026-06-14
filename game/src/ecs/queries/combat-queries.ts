@@ -37,7 +37,7 @@ export function entityToSphereBody(
   const collider = world.get(id, 'collider');
   const shipIdentity = world.get(id, 'shipIdentity');
   if (faction === undefined || !collider || !shipIdentity) return undefined;
-  return {
+  return buildSphereBody({
     id,
     position: getShipPosition(world, id),
     radius: collider.radius,
@@ -45,7 +45,7 @@ export function entityToSphereBody(
     faction,
     velocity: getShipVelocity(world, id),
     colliderMeshes: collider.meshes,
-  };
+  });
 }
 
 export function collectHostileTargets(

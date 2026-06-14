@@ -1,25 +1,10 @@
-import { Mesh, TransformNode, type AbstractMesh } from '@babylonjs/core';
-import { normalizeAnchorNodeName } from './ship-anchor-detector';
+import { TransformNode, type AbstractMesh } from '@babylonjs/core';
+import {
+  collectDescendantMeshes,
+  meshLookupKey,
+} from './scene-graph-utils';
 
-/** Collect every mesh under transform-node parents (getChildMeshes misses nested transforms). */
-export function collectDescendantMeshes(root: TransformNode): AbstractMesh[] {
-  const meshes: AbstractMesh[] = [];
-  const stack: TransformNode[] = [root];
-
-  while (stack.length > 0) {
-    const current = stack.pop()!;
-    for (const child of current.getChildren()) {
-      if (child instanceof Mesh) {
-        meshes.push(child);
-        stack.push(child);
-      } else if (child instanceof TransformNode) {
-        stack.push(child);
-      }
-    }
-  }
-
-  return meshes;
-}
+export { collectDescendantMeshes } from './scene-graph-utils';
 
 /** Resolve the cosmetic visual pivot created by {@link attachVisualPivot}. */
 export function findVisualRoot(root: TransformNode): TransformNode {
@@ -28,10 +13,6 @@ export function findVisualRoot(root: TransformNode): TransformNode {
       | TransformNode
       | undefined) ?? root
   );
-}
-
-function meshLookupKey(name: string): string {
-  return normalizeAnchorNodeName(name).toLowerCase();
 }
 
 function buildMeshLookup(clonedRoot: TransformNode): Map<string, AbstractMesh> {
@@ -46,7 +27,7 @@ function buildMeshLookup(clonedRoot: TransformNode): Map<string, AbstractMesh> {
 export function remapMeshGroupByName(
   templateMeshes: readonly AbstractMesh[],
   templateRoot: TransformNode,
-  clonedRoot: TransformNode
+  clonedRoot: TransformNode,
 ): AbstractMesh[] {
   if (templateMeshes.length === 0) return [];
 
@@ -73,17 +54,17 @@ export function remapMeshGroupByName(
 export function remapLodMeshGroups(
   templateGroups: AbstractMesh[][],
   templateRoot: TransformNode,
-  clonedRoot: TransformNode
+  clonedRoot: TransformNode,
 ): AbstractMesh[][] {
   return templateGroups.map((group) =>
-    remapMeshGroupByName(group, templateRoot, clonedRoot)
+    remapMeshGroupByName(group, templateRoot, clonedRoot),
   );
 }
 
 /** Deep-clone a loaded entity root even when the template hierarchy is hidden in the pool. */
 export function cloneLoadedEntityRoot(
   templateRoot: TransformNode,
-  instanceId: string
+  instanceId: string,
 ): TransformNode {
   const wasEnabled = templateRoot.isEnabled();
   if (!wasEnabled) {

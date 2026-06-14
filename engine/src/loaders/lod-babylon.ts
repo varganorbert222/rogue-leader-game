@@ -1,10 +1,7 @@
 import { Mesh, type AbstractMesh } from '@babylonjs/core';
-import { normalizeAnchorNodeName } from './ship-anchor-detector';
+import { applyLodVisibility } from './lod-runtime';
+import { mapMeshesByLookupKey } from './scene-graph-utils';
 import { defaultScreenThresholds, defaultDistanceThresholds } from './lod-config';
-
-function meshLookupKey(name: string): string {
-  return normalizeAnchorNodeName(name).toLowerCase();
-}
 
 function isLodCapableMesh(mesh: AbstractMesh): mesh is Mesh {
   return mesh instanceof Mesh && !mesh.isAnInstance && !mesh.isDisposed();
@@ -14,23 +11,6 @@ function clearMeshLodLevels(mesh: Mesh): void {
   for (const level of [...mesh.getLODLevels()]) {
     mesh.removeLODLevel(level.mesh ?? null);
   }
-}
-
-function mapMeshesByName(
-  lod0Meshes: readonly AbstractMesh[],
-  otherMeshes: readonly AbstractMesh[],
-): Map<AbstractMesh, AbstractMesh> {
-  const byKey = new Map<string, AbstractMesh>();
-  for (const mesh of otherMeshes) {
-    byKey.set(meshLookupKey(mesh.name), mesh);
-  }
-
-  const pairs = new Map<AbstractMesh, AbstractMesh>();
-  for (const lod0 of lod0Meshes) {
-    const match = byKey.get(meshLookupKey(lod0.name));
-    if (match) pairs.set(lod0, match);
-  }
-  return pairs;
 }
 
 export function resolveThresholdsForLevelCount(
@@ -69,14 +49,7 @@ export function prepareLodMeshGroups(
     mesh.useLODScreenCoverage = false;
   }
 
-  for (let level = 0; level < lodGroups.length; level++) {
-    const show = level === 0;
-    for (const mesh of lodGroups[level]) {
-      if (mesh.isDisposed()) continue;
-      mesh.setEnabled(show);
-      mesh.isVisible = show;
-    }
-  }
+  applyLodVisibility(lodGroups, 0);
 }
 
 /** @deprecated Use `prepareLodMeshGroups` — thresholds are applied at runtime, not via Babylon LOD. */
@@ -96,4 +69,8 @@ export function applyBabylonCullOnly(
   prepareLodMeshGroups([meshes]);
 }
 
-export { mapMeshesByName, isLodCapableMesh, clearMeshLodLevels };
+export {
+  mapMeshesByLookupKey as mapMeshesByName,
+  isLodCapableMesh,
+  clearMeshLodLevels,
+};

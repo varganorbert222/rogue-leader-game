@@ -15,6 +15,10 @@ import type { MissionConfig } from "../mission-types";
 import type { WreckDebrisManager } from "../../vfx/wreck-debris-manager";
 import { collectMissionAssetPlan } from "./collect-mission-assets";
 import { ShipTemplatePool } from "./ship-template-pool";
+import {
+  BULLET_WHOOSH_BASE_PATH,
+  BULLET_WHOOSH_FILES,
+} from "../../audio/bullet-whoosh-sfx";
 
 export interface MissionPreloadContext {
   config: MissionConfig;
@@ -47,6 +51,7 @@ export class MissionAssetPreloader {
     const wreckPromise = ctx.wreckDebris.preload(plan.shipIds, ctx.manifest);
 
     ctx.onMessage?.("Preloading audio…");
+    ctx.audio.preloadFileVariants(BULLET_WHOOSH_BASE_PATH, BULLET_WHOOSH_FILES);
     for (const variant of plan.sfoilFileVariants) {
       ctx.audio.preloadFileVariants(variant.basePath, [...variant.files]);
     }

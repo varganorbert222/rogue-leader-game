@@ -12,6 +12,7 @@ import {
   OUTSIDE_VIEW_MODES,
   ScriptedCameraDriver,
   type CameraViewMode,
+  type FollowCameraState,
 } from './camera-drivers';
 import {
   CAMERA_SPRING_PROFILES,
@@ -37,12 +38,14 @@ export class CameraController {
   private springProfileId: CameraSpringProfileId = DEFAULT_CAMERA_SPRING_PROFILE;
   private shakeTime = 0;
 
-  private readonly followState = {
-    orbitAngle: 0,
+  private readonly followState: FollowCameraState = {
+    behavior: 'follow',
+    orbitYaw: 0,
     distanceBias: 0,
     dropOffset: 0,
     lookAroundYaw: 0,
     lookAroundPitch: 0,
+    orbitIdleSec: 0,
   };
 
   private prevShipPos: Vector3 | null = null;
@@ -106,6 +109,7 @@ export class CameraController {
     if (this.viewMode !== 'cockpit') {
       this.followState.lookAroundYaw = 0;
       this.followState.lookAroundPitch = 0;
+      this.resetOutsideCamera();
     }
     return this.viewMode;
   }
@@ -114,12 +118,14 @@ export class CameraController {
     this.useFollowDriver();
     if (this.viewMode === 'cockpit' || this.viewMode === 'cinematic') {
       this.viewMode = 'standard';
+      this.resetOutsideCamera();
       return this.viewMode;
     }
     const idx = OUTSIDE_VIEW_MODES.indexOf(
       this.viewMode as (typeof OUTSIDE_VIEW_MODES)[number]
     );
     this.viewMode = OUTSIDE_VIEW_MODES[(idx + 1) % OUTSIDE_VIEW_MODES.length];
+    this.resetOutsideCamera();
     return this.viewMode;
   }
 
@@ -164,6 +170,7 @@ export class CameraController {
       if (this.scriptedDriver.isFinished()) {
         this.useFollowDriver();
         this.viewMode = 'standard';
+        this.resetOutsideCamera();
       }
     } else {
       const pose = this.followDriver.computeDesired({
@@ -182,6 +189,9 @@ export class CameraController {
       desiredPos = pose.position;
       desiredRot = pose.orientation;
       directAttach = pose.directAttach ?? false;
+      if (pose.snapSpring) {
+        directAttach = true;
+      }
     }
 
     if (directAttach) {
@@ -226,5 +236,11 @@ export class CameraController {
       (Math.random() - 0.5) * 0.8,
       0
     );
+  }
+
+  private resetOutsideCamera(): void {
+    this.followState.behavior = 'follow';
+    this.followState.orbitYaw = 0;
+    this.followState.orbitIdleSec = 0;
   }
 }

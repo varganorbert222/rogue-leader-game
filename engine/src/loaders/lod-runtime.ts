@@ -144,5 +144,10 @@ export function updateLod(scene: Scene, state: LodRuntimeState): void {
   applyLodVisibility(state.lodMeshes, activeIndex);
 }
 
+/** Force the next {@link updateLod} call to re-apply mesh visibility (pool respawn). */
+export function invalidateLodRuntime(state: LodRuntimeState): void {
+  state.activeLodIndex = Number.MIN_SAFE_INTEGER;
+}
+
 /** @deprecated Use `updateLod`. */
 export const updateLodByScreenCoverage = updateLod;

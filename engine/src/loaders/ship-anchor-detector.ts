@@ -1,4 +1,5 @@
 import { Mesh, TransformNode, Vector3, type AbstractMesh } from '@babylonjs/core';
+import { walkSceneNodes } from './scene-graph-utils';
 
 /**
  * glTF / Blender transform anchor naming:
@@ -111,25 +112,6 @@ function asAnchorNode(node: TransformNode | AbstractMesh, fallback: TransformNod
     return (node.parent as TransformNode | null) ?? fallback;
   }
   return node;
-}
-
-function walkSceneNodes(
-  root: TransformNode,
-  visit: (node: TransformNode | AbstractMesh) => void
-): void {
-  const stack: TransformNode[] = [root];
-  while (stack.length > 0) {
-    const current = stack.pop()!;
-    for (const child of current.getChildren()) {
-      if (child instanceof Mesh) {
-        visit(child);
-        stack.push(child);
-      } else if (child instanceof TransformNode) {
-        visit(child);
-        stack.push(child);
-      }
-    }
-  }
 }
 
 export function detectShipAnchors(root: TransformNode): ShipAnchors {

@@ -1,3 +1,6 @@
+import { clamp } from '@rogue-leader/engine';
+import { normalizeTriggerAxis } from './analog-curve';
+
 /** Sony USB vendor id in Gamepad.id strings (054c). */
 const SONY_VENDOR = '054c';
 
@@ -157,7 +160,7 @@ export function readGamepadTriggers(pad: Gamepad): GamepadTriggerValues {
   if (isPlayStationGamepad(pad) && pad.axes.length >= 6) {
     const axisValue = (v: number) => {
       if (v >= 0 && v <= 1) return v;
-      return ScalarClamp((v + 1) * 0.5, 0, 1);
+      return normalizeTriggerAxis(v);
     };
     return {
       rTrigger: axisValue(pad.axes[5] ?? 0),
@@ -190,8 +193,4 @@ export function isCameraTogglePressed(pad: Gamepad, buttonIndex: number): boolea
     return buttonIndex === 8 || buttonIndex === 9;
   }
   return buttonIndex === 2;
-}
-
-function ScalarClamp(v: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, v));
 }

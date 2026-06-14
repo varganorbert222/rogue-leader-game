@@ -364,12 +364,12 @@ export class MissionManager {
     });
     this.prevListenerPosition = tick.prevListenerPosition;
 
+    this.audioBridge?.update(dt, tick.audioContext);
     this.audioBridge?.processInbound(
       this.world,
-      getShipPosition(this.world, playerId),
+      tick.audioContext.listenerPosition,
       playerFaction,
     );
-    this.audioBridge?.update(dt, tick.audioContext);
     this.renderGameDebug(playerId);
 
     if (!this.debugPreferences.gameplay.invincible && playerHealth.isDead()) {

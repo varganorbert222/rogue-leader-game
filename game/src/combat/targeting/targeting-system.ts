@@ -1,9 +1,10 @@
 import { Vector3, type Scene } from '@babylonjs/core';
+import { angularOffsetDeg } from '@rogue-leader/engine';
 import { isAutoAimCandidate, type FactionId } from '../faction';
 import type { TargetingConfig } from '../../data/config/combat-config';
 import { projectWorldToScreen, type HudScreenPoint } from '../../flight/screen-project';
 import { isTargetInAimHemisphere } from './aim-solver';
-import { angularOffsetDeg, isInsideAimCone } from './targeting-cone';
+import { isInsideAimCone } from './targeting-cone';
 
 export interface TargetEntity {
   id: string;

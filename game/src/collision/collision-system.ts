@@ -1,4 +1,5 @@
 import { Ray, Vector3, type AbstractMesh } from '@babylonjs/core';
+import { ensureMeshWorldMatrix } from '@rogue-leader/engine';
 
 export interface SphereBody {
   id: string;
@@ -90,7 +91,7 @@ export class CollisionSystem {
 
     for (const mesh of meshes) {
       if (mesh.isDisposed() || !mesh.isEnabled()) continue;
-      mesh.computeWorldMatrix(true);
+      ensureMeshWorldMatrix(mesh);
       const pick = ray.intersectsMesh(mesh, false);
       if (!pick.hit || pick.distance === undefined || pick.distance > maxDistance) continue;
       if (pick.distance >= closest) continue;
@@ -119,7 +120,7 @@ export class CollisionSystem {
   ): boolean {
     for (const mesh of meshes) {
       if (mesh.isDisposed() || !mesh.isEnabled()) continue;
-      mesh.computeWorldMatrix(true);
+      ensureMeshWorldMatrix(mesh);
       const bounds = mesh.getBoundingInfo().boundingSphere;
       if (Vector3.Distance(position, bounds.centerWorld) < radius + bounds.radiusWorld) {
         return true;
@@ -135,11 +136,11 @@ export class CollisionSystem {
     if (aMeshes.length && bMeshes.length) {
       for (const am of aMeshes) {
         if (am.isDisposed() || !am.isEnabled()) continue;
-        am.computeWorldMatrix(true);
+        ensureMeshWorldMatrix(am);
         const aBounds = am.getBoundingInfo().boundingSphere;
         for (const bm of bMeshes) {
           if (bm.isDisposed() || !bm.isEnabled()) continue;
-          bm.computeWorldMatrix(true);
+          ensureMeshWorldMatrix(bm);
           const bBounds = bm.getBoundingInfo().boundingSphere;
           if (
             Vector3.Distance(aBounds.centerWorld, bBounds.centerWorld) <
