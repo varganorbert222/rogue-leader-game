@@ -10,8 +10,10 @@ import { ProjectileManager, type ProjectileHitCallback, type ProjectilePassByCal
 import type { ProjectilePassByObserver } from '../../audio/projectile-pass-by';
 import type { ProjectileHit } from '../projectiles/projectile';
 import { VehicleWeaponSystem } from '../weapons/vehicle-weapon-system';
-import type { PlayerAmmoConfig } from '../../data/config/combat-config';
+import { resolvePlayerAmmoMagazines, resolveShipWeaponsConfig } from '../../data/config/ship-weapons-config';
+import type { ResolvedShipWeaponGroup } from '../../data/config/ship-weapon-groups';
 import { PlayerAmmoStore } from '../weapons/player-ammo';
+import type { WeaponEnergyComponent } from '../../ecs/components/weapon-energy-component';
 
 export type { ProjectileHit };
 
@@ -30,10 +32,6 @@ export class CombatSystem {
 
   setWeaponsManifest(manifest: WeaponsManifest): void {
     this.weaponsManifest = manifest;
-  }
-
-  initPlayerAmmo(config: PlayerAmmoConfig): void {
-    this.playerAmmo = new PlayerAmmoStore(config.magazines);
   }
 
   getPlayerAmmo(): PlayerAmmoStore {
@@ -57,7 +55,7 @@ export class CombatSystem {
     root: import('@babylonjs/core').TransformNode,
     shipEntry: ShipManifestEntry,
     team: CombatTeam,
-    anchors?: ShipAnchors
+    anchors?: ShipAnchors,
   ): VehicleWeaponSystem {
     if (!this.weaponsManifest) {
       throw new Error('Weapons manifest not loaded — call setWeaponsManifest first');
@@ -67,7 +65,17 @@ export class CombatSystem {
       shipEntry,
       this.weaponsManifest,
       team,
-      anchors
+      anchors,
+    );
+  }
+
+  initPlayerAmmoFromShip(
+    shipEntry: ShipManifestEntry,
+    shipGroups: ResolvedShipWeaponGroup[],
+  ): void {
+    const shipWeapons = resolveShipWeaponsConfig(shipEntry);
+    this.playerAmmo = new PlayerAmmoStore(
+      resolvePlayerAmmoMagazines(shipGroups, shipWeapons),
     );
   }
 
@@ -102,7 +110,8 @@ export class CombatSystem {
     team: CombatTeam,
     faction: FactionId,
     shooterId: string,
-    aimDirection: Vector3
+    aimDirection: Vector3,
+    energy?: WeaponEnergyComponent
   ): boolean {
     const aim = weapons.getPrimaryAimDirection(aimDirection);
     return weapons.tryFirePrimary(
@@ -112,7 +121,8 @@ export class CombatSystem {
       shooterId,
       aim,
       this.events,
-      team === 'player' ? this.playerAmmo : undefined
+      team === 'player' ? this.playerAmmo : undefined,
+      energy
     );
   }
 
@@ -121,7 +131,8 @@ export class CombatSystem {
     team: CombatTeam,
     faction: FactionId,
     shooterId: string,
-    aimDirection: Vector3
+    aimDirection: Vector3,
+    energy?: WeaponEnergyComponent
   ): boolean {
     const aim = weapons.getPrimaryAimDirection(aimDirection);
     return weapons.tryFireSecondary(
@@ -131,7 +142,8 @@ export class CombatSystem {
       shooterId,
       aim,
       this.events,
-      team === 'player' ? this.playerAmmo : undefined
+      team === 'player' ? this.playerAmmo : undefined,
+      energy
     );
   }
 

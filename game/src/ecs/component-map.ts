@@ -10,12 +10,14 @@ import type { Role } from './components/role-tag';
 import type { SfoilComponent } from './components/sfoil-component';
 import type { ShipIdentityComponent } from './components/ship-identity-component';
 import type { TargetingComponent } from './components/targeting-component';
+import type { WeaponEnergyComponent } from './components/weapon-energy-component';
 import type { WeaponsComponent } from './components/weapons-component';
 
 /** Typed component registry — every key maps to one component type. */
 export interface ComponentMap {
   role: Role;
   health: HealthComponent;
+  weaponEnergy: WeaponEnergyComponent;
   faction: FactionId;
   shipIdentity: ShipIdentityComponent;
   cockpit: CockpitComponent;

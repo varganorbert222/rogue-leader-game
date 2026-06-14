@@ -29,6 +29,11 @@ import { MissionAssetPreloader } from '../loading/mission-asset-preloader';
 import { GameAudioBridge } from '../../audio/game-audio-bridge';
 import { CollisionSystem } from '../../collision/collision-system';
 import { HealthComponent } from '../../ecs/components/health-component';
+import { WeaponEnergyComponent } from '../../ecs/components/weapon-energy-component';
+import {
+  resolveShipWeaponsConfig,
+  resolveShipWeaponEnergyPool,
+} from '../../data/config/ship-weapons-config';
 import { Role } from '../../ecs/components/role-tag';
 import type { EntityId } from '../../ecs/entity-id';
 import { spawnPlayerEntity } from '../../ecs/spawn/entity-factory';
@@ -205,9 +210,17 @@ export class MissionManager {
       'player',
       playerLoaded.anchors,
     );
+    const shipGroups = playerWeapons.getShipWeaponGroups();
+    this.combat.initPlayerAmmoFromShip(shipEntry, shipGroups);
+    const shipWeapons = resolveShipWeaponsConfig(shipEntry);
+    const weaponEnergy = new WeaponEnergyComponent(
+      resolveShipWeaponEnergyPool(shipWeapons),
+      shipGroups.filter((group) => group.usesEnergy),
+    );
     spawnPlayerEntity(this.world, {
       id: 'player',
       health: new HealthComponent(100, 100, 50, 50),
+      weaponEnergy,
       shipId: this.config.player.shipId,
       shipEntry,
       loaded: playerLoaded,

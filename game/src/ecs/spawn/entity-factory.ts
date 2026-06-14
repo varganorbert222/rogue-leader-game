@@ -4,6 +4,7 @@ import type { CombatTeam } from '../../combat/weapons/combat-team';
 import type { VehicleWeaponSystem } from '../../combat/weapons/vehicle-weapon-system';
 import type { ShipFlightStatsConfig } from '../../data/config/ship-flight-stats';
 import { HealthComponent } from '../components/health-component';
+import type { WeaponEnergyComponent } from '../components/weapon-energy-component';
 import { Role } from '../components/role-tag';
 import { createTargetingComponent } from '../components/targeting-component';
 import type { NpcSteeringComponent } from '../components/npc-steering-component';
@@ -30,6 +31,7 @@ export interface ShipSpawnOptions {
 export interface SpawnPlayerEntityOptions extends ShipSpawnOptions {
   id: string;
   health: HealthComponent;
+  weaponEnergy: WeaponEnergyComponent;
 }
 
 export interface SpawnNpcEntityOptions extends ShipSpawnOptions {
@@ -64,6 +66,7 @@ export function spawnPlayerEntity(
   const id = world.spawn(options.id);
   world.add(id, 'role', Role.Player);
   world.add(id, 'health', options.health);
+  world.add(id, 'weaponEnergy', options.weaponEnergy);
   world.add(id, 'faction', options.faction);
   world.add(id, 'targeting', createTargetingComponent());
   spawnShipEntity(world, id, options);

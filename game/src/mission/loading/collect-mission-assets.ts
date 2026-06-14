@@ -1,5 +1,7 @@
 import type { AssetManifest, ShipManifestEntry } from "@rogue-leader/engine";
 import type { WeaponsManifest } from "../../data/config/weapons-manifest";
+import { resolveWeaponDefinitionEntry } from "../../data/config/weapons-manifest";
+import { collectShipWeaponIds, resolveShipWeaponsConfig } from "../../data/config/ship-weapons-config";
 import type { MissionConfig } from "../mission-types";
 import { ShipAudioCatalog } from "../../audio/ship-audio-map";
 import { SfxClipIds } from "../../data/constants/audio-clips";
@@ -99,16 +101,12 @@ function collectWeaponClips(
   weaponsManifest: WeaponsManifest,
   clipIds: Set<string>,
 ): void {
-  const weaponIds = new Set<string>();
-  for (const weaponId of Object.values(entry.defaultWeapons ?? {})) {
-    if (weaponId) weaponIds.add(weaponId);
-  }
-  for (const weaponId of Object.values(entry.anchors?.weapons ?? {})) {
-    if (weaponId) weaponIds.add(weaponId);
-  }
-
-  for (const weaponId of weaponIds) {
-    const def = weaponsManifest.weapons[weaponId];
+  for (const weaponId of collectShipWeaponIds(entry)) {
+    const def = resolveWeaponDefinitionEntry(
+      weaponsManifest,
+      weaponId,
+      resolveShipWeaponsConfig(entry),
+    );
     if (def?.audio?.fire) clipIds.add(def.audio.fire);
     if (def?.audio?.hit) clipIds.add(def.audio.hit);
   }

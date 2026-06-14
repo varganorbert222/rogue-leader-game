@@ -19,12 +19,47 @@
         "pitchRate": 1.9,
         "yawRate": 1.9
       },
-      "defaultWeapons": {
-        "laser": "rebel_laser",
-        "projectile": "proton_torpedo"
+      "weapons": {
+        "groups": [
+          {
+            "id": "wing_lasers",
+            "fireInput": "primary",
+            "slots": [
+              "01",
+              "02",
+              "03",
+              "04"
+            ],
+            "pairSequence": [
+              [
+                "01",
+                "03"
+              ],
+              [
+                "02",
+                "04"
+              ]
+            ]
+          },
+          {
+            "id": "torpedo_bay",
+            "fireInput": "secondary",
+            "slots": [
+              "01",
+              "02"
+            ],
+            "usesEnergy": false,
+            "weaponId": "proton_torpedo",
+            "ammo": 6
+          }
+        ],
+        "energy": {
+          "maxEnergy": 100,
+          "regenPerSec": 15,
+          "regenDelaySec": 0.85
+        }
       },
       "anchors": {
-        "weapons": {},
         "engines": {}
       },
       "animations": {
@@ -100,8 +135,28 @@
         "pitchRate": 2.1,
         "yawRate": 2.0
       },
-      "defaultWeapons": {
-        "laser": "imperial_laser"
+      "weapons": {
+        "defaults": {
+          "laser": "imperial_laser"
+        },
+        "groups": [
+          {
+            "id": "chin_lasers",
+            "fireInput": "primary",
+            "slots": [
+              "01",
+              "02"
+            ],
+            "energyCost": 4,
+            "pairThreshold": 0.9,
+            "fullFireThreshold": 1.0
+          }
+        ],
+        "energy": {
+          "maxEnergy": 80,
+          "regenPerSec": 14,
+          "regenDelaySec": 0.85
+        }
       },
       "anchors": {
         "engines": {}

@@ -29,6 +29,8 @@ export interface MissionHudState {
   maxHealth: number;
   shield: number;
   maxShield: number;
+  energy: number;
+  maxEnergy: number;
   wave: number;
   totalWaves: number;
   enemiesRemaining: number;
@@ -56,6 +58,7 @@ export function buildMissionHudState(params: {
 
   const { playerId, scene, world } = params;
   const playerHealth = playerId ? world.get(playerId, 'health') : undefined;
+  const playerEnergy = playerId ? world.get(playerId, 'weaponEnergy') : undefined;
   const targeting = playerId ? world.get(playerId, 'targeting') : undefined;
   const hasPlayerShip = playerId ? world.has(playerId, 'flight') : false;
 
@@ -80,6 +83,8 @@ export function buildMissionHudState(params: {
     maxHealth: playerHealth?.maxHealth ?? 100,
     shield: playerHealth?.shield ?? 0,
     maxShield: playerHealth?.maxShield ?? 50,
+    energy: playerEnergy?.energy ?? 0,
+    maxEnergy: playerEnergy?.maxEnergy ?? 100,
     wave: hudCurrentWave(params.wavesSpawned, params.config?.waves),
     totalWaves: hudTotalWaves(params.config?.waves),
     enemiesRemaining: params.npcCount,

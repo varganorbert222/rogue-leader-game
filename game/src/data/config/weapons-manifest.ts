@@ -1,5 +1,7 @@
 import type { EngineVfxProfile } from '@rogue-leader/engine';
+import type { ShipWeaponDefinitionPatch } from '@rogue-leader/engine';
 import type { ProjectileVisualConfig } from '../../combat/projectiles/projectile-config';
+import type { ResolvedShipWeaponsConfig } from './ship-weapons-config';
 
 export type WeaponDelivery = 'laser' | 'projectile';
 export type LaserBehavior = 'standard' | 'disabling' | 'ion';
@@ -64,31 +66,42 @@ export async function loadWeaponsManifest(url: string): Promise<WeaponsManifest>
   return (await res.json()) as WeaponsManifest;
 }
 
+export function weaponIdExists(
+  manifest: WeaponsManifest,
+  shipWeapons: ResolvedShipWeaponsConfig,
+  weaponId: string,
+): boolean {
+  return !!(manifest.weapons[weaponId] || shipWeapons.definitions[weaponId]);
+}
+
 export function resolveWeaponIdForMount(
   manifest: WeaponsManifest,
-  shipDefaults: Partial<Record<WeaponDelivery, string>> | undefined,
+  shipWeapons: ResolvedShipWeaponsConfig,
   slotId: string,
   delivery: WeaponDelivery,
   behaviorHint: string | undefined,
-  slotBindings: Record<string, string> | undefined
 ): string | null {
-  const explicit = slotBindings?.[slotId];
-  if (explicit && manifest.weapons[explicit]) {
-    return explicit;
+  const explicit = shipWeapons.slotBindings[slotId];
+  if (explicit && weaponIdExists(manifest, shipWeapons, explicit)) {
+    const entry = manifest.weapons[explicit] ?? shipWeapons.definitions[explicit];
+    const resolvedDelivery = entry?.delivery;
+    if (!resolvedDelivery || resolvedDelivery === delivery) {
+      return explicit;
+    }
   }
 
   if (behaviorHint) {
     const mapped = BEHAVIOR_HINT_MAP[behaviorHint];
     if (mapped) {
       const byBehavior = Object.entries(manifest.weapons).find(
-        ([, def]) => def.delivery === 'projectile' && def.behavior === mapped
+        ([, def]) => def.delivery === 'projectile' && def.behavior === mapped,
       );
       if (byBehavior) return byBehavior[0];
     }
   }
 
-  const shipDefault = shipDefaults?.[delivery];
-  if (shipDefault && manifest.weapons[shipDefault]) {
+  const shipDefault = shipWeapons.defaults[delivery];
+  if (shipDefault && weaponIdExists(manifest, shipWeapons, shipDefault)) {
     return shipDefault;
   }
 
@@ -100,11 +113,103 @@ export function resolveWeaponIdForMount(
   return null;
 }
 
+function stripDefinitionMeta(
+  patch: ShipWeaponDefinitionPatch,
+): Partial<WeaponDefinitionEntry> {
+  const { extends: _extends, ammo: _ammo, ...rest } = patch;
+  return rest as Partial<WeaponDefinitionEntry>;
+}
+
+function isCompleteShipWeaponDefinition(
+  patch: ShipWeaponDefinitionPatch,
+): patch is WeaponDefinitionEntry {
+  return !!(
+    patch.delivery &&
+    patch.behavior &&
+    patch.fireGroup &&
+    patch.cooldownSec !== undefined &&
+    patch.damage !== undefined &&
+    patch.visualProfile &&
+    patch.projectile?.speed !== undefined &&
+    patch.projectile?.maxRange !== undefined &&
+    patch.projectile?.hitRadius !== undefined
+  );
+}
+
+function mergeWeaponDefinitionEntry(
+  base: WeaponDefinitionEntry,
+  ...patches: (Partial<WeaponDefinitionEntry> | undefined)[]
+): WeaponDefinitionEntry {
+  let result: WeaponDefinitionEntry = {
+    ...base,
+    projectile: { ...base.projectile },
+    homing: base.homing ? { ...base.homing } : undefined,
+    audio: base.audio ? { ...base.audio } : undefined,
+  };
+
+  for (const patch of patches) {
+    if (!patch) continue;
+    const { projectile, homing, audio, ...scalar } = patch;
+    result = {
+      ...result,
+      ...scalar,
+      projectile: projectile
+        ? { ...result.projectile, ...projectile }
+        : result.projectile,
+      homing: homing ? { ...(result.homing ?? homing), ...homing } : result.homing,
+      audio: audio ? { ...(result.audio ?? audio), ...audio } : result.audio,
+    };
+  }
+
+  return result;
+}
+
+export function resolveWeaponDefinitionEntry(
+  manifest: WeaponsManifest,
+  weaponId: string,
+  shipWeapons: ResolvedShipWeaponsConfig,
+  slotOverride?: ShipWeaponDefinitionPatch,
+  visited = new Set<string>(),
+): WeaponDefinitionEntry | null {
+  if (visited.has(weaponId)) return null;
+  visited.add(weaponId);
+
+  const shipDef = shipWeapons.definitions[weaponId];
+  const extendsId = shipDef?.extends;
+
+  let base: WeaponDefinitionEntry | null = null;
+
+  if (extendsId) {
+    base = resolveWeaponDefinitionEntry(
+      manifest,
+      extendsId,
+      shipWeapons,
+      undefined,
+      visited,
+    );
+  } else if (manifest.weapons[weaponId]) {
+    base = manifest.weapons[weaponId];
+  } else if (shipDef && isCompleteShipWeaponDefinition(shipDef)) {
+    return mergeWeaponDefinitionEntry(
+      shipDef,
+      slotOverride ? stripDefinitionMeta(slotOverride) : undefined,
+    );
+  }
+
+  if (!base) return null;
+
+  return mergeWeaponDefinitionEntry(
+    base,
+    shipDef ? stripDefinitionMeta(shipDef) : undefined,
+    slotOverride ? stripDefinitionMeta(slotOverride) : undefined,
+  );
+}
+
 export function resolveEngineVfxProfile(
   manifest: WeaponsManifest,
   slotId: string,
   engineBindings: Record<string, string> | undefined,
-  faction?: WeaponFaction
+  faction?: WeaponFaction,
 ): EngineVfxProfile | undefined {
   const profileId = engineBindings?.[slotId];
   if (profileId && manifest.engineVfx[profileId]) {

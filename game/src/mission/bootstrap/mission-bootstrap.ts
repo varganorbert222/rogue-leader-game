@@ -78,7 +78,6 @@ export class MissionBootstrap {
 
     const combat = new CombatSystem(input.host.scene, input.events);
     combat.setWeaponsManifest(weaponsManifest);
-    combat.initPlayerAmmo(combatConfig.playerAmmo);
     combat.initProjectilePassBy((_weaponId, point, velocity) => {
       input.events.emit(
         GameEvents.projectileWhoosh({

@@ -22,10 +22,3 @@ export interface ResolvedWeaponDefinition {
   homing?: WeaponHomingConfig;
   audio?: WeaponAudioConfig;
 }
-
-/** Minimal weapon metadata for future stub weapons (missile / harpoon placeholders). */
-export interface StubWeaponDefinition {
-  id: string;
-  kind: 'missile' | 'harpoon';
-  mountType: string;
-}

@@ -125,7 +125,6 @@ export {
 export { CombatSystem, type ProjectileHit } from "./combat/systems/combat-system";
 export type {
   ResolvedWeaponDefinition,
-  StubWeaponDefinition,
   WeaponDelivery,
   WeaponBehavior,
   WeaponFireGroup,
@@ -135,8 +134,6 @@ export {
   type WeaponsManifest,
 } from "./data/config/weapons-manifest";
 export { VehicleWeaponSystem } from "./combat/weapons/vehicle-weapon-system";
-export { MissileWeapon } from "./combat/weapons/missile-weapon";
-export { HarpoonWeapon } from "./combat/weapons/harpoon-weapon";
 export { BoidNpcInput, type EnemyBehavior } from "./ai/boid-npc-input";
 export { BehaviorNpcInput } from "./ai/behavior-npc-input";
 export { NpcStateMachine } from "./ai/npc-state-machine";

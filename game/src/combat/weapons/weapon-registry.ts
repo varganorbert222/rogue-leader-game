@@ -1,17 +1,25 @@
-import type { ShipManifestEntry } from '@rogue-leader/engine';
-import type { DetectedWeaponMount } from '@rogue-leader/engine';
-import type { WeaponsManifest } from '../../data/config/weapons-manifest';
-import { resolveWeaponIdForMount } from '../../data/config/weapons-manifest';
+import type {
+  DetectedWeaponMount,
+  ShipManifestEntry,
+  ShipWeaponDefinitionPatch,
+} from '@rogue-leader/engine';
+import type {
+  WeaponsManifest,
+  WeaponDefinitionEntry,
+} from '../../data/config/weapons-manifest';
+import {
+  resolveWeaponDefinitionEntry,
+  resolveWeaponIdForMount,
+} from '../../data/config/weapons-manifest';
+import { resolveShipWeaponsConfig } from '../../data/config/ship-weapons-config';
 import type { ResolvedWeaponDefinition } from './weapon-definition';
 import type { ProjectileConfig } from '../projectiles/projectile-config';
 
-export function resolveWeaponDefinition(
+function toResolvedWeaponDefinition(
   manifest: WeaponsManifest,
-  weaponId: string
+  weaponId: string,
+  entry: WeaponDefinitionEntry,
 ): ResolvedWeaponDefinition | null {
-  const entry = manifest.weapons[weaponId];
-  if (!entry) return null;
-
   const visual = manifest.visualProfiles[entry.visualProfile];
   if (!visual) return null;
 
@@ -38,36 +46,20 @@ export function resolveWeaponDefinition(
   };
 }
 
-export function bindMountsToWeapons(
+export function resolveWeaponDefinition(
   manifest: WeaponsManifest,
-  shipEntry: ShipManifestEntry,
-  mounts: DetectedWeaponMount[]
-): ResolvedWeaponDefinition[] {
-  const bindings = shipEntry.anchors?.weapons;
-  const defaults = shipEntry.defaultWeapons;
-  const resolved: ResolvedWeaponDefinition[] = [];
-  const seen = new Set<string>();
-
-  for (const mount of mounts) {
-    const weaponId = resolveWeaponIdForMount(
-      manifest,
-      defaults,
-      mount.slotId,
-      mount.delivery,
-      mount.behaviorHint,
-      bindings
-    );
-    if (!weaponId) continue;
-
-    const key = `${weaponId}@${mount.slotId}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-
-    const def = resolveWeaponDefinition(manifest, weaponId);
-    if (def) resolved.push(def);
-  }
-
-  return resolved;
+  weaponId: string,
+  shipWeapons: ReturnType<typeof resolveShipWeaponsConfig>,
+  slotOverride?: ShipWeaponDefinitionPatch,
+): ResolvedWeaponDefinition | null {
+  const entry = resolveWeaponDefinitionEntry(
+    manifest,
+    weaponId,
+    shipWeapons,
+    slotOverride,
+  );
+  if (!entry) return null;
+  return toResolvedWeaponDefinition(manifest, weaponId, entry);
 }
 
 export interface MountWeaponBinding {
@@ -78,24 +70,27 @@ export interface MountWeaponBinding {
 export function createMountWeaponBindings(
   manifest: WeaponsManifest,
   shipEntry: ShipManifestEntry,
-  mounts: DetectedWeaponMount[]
+  mounts: DetectedWeaponMount[],
 ): MountWeaponBinding[] {
-  const bindings = shipEntry.anchors?.weapons;
-  const defaults = shipEntry.defaultWeapons;
+  const shipWeapons = resolveShipWeaponsConfig(shipEntry);
   const result: MountWeaponBinding[] = [];
 
   for (const mount of mounts) {
     const weaponId = resolveWeaponIdForMount(
       manifest,
-      defaults,
+      shipWeapons,
       mount.slotId,
       mount.delivery,
       mount.behaviorHint,
-      bindings
     );
     if (!weaponId) continue;
 
-    const def = resolveWeaponDefinition(manifest, weaponId);
+    const def = resolveWeaponDefinition(
+      manifest,
+      weaponId,
+      shipWeapons,
+      shipWeapons.slotOverrides[mount.slotId],
+    );
     if (!def) continue;
 
     result.push({ mount, definition: def });

@@ -1,5 +1,5 @@
 export interface ShipAnchorBindings {
-  /** slotId → weapon definition id from weapons manifest */
+  /** @deprecated Use `weapons.slots` */
   weapons?: Record<string, string>;
   /** slotId → engine VFX profile id from weapons manifest */
   engines?: Record<string, string>;
@@ -31,10 +31,16 @@ export interface ShipManifestEntry {
   axes?: Partial<ShipAxisConventionConfig>;
   faction?: 'rebel' | 'imperial' | 'neutral';
   flight?: ShipFlightStatsManifest;
-  /** Per-slot overrides; missing slots use defaultWeapons by delivery kind. */
-  anchors?: ShipAnchorBindings;
-  /** Fallback weapon ids keyed by delivery (laser / projectile). */
+  /** Unified weapon loadout, definitions, groups, and energy pool. */
+  weapons?: ShipWeaponsManifest;
+  /** @deprecated Use `weapons.defaults` */
   defaultWeapons?: Partial<Record<'laser' | 'projectile', string>>;
+  /** @deprecated Use `weapons.energy` */
+  weaponEnergy?: ShipWeaponEnergyManifest;
+  /** @deprecated Use `weapons.groups` */
+  weaponGroups?: ShipWeaponGroupManifest[];
+  /** Per-slot engine VFX overrides. */
+  anchors?: ShipAnchorBindings;
   /** glTF skeletal / morph animations and ship-specific abilities. */
   animations?: ShipAnimationManifest;
   abilities?: ShipAbilitiesManifest;
@@ -79,6 +85,83 @@ export interface ShipSfoilAbilityManifest {
 
 export interface ShipAbilitiesManifest {
   sfoil?: ShipSfoilAbilityManifest;
+}
+
+/** Shared weapon energy pool tuning (per ship overrides on `weaponEnergy`). */
+export interface ShipWeaponEnergyManifest {
+  maxEnergy?: number;
+  regenPerSec?: number;
+  /** Seconds after a shot before energy regen resumes. */
+  regenDelaySec?: number;
+}
+
+/** Player-defined firing group — mounts fire together / in pairs / sequentially by energy. */
+export interface ShipWeaponGroupManifest {
+  id: string;
+  fireInput: 'primary' | 'secondary';
+  /** Mount slot ids in firing order (`weapon_laser_01` → `"01"`). */
+  slots: string[];
+  /** Lasers default true; projectiles default false (ammo only). */
+  usesEnergy?: boolean;
+  energyCost?: number;
+  pairThreshold?: number;
+  fullFireThreshold?: number;
+  /** Magazine size for projectile weapons in this group. */
+  ammo?: number;
+  /** Weapon manifest id for ammo tracking (defaults to bound projectile on first slot). */
+  weaponId?: string;
+  /**
+   * Pair firing steps when energy is between pairThreshold and fullFireThreshold.
+   * Each step is a list of slot ids that fire together, cycled sequentially.
+   * @example [["01", "03"], ["02", "04"]]
+   */
+  pairSequence?: string[][];
+  /**
+   * Optional override for minimum seconds between volleys in this group.
+   * Defaults to the longest `cooldownSec` among weapons assigned to the group.
+   */
+  fireRateSec?: number;
+}
+
+/** Partial weapon stat patch; `extends` inherits a global or ship definition. */
+export interface ShipWeaponDefinitionPatch {
+  extends?: string;
+  delivery?: 'laser' | 'projectile';
+  behavior?: string;
+  faction?: 'rebel' | 'imperial' | 'neutral';
+  fireGroup?: 'primary' | 'secondary' | 'all';
+  cooldownSec?: number;
+  damage?: number;
+  visualProfile?: string;
+  projectile?: {
+    speed?: number;
+    maxRange?: number;
+    hitRadius?: number;
+  };
+  homing?: {
+    turnRate?: number;
+    acquireRange?: number;
+  };
+  audio?: {
+    fire?: string;
+    hit?: string;
+  };
+  /** Magazine size for this projectile weapon on this ship. */
+  ammo?: number;
+}
+
+export interface ShipWeaponSlotManifest {
+  weapon: string;
+  overrides?: ShipWeaponDefinitionPatch;
+}
+
+/** Unified ship weapon configuration (loadout, defs, groups, energy). */
+export interface ShipWeaponsManifest {
+  defaults?: Partial<Record<'laser' | 'projectile', string>>;
+  slots?: Record<string, string | ShipWeaponSlotManifest>;
+  definitions?: Record<string, ShipWeaponDefinitionPatch>;
+  groups?: ShipWeaponGroupManifest[];
+  energy?: ShipWeaponEnergyManifest;
 }
 
 /** Use the prop's own visible mesh geometry for hit tests (e.g. asteroids). */

@@ -71,6 +71,9 @@ export class MissionSimulationCoordinator {
       input;
     const world = this.runtime.world;
 
+    const weaponEnergy = world.get(playerId, 'weaponEnergy');
+    weaponEnergy?.setRegenBlocked(playerInput.combat.fire);
+
     runPlayerSystem({
       world,
       playerId,
@@ -97,6 +100,7 @@ export class MissionSimulationCoordinator {
     }
 
     this.runtime.combat.updateWeapons(world.collectShipWeaponSystems(), dt);
+    weaponEnergy?.endFrame(dt);
 
     runNpcSystem(
       {

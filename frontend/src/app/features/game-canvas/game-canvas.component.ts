@@ -54,6 +54,8 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
     maxHealth: 100,
     shield: 50,
     maxShield: 50,
+    energy: 100,
+    maxEnergy: 100,
     wave: 1,
     totalWaves: 1,
     enemiesRemaining: 0,

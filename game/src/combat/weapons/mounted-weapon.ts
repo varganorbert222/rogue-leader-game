@@ -17,6 +17,7 @@ import type {
   ResolvedWeaponDefinition,
   WeaponFireGroup,
 } from "./weapon-definition";
+import { mountAssignmentKey } from "../../data/config/ship-weapon-groups";
 
 export class MountedWeapon {
   private cooldown = 0;
@@ -26,6 +27,8 @@ export class MountedWeapon {
   constructor(
     public readonly mount: DetectedWeaponMount,
     public readonly definition: ResolvedWeaponDefinition,
+    public readonly shipGroupId: string,
+    public readonly indexInGroup: number,
   ) {
     // Initialize aim direction to center (mount forward)
     const centerAim = getMountForward(mount.node).clone();
@@ -47,6 +50,11 @@ export class MountedWeapon {
 
   get ready(): boolean {
     return this.cooldown <= 0;
+  }
+
+  /** Minimum interval between shots for this mount (= definition cooldownSec). */
+  get fireRateSec(): number {
+    return this.definition.cooldownSec;
   }
 
   updateConvergence(
@@ -196,6 +204,15 @@ export function createMountedWeapons(
     mount: DetectedWeaponMount;
     definition: ResolvedWeaponDefinition;
   }[],
+  assignments: Map<string, { groupId: string; indexInGroup: number }>,
 ): MountedWeapon[] {
-  return bindings.map((b) => new MountedWeapon(b.mount, b.definition));
+  return bindings.map((b) => {
+    const assignment = assignments.get(mountAssignmentKey(b.mount));
+    return new MountedWeapon(
+      b.mount,
+      b.definition,
+      assignment?.groupId ?? b.definition.id,
+      assignment?.indexInGroup ?? 0,
+    );
+  });
 }

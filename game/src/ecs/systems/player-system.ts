@@ -1,18 +1,21 @@
-import { Quaternion, type Scene, Vector3 } from '@babylonjs/core';
-import { applyCockpitViewMode, composeShipVisualRotation } from '@rogue-leader/engine';
-import type { TargetEntity } from '../../combat/targeting/targeting-system';
-import { updateWeaponAimForObserver } from '../../combat/targeting/weapon-aim-controller';
-import type { TargetingConfig } from '../../data/config/combat-config';
-import type { CameraController } from '../../flight/camera-controller';
-import { RETICLE_INNER_DISTANCE } from '../../flight/flight-constants';
-import { projectWorldToScreen } from '../../flight/screen-project';
-import { getShipForward } from '../../flight/ship-forward';
-import type { SoftBoundary } from '../../flight/soft-boundary';
-import type { PlayerInput } from '../../player/input/player-input';
-import type { CombatSystem } from '../../combat/systems/combat-system';
-import type { GameEventBus } from '../../core/events/game-events';
-import { GameEvents } from '../../core/events/game-events';
-import { sfoilSfxToEventPayload } from '../../audio/sfoil-sfx';
+import { Quaternion, type Scene, Vector3 } from "@babylonjs/core";
+import {
+  applyCockpitViewMode,
+  composeShipVisualRotation,
+} from "@rogue-leader/engine";
+import type { TargetEntity } from "../../combat/targeting/targeting-system";
+import { updateWeaponAimForObserver } from "../../combat/targeting/weapon-aim-controller";
+import type { TargetingConfig } from "../../data/config/combat-config";
+import type { CameraController } from "../../flight/camera-controller";
+import { RETICLE_INNER_DISTANCE } from "../../flight/flight-constants";
+import { projectWorldToScreen } from "../../flight/screen-project";
+import { getShipForward } from "../../flight/ship-forward";
+import type { SoftBoundary } from "../../flight/soft-boundary";
+import type { PlayerInput } from "../../player/input/player-input";
+import type { CombatSystem } from "../../combat/systems/combat-system";
+import type { GameEventBus } from "../../core/events/game-events";
+import { GameEvents } from "../../core/events/game-events";
+import { sfoilSfxToEventPayload } from "../../audio/sfoil-sfx";
 import {
   applyShipFlightInput,
   getShipForward as getEntityShipForward,
@@ -22,9 +25,9 @@ import {
   getVisualBankAngle,
   hasSfoil,
   tryToggleSfoil,
-} from '../queries/ship-queries';
-import type { World } from '../world';
-import type { EntityId } from '../entity-id';
+} from "../queries/ship-queries";
+import type { World } from "../world";
+import type { EntityId } from "../entity-id";
 
 export interface PlayerSystemContext {
   world: World;
@@ -43,15 +46,15 @@ export interface PlayerSystemContext {
 
 export function runPlayerSystem(ctx: PlayerSystemContext): void {
   const { world, playerId, input } = ctx;
-  const faction = world.get(playerId, 'faction');
-  const targeting = world.get(playerId, 'targeting');
-  const weapons = world.get(playerId, 'weapons');
-  const shipIdentity = world.get(playerId, 'shipIdentity');
-  const cockpit = world.get(playerId, 'cockpit');
+  const faction = world.get(playerId, "faction");
+  const targeting = world.get(playerId, "targeting");
+  const weapons = world.get(playerId, "weapons");
+  const shipIdentity = world.get(playerId, "shipIdentity");
+  const cockpit = world.get(playerId, "cockpit");
   if (faction === undefined || !targeting || !weapons || !shipIdentity) return;
 
   const root = getShipRoot(world, playerId);
-  const flight = world.get(playerId, 'flight');
+  const flight = world.get(playerId, "flight");
   applyShipFlightInput(world, playerId, ctx.dt, input.vehicle, ctx.boundary);
   const visualRot = composeShipVisualRotation(
     root.rotationQuaternion ?? Quaternion.Identity(),
@@ -59,7 +62,11 @@ export function runPlayerSystem(ctx: PlayerSystemContext): void {
     flight?.invertForwardRoll ?? false,
   );
   ctx.camera.update(ctx.dt, root, input.camera, visualRot, input.vehicle);
-  applyCockpitViewMode(shipIdentity.loadedEntity, cockpit?.attachment, ctx.camera.getMode() === 'cockpit');
+  applyCockpitViewMode(
+    shipIdentity.loadedEntity,
+    cockpit?.attachment,
+    ctx.camera.getMode() === "cockpit",
+  );
 
   const shipPos = root.getAbsolutePosition();
   const shipForward = getShipForward(
@@ -84,13 +91,14 @@ export function runPlayerSystem(ctx: PlayerSystemContext): void {
     targeting: ctx.targetingConfig,
     radarRadius: ctx.radarRadius,
     dt: ctx.dt,
-    mode: 'screen',
+    mode: "screen",
     targetingSystem: targeting.system,
     reticle: reticleInner,
   });
   targeting.lastAimDebug = debug;
 
   const aim = getEntityShipForward(world, playerId);
+  const weaponEnergy = world.get(playerId, "weaponEnergy");
   if (input.combat.fire) {
     ctx.combat.tryFirePrimary(
       weapons.system,
@@ -98,6 +106,7 @@ export function runPlayerSystem(ctx: PlayerSystemContext): void {
       faction,
       playerId,
       aim,
+      weaponEnergy,
     );
   }
   if (input.combat.fireSecondaryPressed) {
@@ -107,6 +116,7 @@ export function runPlayerSystem(ctx: PlayerSystemContext): void {
       faction,
       playerId,
       aim,
+      weaponEnergy,
     );
   }
   if (input.combat.toggleSfoilPressed && hasSfoil(world, playerId)) {
