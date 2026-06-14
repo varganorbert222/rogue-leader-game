@@ -63,7 +63,6 @@ import {
   resolveShipVisualOptions,
 } from "./ship-axis-convention";
 import type { ShipVisualOptions } from "./ship-axis-convention";
-
 export interface LoadedEntity {
   root: TransformNode;
   /** Child of root — cosmetic banking; physics stay on root. */

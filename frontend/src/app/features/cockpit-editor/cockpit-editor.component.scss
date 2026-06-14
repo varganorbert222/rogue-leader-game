@@ -1,0 +1,101 @@
+@use '../lod-editor/lod-editor.component.scss';
+
+.cockpit-editor {
+  @extend .lod-editor;
+
+  .panel-right {
+    overflow-x: hidden;
+    overflow-y: auto;
+    min-width: 0;
+  }
+
+  .row-2,
+  .row-3 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .row-2 > .field {
+    flex: 1 1 9rem;
+    min-width: 0;
+  }
+
+  .row-3 > .field {
+    flex: 1 1 6rem;
+    min-width: 0;
+  }
+
+  .field {
+    min-width: 0;
+
+    span {
+      overflow-wrap: anywhere;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+  }
+
+  .hint,
+  .mono {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
+.mono {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.78rem;
+  color: #9aa8bc;
+  margin: 0;
+}
+
+.export-box {
+  width: 100%;
+  max-width: 100%;
+  min-height: 8rem;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.72rem;
+  background: #0f1114;
+  color: #c8d4e4;
+  border: 1px solid #3a4048;
+  border-radius: 4px;
+  padding: 0.5rem;
+  resize: vertical;
+}
+
+.btn {
+  margin-top: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  background: #2a4a7a;
+  color: #eef2f8;
+  border: 1px solid #4a6a9a;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &.btn-active {
+    background: #6a3a2a;
+    border-color: #9a5a4a;
+  }
+}
+
+.copy-status {
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  color: #7dcea0;
+}
+
+code {
+  color: #8ab4ff;
+  overflow-wrap: anywhere;
+}

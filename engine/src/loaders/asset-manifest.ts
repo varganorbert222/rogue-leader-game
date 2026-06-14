@@ -7,6 +7,7 @@ export interface ShipAnchorBindings {
 
 import type { ShipAxisConventionConfig } from './ship-axis-convention';
 import type { LodManifestValue } from './lod-config';
+import type { CockpitConfig } from './cockpit-config';
 
 export interface ShipFlightStatsManifest {
   maxSpeed?: number;
@@ -37,6 +38,8 @@ export interface ShipManifestEntry {
   /** glTF skeletal / morph animations and ship-specific abilities. */
   animations?: ShipAnimationManifest;
   abilities?: ShipAbilitiesManifest;
+  /** Cockpit interior GLB + first-person camera tuning. */
+  cockpit?: CockpitConfig;
 }
 
 export interface ShipAnimationTransitionDef {
@@ -114,6 +117,18 @@ export interface AssetManifest {
 }
 
 const warned = new Set<string>();
+
+export type { CockpitConfig, CockpitInputResponseConfig, ResolvedCockpitConfig } from './cockpit-config';
+export {
+  DEFAULT_COCKPIT_CONFIG,
+  DEFAULT_COCKPIT_FOV_DEG,
+  DEFAULT_COCKPIT_INPUT_RESPONSE,
+  deriveCockpitModelPath,
+  hasShipCockpit,
+  resolveCockpitConfig,
+  resolveCockpitModelPath,
+  suggestCockpitModelPath,
+} from './cockpit-config';
 
 export async function loadAssetManifest(url: string): Promise<AssetManifest> {
   const res = await fetch(url);

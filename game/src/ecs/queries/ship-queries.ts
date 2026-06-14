@@ -1,46 +1,50 @@
+import { Quaternion, Scalar, TransformNode, Vector3 } from "@babylonjs/core";
+import type { LoadedEntity, ShipManifestEntry } from "@rogue-leader/engine";
 import {
-  Quaternion,
-  Scalar,
-  TransformNode,
-  Vector3,
-} from '@babylonjs/core';
-import type { LoadedEntity, ShipManifestEntry } from '@rogue-leader/engine';
-import { degToRad, powSmoothingFactor, prepareLoadedEntityForPool } from '@rogue-leader/engine';
-import type { FactionId } from '../../combat/faction';
-import { computeEngineSpeedRatio } from '../../audio/engine-audio-config';
-import type { SfoilSfxPlayRequest } from '../../audio/sfoil-sfx';
-import type { CombatTeam } from '../../combat/weapons/combat-team';
-import type { VehicleWeaponSystem } from '../../combat/weapons/vehicle-weapon-system';
+  degToRad,
+  smoothDampedScalar,
+  prepareLoadedEntityForPool,
+} from "@rogue-leader/engine";
+import type { FactionId } from "../../combat/faction";
+import { computeEngineSpeedRatio } from "../../audio/engine-audio-config";
+import type { SfoilSfxPlayRequest } from "../../audio/sfoil-sfx";
+import type { CombatTeam } from "../../combat/weapons/combat-team";
+import type { VehicleWeaponSystem } from "../../combat/weapons/vehicle-weapon-system";
 import {
   resolveShipFlightStats,
   type ShipFlightStatsConfig,
-} from '../../data/config/ship-flight-stats';
+} from "../../data/config/ship-flight-stats";
+import { type FlightAssistOptions } from "../../flight/flight-assist";
 import {
-  INPUT_DEADZONE,
-  type FlightAssistOptions,
-} from '../../flight/flight-assist';
-import { YAW_VISUAL_BANK_DEG } from '../../flight/flight-constants';
-import { ShipFlightController } from '../../flight/ship-flight-controller';
-import type { SoftBoundary } from '../../flight/soft-boundary';
-import type { VehicleInput } from '../../player/input/vehicle-input';
-import { ShipSfoilController } from '../../flight/ship-sfoil-controller';
-import type { ColliderComponent } from '../components/collider-component';
-import type { FlightComponent } from '../components/flight-component';
-import type { LodComponent } from '../components/lod-component';
-import type { ShipIdentityComponent } from '../components/ship-identity-component';
-import type { SfoilComponent } from '../components/sfoil-component';
-import type { WeaponsComponent } from '../components/weapons-component';
-import type { EntityId } from '../entity-id';
-import type { World } from '../world';
+  YAW_VISUAL_BANK_DEG,
+  YAW_VISUAL_BANK_SMOOTH_STICK_TIME,
+} from "../../flight/flight-constants";
+import { ShipFlightController } from "../../flight/ship-flight-controller";
+import type { SoftBoundary } from "../../flight/soft-boundary";
+import type { VehicleInput } from "../../player/input/vehicle-input";
+import { ShipSfoilController } from "../../flight/ship-sfoil-controller";
+import type { ColliderComponent } from "../components/collider-component";
+import type { FlightComponent } from "../components/flight-component";
+import type { LodComponent } from "../components/lod-component";
+import type { ShipIdentityComponent } from "../components/ship-identity-component";
+import type { SfoilComponent } from "../components/sfoil-component";
+import type { WeaponsComponent } from "../components/weapons-component";
+import type { EntityId } from "../entity-id";
+import { disposePlayerCockpit } from "../services/player-cockpit-service";
+import type { World } from "../world";
 
 const YAW_VISUAL_BANK_RAD = degToRad(YAW_VISUAL_BANK_DEG);
 
+export function getVisualBankAngle(flight: FlightComponent): number {
+  return flight.visualBankYaw * YAW_VISUAL_BANK_RAD;
+}
+
 export function isShipEntity(world: World, id: EntityId): boolean {
-  return world.has(id, 'flight') && world.has(id, 'shipIdentity');
+  return world.has(id, "flight") && world.has(id, "shipIdentity");
 }
 
 export function getShipRoot(world: World, id: EntityId): TransformNode {
-  return world.get(id, 'flight')!.controller.root;
+  return world.get(id, "flight")!.controller.root;
 }
 
 export function getShipPosition(world: World, id: EntityId): Vector3 {
@@ -52,7 +56,7 @@ export function getShipWorldPosition(world: World, id: EntityId): Vector3 {
 }
 
 export function getShipVelocity(world: World, id: EntityId): Vector3 {
-  return world.get(id, 'flight')!.controller.velocity;
+  return world.get(id, "flight")!.controller.velocity;
 }
 
 export function getShipRotation(world: World, id: EntityId): Quaternion {
@@ -60,19 +64,19 @@ export function getShipRotation(world: World, id: EntityId): Quaternion {
 }
 
 export function getShipForward(world: World, id: EntityId): Vector3 {
-  return world.get(id, 'flight')!.controller.getForward();
+  return world.get(id, "flight")!.controller.getForward();
 }
 
 export function getShipSpeed(world: World, id: EntityId): number {
-  return world.get(id, 'flight')!.controller.getSpeed();
+  return world.get(id, "flight")!.controller.getSpeed();
 }
 
 export function getShipCruiseSpeed(world: World, id: EntityId): number {
-  return world.get(id, 'flight')!.controller.getCruiseSpeed();
+  return world.get(id, "flight")!.controller.getCruiseSpeed();
 }
 
 export function getEngineSpeedRatio(world: World, id: EntityId): number {
-  const flight = world.get(id, 'flight')!.controller;
+  const flight = world.get(id, "flight")!.controller;
   return computeEngineSpeedRatio(
     flight.getSpeed(),
     flight.getMinSpeed(),
@@ -85,7 +89,7 @@ export function setFlightAssist(
   id: EntityId,
   options: Partial<FlightAssistOptions>,
 ): void {
-  world.get(id, 'flight')?.controller.setFlightAssist(options);
+  world.get(id, "flight")?.controller.setFlightAssist(options);
 }
 
 export function applyShipFlightInput(
@@ -96,11 +100,11 @@ export function applyShipFlightInput(
   boundary?: SoftBoundary,
   visualYaw = input.yaw,
 ): void {
-  const flight = world.get(id, 'flight');
+  const flight = world.get(id, "flight");
   if (!flight) return;
 
-  flight.controller.update(dt, input, boundary);
   updateVisualYawBank(flight, dt, visualYaw);
+  flight.controller.update(dt, input, boundary);
 }
 
 function updateVisualYawBank(
@@ -110,13 +114,21 @@ function updateVisualYawBank(
 ): void {
   if (!flight.bankPivot) return;
 
-  const hasYaw = Math.abs(yaw) >= INPUT_DEADZONE;
-  const target = hasYaw ? Scalar.Clamp(yaw, -1, 1) * YAW_VISUAL_BANK_RAD : 0;
-  const blend = hasYaw ? powSmoothingFactor(0.00005, dt) : powSmoothingFactor(0.001, dt);
-  flight.visualBank = Scalar.Lerp(flight.visualBank, target, blend);
-  const rollAngle = flight.invertForwardRoll
-    ? -flight.visualBank
-    : flight.visualBank;
+  const target = Scalar.Clamp(yaw, -1, 1);
+  const damped = smoothDampedScalar(
+    flight.visualBankYaw,
+    target,
+    flight.visualBankYawVel,
+    YAW_VISUAL_BANK_SMOOTH_STICK_TIME,
+    dt,
+  );
+  flight.visualBankYaw = damped.value;
+  flight.visualBankYawVel = damped.velocity;
+
+  const rollAngle =
+    (flight.invertForwardRoll ? -1 : 1) *
+    flight.visualBankYaw *
+    YAW_VISUAL_BANK_RAD;
   flight.bankPivot.rotationQuaternion = Quaternion.RotationAxis(
     Vector3.Backward(),
     rollAngle,
@@ -124,29 +136,34 @@ function updateVisualYawBank(
 }
 
 export function hasSfoil(world: World, id: EntityId): boolean {
-  return world.has(id, 'sfoil');
+  return world.has(id, "sfoil");
 }
 
 export function tryToggleSfoil(
   world: World,
   id: EntityId,
 ): SfoilSfxPlayRequest | null {
-  const sfoil = world.get(id, 'sfoil');
+  const sfoil = world.get(id, "sfoil");
   if (!sfoil?.controller.requestToggle()) return null;
   return sfoil.controller.sfxRequest;
 }
 
 export function prepareShipForPool(world: World, id: EntityId): void {
-  const flight = world.get(id, 'flight');
-  const weapons = world.get(id, 'weapons');
-  const ship = world.get(id, 'shipIdentity');
+  const flight = world.get(id, "flight");
+  const weapons = world.get(id, "weapons");
+  const ship = world.get(id, "shipIdentity");
   if (!flight || !weapons || !ship) return;
 
-  world.get(id, 'sfoil')?.controller.dispose();
-  world.removeComponent(id, 'sfoil');
+  world.get(id, "sfoil")?.controller.dispose();
+  world.removeComponent(id, "sfoil");
 
   weapons.system.setFireEnabled(false);
   flight.controller.resetKinematics();
+  flight.visualBankYaw = 0;
+  flight.visualBankYawVel = 0;
+  if (flight.bankPivot) {
+    flight.bankPivot.rotationQuaternion = Quaternion.Identity();
+  }
   const root = flight.controller.root;
   root.rotationQuaternion = Quaternion.Identity();
   root.rotation.setAll(0);
@@ -155,8 +172,9 @@ export function prepareShipForPool(world: World, id: EntityId): void {
 }
 
 export function disposeShipEntity(world: World, id: EntityId): void {
-  world.get(id, 'sfoil')?.controller.dispose();
-  if (world.has(id, 'flight')) {
+  disposePlayerCockpit(world, id);
+  world.get(id, "sfoil")?.controller.dispose();
+  if (world.has(id, "flight")) {
     getShipRoot(world, id).dispose();
   }
   world.despawn(id);
@@ -209,7 +227,8 @@ export function buildShipComponents(
     flight: {
       controller: flightController,
       bankPivot,
-      visualBank: 0,
+      visualBankYaw: 0,
+      visualBankYawVel: 0,
       invertForwardRoll: options.loaded.visual.invertForwardRoll,
     },
     collider: {
@@ -233,10 +252,13 @@ function setupVisualBankPivot(
 ): TransformNode | undefined {
   const existing = visualRoot
     .getChildTransformNodes(false)
-    .find((node) => node.name.endsWith('_bank'));
+    .find((node) => node.name.endsWith("_bank"));
   if (existing) return existing;
 
-  const bank = new TransformNode(`${visualRoot.name}_bank`, visualRoot.getScene());
+  const bank = new TransformNode(
+    `${visualRoot.name}_bank`,
+    visualRoot.getScene(),
+  );
   bank.parent = visualRoot;
   for (const child of [...visualRoot.getChildren()]) {
     if (child !== bank) {
@@ -251,13 +273,13 @@ export function attachShipComponents(
   id: EntityId,
   built: BuiltShipComponents,
 ): void {
-  world.add(id, 'shipIdentity', built.shipIdentity);
-  world.add(id, 'flight', built.flight);
-  world.add(id, 'collider', built.collider);
-  world.add(id, 'lod', built.lod);
-  world.add(id, 'weapons', built.weapons);
+  world.add(id, "shipIdentity", built.shipIdentity);
+  world.add(id, "flight", built.flight);
+  world.add(id, "collider", built.collider);
+  world.add(id, "lod", built.lod);
+  world.add(id, "weapons", built.weapons);
   if (built.sfoil) {
-    world.add(id, 'sfoil', built.sfoil);
+    world.add(id, "sfoil", built.sfoil);
   }
 }
 
@@ -266,7 +288,7 @@ export function replaceShipComponents(
   id: EntityId,
   built: BuiltShipComponents,
 ): void {
-  world.get(id, 'sfoil')?.controller.dispose();
-  world.removeComponent(id, 'sfoil');
+  world.get(id, "sfoil")?.controller.dispose();
+  world.removeComponent(id, "sfoil");
   attachShipComponents(world, id, built);
 }

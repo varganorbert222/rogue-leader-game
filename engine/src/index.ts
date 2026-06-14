@@ -1,5 +1,16 @@
 export { BabylonHost } from './core/babylon-host';
 export { RuntimePaths, ASSETS_BASE_URL, DATA_BASE_URL } from './runtime-paths';
+export type { CockpitConfig, CockpitInputResponseConfig, ResolvedCockpitConfig } from './loaders/cockpit-config';
+export {
+  DEFAULT_COCKPIT_CONFIG,
+  DEFAULT_COCKPIT_FOV_DEG,
+  DEFAULT_COCKPIT_INPUT_RESPONSE,
+  deriveCockpitModelPath,
+  resolveCockpitConfig,
+  resolveCockpitModelPath,
+  hasShipCockpit,
+  suggestCockpitModelPath,
+} from './loaders/cockpit-config';
 export { createGraphicsEngine, type GraphicsBackend } from './core/backend';
 export {
   clamp,
@@ -11,6 +22,7 @@ export {
   lerpAngleRad,
   expSmoothingFactor,
   approachScalar,
+  smoothDampedScalar,
   expDecayFactor,
   powSmoothingFactor,
   isNearZero,
@@ -171,6 +183,10 @@ export {
   resolveDistanceThresholdsForLevelCount,
 } from './loaders/lod-babylon';
 export { computeScreenCoveragePercent } from './render/screen-coverage';
+export {
+  BABYLON_MIN_CAMERA_NEAR_Z,
+  CHASE_CAMERA_NEAR_Z,
+} from './render/camera-near-plane';
 export { computeCameraDistanceMeters } from './render/lod-distance';
 export { ensureMeshWorldMatrix, ensureNodeWorldMatrix } from './render/mesh-world-utils';
 export { applyMeshAlphaCutoff, disableMeshBackfaceCulling } from './render/mesh-material-utils';
@@ -186,8 +202,23 @@ export {
   LodPreviewScene,
 } from './dev/lod-preview-scene';
 export {
+  CockpitPreviewScene,
+  type CockpitPreviewLiveState,
+} from './dev/cockpit-preview-scene';
+export {
   listLodEditorModels,
 } from './dev/lod-manifest-models';
+export {
+  listCockpitEditorShips,
+  cockpitManifestToEditable,
+  editableToManifestCockpit,
+  defaultCockpitEditable,
+  editableToResolvedCockpitConfig,
+  type CockpitEditableConfig,
+  type CockpitEditableInputResponse,
+  type CockpitPreviewMotion,
+  previewMotionToVehicleInput,
+} from './dev/cockpit-editor-types';
 export {
   lodManifestToEditableConfig,
   editableConfigToManifestValue,
@@ -197,7 +228,25 @@ export {
   type LodPreviewSnapshot,
   type LodPreviewLevelInfo,
 } from './dev/lod-editor-types';
-export { detectFirePoints, refreshFirePoints, type FirePoints } from './loaders/firepoint-detector';
+export {
+  applyCockpitViewMode,
+  disposeCockpitAttachment,
+  loadCockpitForShip,
+  setCockpitVisible,
+  setExteriorShipVisible,
+  type CockpitAttachment,
+} from './loaders/cockpit-loader';
+export {
+  cockpitInputTargetOffset,
+  composeShipVisualRotation,
+  computeCockpitPose,
+  createCockpitInputOffsetState,
+  resetCockpitInputOffsetState,
+  updateCockpitInputOffsetState,
+  ZERO_COCKPIT_VEHICLE_INPUT,
+  type CockpitInputOffsetState,
+  type CockpitVehicleInput,
+} from './flight/cockpit-camera';
 export {
   detectWeaponMounts,
   getMountForward,

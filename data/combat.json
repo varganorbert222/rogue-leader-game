@@ -26,7 +26,7 @@
       "boostMultiplier": 1.6,
       "pitchRate": 1.8,
       "yawRate": 1.8,
-      "rollRate": 3.0,
+      "rollRate": 5.0,
       "thrustRate": 35,
       "brakeRate": 45,
       "cruiseSpeed": 55

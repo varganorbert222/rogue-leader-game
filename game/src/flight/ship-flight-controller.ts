@@ -1,9 +1,11 @@
 import { Quaternion, Scalar, TransformNode, Vector3 } from '@babylonjs/core';
+import { smoothDampedScalar } from '@rogue-leader/engine';
 import type { VehicleInput } from '../player/input/vehicle-input';
 import {
   AngularRateSmoother,
   DEFAULT_ANGULAR_DYNAMICS,
 } from './angular-dynamics';
+import { FLIGHT_STICK_SMOOTH_TIME } from './flight-constants';
 import {
   canAutoRoll,
   DEFAULT_FLIGHT_ASSIST,
@@ -29,6 +31,8 @@ export class ShipFlightController {
   private flightAssist: FlightAssistOptions = { ...DEFAULT_FLIGHT_ASSIST };
   private rollIdleTime = 0;
   private readonly angular = new AngularRateSmoother();
+  private rollStick = 0;
+  private rollStickVel = 0;
   private speedCapMultiplier = 1;
 
   constructor(
@@ -50,9 +54,19 @@ export class ShipFlightController {
     const rot = this.root.rotationQuaternion ?? Quaternion.Identity();
     const { pitchAxis, yawAxis, rollAxis } = computeRogueFlightAxes(rot);
 
+    const rollStick = smoothDampedScalar(
+      this.rollStick,
+      input.roll,
+      this.rollStickVel,
+      FLIGHT_STICK_SMOOTH_TIME,
+      dt,
+    );
+    this.rollStick = rollStick.value;
+    this.rollStickVel = rollStick.velocity;
+
     let targetPitch = input.pitch * this.stats.pitchRate;
     let targetYaw = input.yaw * this.stats.yawRate;
-    let targetRoll = -input.roll * this.stats.rollRate;
+    let targetRoll = -this.rollStick * this.stats.rollRate;
 
     if (hasFlightControlInput(input)) {
       this.rollIdleTime = 0;
@@ -135,5 +149,8 @@ export class ShipFlightController {
     this.speed = this.stats.minSpeed * 1.4;
     this.rollIdleTime = 0;
     this.speedCapMultiplier = 1;
+    this.angular.reset();
+    this.rollStick = 0;
+    this.rollStickVel = 0;
   }
 }

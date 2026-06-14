@@ -1,5 +1,6 @@
 import type { FactionId } from '../combat/faction';
 import type { AsteroidBodyComponent } from './components/asteroid-body-component';
+import type { CockpitComponent } from './components/cockpit-component';
 import type { ColliderComponent } from './components/collider-component';
 import type { FlightComponent } from './components/flight-component';
 import type { HealthComponent } from './components/health-component';
@@ -17,6 +18,7 @@ export interface ComponentMap {
   health: HealthComponent;
   faction: FactionId;
   shipIdentity: ShipIdentityComponent;
+  cockpit: CockpitComponent;
   flight: FlightComponent;
   collider: ColliderComponent;
   lod: LodComponent;

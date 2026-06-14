@@ -1,4 +1,5 @@
 import { Quaternion, type Scene, Vector3 } from '@babylonjs/core';
+import { applyCockpitViewMode, composeShipVisualRotation } from '@rogue-leader/engine';
 import type { TargetEntity } from '../../combat/targeting/targeting-system';
 import { updateWeaponAimForObserver } from '../../combat/targeting/weapon-aim-controller';
 import type { TargetingConfig } from '../../data/config/combat-config';
@@ -18,6 +19,7 @@ import {
   getShipPosition,
   getShipRoot,
   getShipVelocity,
+  getVisualBankAngle,
   hasSfoil,
   tryToggleSfoil,
 } from '../queries/ship-queries';
@@ -45,11 +47,19 @@ export function runPlayerSystem(ctx: PlayerSystemContext): void {
   const targeting = world.get(playerId, 'targeting');
   const weapons = world.get(playerId, 'weapons');
   const shipIdentity = world.get(playerId, 'shipIdentity');
+  const cockpit = world.get(playerId, 'cockpit');
   if (faction === undefined || !targeting || !weapons || !shipIdentity) return;
 
   const root = getShipRoot(world, playerId);
+  const flight = world.get(playerId, 'flight');
   applyShipFlightInput(world, playerId, ctx.dt, input.vehicle, ctx.boundary);
-  ctx.camera.update(ctx.dt, root, input.camera);
+  const visualRot = composeShipVisualRotation(
+    root.rotationQuaternion ?? Quaternion.Identity(),
+    flight ? getVisualBankAngle(flight) : 0,
+    flight?.invertForwardRoll ?? false,
+  );
+  ctx.camera.update(ctx.dt, root, input.camera, visualRot, input.vehicle);
+  applyCockpitViewMode(shipIdentity.loadedEntity, cockpit?.attachment, ctx.camera.getMode() === 'cockpit');
 
   const shipPos = root.getAbsolutePosition();
   const shipForward = getShipForward(

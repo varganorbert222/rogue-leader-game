@@ -4,6 +4,9 @@ import type { ShipFlightController } from '../../flight/ship-flight-controller';
 export interface FlightComponent {
   controller: ShipFlightController;
   bankPivot?: TransformNode;
-  visualBank: number;
+  /** Smoothed yaw stick [-1, 1] driving cosmetic bank. */
+  visualBankYaw: number;
+  /** Spring velocity for {@link visualBankYaw}. */
+  visualBankYawVel: number;
   invertForwardRoll: boolean;
 }

@@ -18,6 +18,7 @@ export {
   approachScalar,
   expDecayFactor,
   powSmoothingFactor,
+  smoothDampedScalar,
 } from './exponential-smoothing';
 export {
   isNearZero,

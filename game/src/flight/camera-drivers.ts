@@ -5,9 +5,14 @@ import {
   type TransformNode,
 } from "@babylonjs/core";
 import {
+  computeCockpitPose,
+  createCockpitInputOffsetState,
+  DEFAULT_COCKPIT_CONFIG,
   expSmoothingFactor,
   lerpAngleRad,
   quaternionLookAt,
+  type CockpitInputOffsetState,
+  type ResolvedCockpitConfig,
 } from "@rogue-leader/engine";
 import type { CameraInput } from "../player/input/camera-input";
 import { getShipForward, getShipRight, getShipUp } from "./ship-forward";
@@ -80,6 +85,10 @@ export interface FollowCameraContext {
   prevShipRot: Quaternion;
   shakeOffset: Vector3;
   state: FollowCameraState;
+  cockpitConfig?: ResolvedCockpitConfig | null;
+  inputOffsetState?: CockpitInputOffsetState;
+  /** Root rotation composed with visual axis fix + cosmetic bank roll. */
+  visualRot?: Quaternion;
 }
 
 /** Computes desired chase / cockpit pose from ship transform. */
@@ -97,16 +106,20 @@ export class FollowCameraDriver {
     this.updateUserOffsets(ctx);
 
     if (ctx.viewMode === "cockpit") {
-      const cockpitPos = pos.add(fwd.scale(0.35)).add(up.scale(0.15));
-      const lookYaw = Quaternion.RotationAxis(up, ctx.state.lookAroundYaw);
-      const lookPitch = Quaternion.RotationAxis(
-        right,
+      const config = ctx.cockpitConfig ?? DEFAULT_COCKPIT_CONFIG;
+      const inputOffset = ctx.inputOffsetState ?? createCockpitInputOffsetState();
+      const pose = computeCockpitPose(
+        pos,
+        rot,
+        config,
+        ctx.state.lookAroundYaw,
         ctx.state.lookAroundPitch,
+        inputOffset,
+        ctx.visualRot,
       );
-      const lookOffset = lookPitch.multiply(lookYaw);
       return {
-        position: cockpitPos,
-        orientation: lookOffset.multiply(rot).normalize(),
+        position: pose.position,
+        orientation: pose.orientation,
         directAttach: true,
       };
     }
@@ -178,6 +191,8 @@ export class FollowCameraDriver {
     const blend = expSmoothingFactor(inputResponse, dt);
     const hasOrbitInput =
       viewMode !== "cockpit" && Math.abs(orbitInput) > ORBIT_INPUT_DEADZONE;
+    const cockpitLimits =
+      ctx.cockpitConfig?.lookLimits ?? DEFAULT_COCKPIT_CONFIG.lookLimits;
 
     if (hasOrbitInput) {
       state.behavior = "orbit";
@@ -208,13 +223,13 @@ export class FollowCameraDriver {
     if (input?.lookAround && viewMode === "cockpit") {
       state.lookAroundYaw = Scalar.Clamp(
         state.lookAroundYaw + orbitInput * dt * 2.5,
-        -0.8,
-        0.8,
+        -cockpitLimits.yaw,
+        cockpitLimits.yaw,
       );
       state.lookAroundPitch = Scalar.Clamp(
         state.lookAroundPitch + distInput * dt * 2.5,
-        -0.5,
-        0.5,
+        -cockpitLimits.pitch,
+        cockpitLimits.pitch,
       );
     } else if (viewMode !== "cockpit") {
       const relax = expSmoothingFactor(4, dt);
@@ -358,3 +373,4 @@ export class RailCameraDriver {
     return null;
   }
 }
+

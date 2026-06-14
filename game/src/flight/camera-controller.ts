@@ -1,12 +1,24 @@
 import {
   FreeCamera,
   Quaternion,
+  Scalar,
   Vector3,
   type Scene,
   type TransformNode,
 } from '@babylonjs/core';
+import {
+  createCockpitInputOffsetState,
+  resetCockpitInputOffsetState,
+  updateCockpitInputOffsetState,
+  BABYLON_MIN_CAMERA_NEAR_Z,
+  CHASE_CAMERA_NEAR_Z,
+  type CockpitInputOffsetState,
+  type CockpitVehicleInput,
+  type ResolvedCockpitConfig,
+} from '@rogue-leader/engine';
 import type { CameraInput } from '../player/input/camera-input';
 import type { FlightInput } from '../player/input/i-input-source';
+import { ZERO_VEHICLE_INPUT, type VehicleInput } from '../player/input/vehicle-input';
 import {
   FollowCameraDriver,
   OUTSIDE_VIEW_MODES,
@@ -50,10 +62,14 @@ export class CameraController {
 
   private prevShipPos: Vector3 | null = null;
   private prevShipRot = Quaternion.Identity();
+  private prevShipVel = Vector3.Zero();
+  private prevAngularVel = Vector3.Zero();
+  private cockpitConfig: ResolvedCockpitConfig | null = null;
+  private readonly cockpitInputOffset = createCockpitInputOffsetState();
 
   constructor(scene: Scene, canvas: HTMLCanvasElement) {
     this.camera = new FreeCamera('chaseCam', Vector3.Zero(), scene);
-    this.camera.minZ = 0.5;
+    this.camera.minZ = CHASE_CAMERA_NEAR_Z;
     this.camera.fov = 1.05;
     this.camera.inputs.clear();
     void canvas;
@@ -84,6 +100,10 @@ export class CameraController {
     return this.activeDriver;
   }
 
+  setCockpitConfig(config: ResolvedCockpitConfig | null): void {
+    this.cockpitConfig = config;
+  }
+
   /** Switch to scripted / cinematic driver (mission intros, future rails). */
   useScriptedDriver(): ScriptedCameraDriver {
     this.activeDriver = 'scripted';
@@ -104,6 +124,7 @@ export class CameraController {
   }
 
   toggleCockpit(): CameraViewMode {
+    if (!this.cockpitConfig) return this.viewMode;
     this.useFollowDriver();
     this.viewMode = this.viewMode === 'cockpit' ? 'standard' : 'cockpit';
     if (this.viewMode !== 'cockpit') {
@@ -137,7 +158,13 @@ export class CameraController {
     this.shakeTime = duration;
   }
 
-  update(dt: number, target: TransformNode, input?: CameraInput | FlightInput): void {
+  update(
+    dt: number,
+    target: TransformNode,
+    input?: CameraInput | FlightInput,
+    visualRot?: Quaternion,
+    vehicleInput: VehicleInput = ZERO_VEHICLE_INPUT,
+  ): void {
     if (input?.cameraToggle) this.toggleCockpit();
     if (input?.cameraCycle) {
       for (let i = 0; i < input.cameraCycle; i++) this.cycleOutsideView();
@@ -152,6 +179,31 @@ export class CameraController {
       this.prevShipPos && dt > 0
         ? shipPos.subtract(this.prevShipPos).scale(1 / dt)
         : Vector3.Zero();
+    const angularVel = this.estimateAngularVelocity(shipRot, lagReferenceRot, dt);
+    const stickInput: CockpitVehicleInput = {
+      throttle: vehicleInput.throttle,
+      pitch: vehicleInput.pitch,
+      yaw: vehicleInput.yaw,
+      roll: vehicleInput.roll,
+    };
+
+    if (this.viewMode === 'cockpit' && this.cockpitConfig) {
+      this.camera.minZ = BABYLON_MIN_CAMERA_NEAR_Z;
+      updateCockpitInputOffsetState(
+        this.cockpitInputOffset,
+        dt,
+        this.cockpitConfig.inputResponse,
+        stickInput,
+      );
+      this.camera.fov = this.cockpitConfig.fov;
+    } else {
+      this.camera.minZ = CHASE_CAMERA_NEAR_Z;
+      this.camera.fov = 1.05;
+      resetCockpitInputOffsetState(this.cockpitInputOffset);
+    }
+
+    this.prevShipVel = shipVel.clone();
+    this.prevAngularVel = angularVel.clone();
 
     const shakeOffset = this.sampleShake(dt);
     const profile = CAMERA_SPRING_PROFILES[this.springProfileId];
@@ -185,6 +237,9 @@ export class CameraController {
         prevShipRot: lagReferenceRot,
         shakeOffset,
         state: this.followState,
+        cockpitConfig: this.cockpitConfig,
+        inputOffsetState: this.cockpitInputOffset,
+        visualRot,
       });
       desiredPos = pose.position;
       desiredRot = pose.orientation;
@@ -242,5 +297,20 @@ export class CameraController {
     this.followState.behavior = 'follow';
     this.followState.orbitYaw = 0;
     this.followState.orbitIdleSec = 0;
+  }
+
+  private estimateAngularVelocity(
+    shipRot: Quaternion,
+    prevRot: Quaternion,
+    dt: number,
+  ): Vector3 {
+    if (dt <= 0) return Vector3.Zero();
+    const invPrev = prevRot.conjugate();
+    const delta = shipRot.multiply(invPrev);
+    const angle = 2 * Math.acos(Scalar.Clamp(Math.abs(delta.w), 0, 1));
+    if (angle < 1e-6) return Vector3.Zero();
+    const axis = new Vector3(delta.x, delta.y, delta.z);
+    if (axis.lengthSquared() < 1e-8) return Vector3.Zero();
+    return axis.normalize().scale(angle / dt);
   }
 }

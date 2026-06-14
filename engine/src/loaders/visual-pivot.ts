@@ -11,3 +11,10 @@ export function attachVisualPivot(root: TransformNode, scene: Scene): TransformN
   }
   return visual;
 }
+
+/** Cosmetic yaw-bank pivot under {@link attachVisualPivot} (`*_bank`). */
+export function findVisualBankPivot(visualRoot: TransformNode): TransformNode | undefined {
+  return visualRoot
+    .getChildTransformNodes(false)
+    .find((node) => node.name.endsWith('_bank'));
+}

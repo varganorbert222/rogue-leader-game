@@ -3,6 +3,7 @@ import {
   GltfShipLoader,
   ParticleFx,
   disposeParticleFxPool,
+  RuntimePaths,
   type AssetManifest,
   DebugFloor,
   DebugAxes,
@@ -31,6 +32,7 @@ import { HealthComponent } from '../../ecs/components/health-component';
 import { Role } from '../../ecs/components/role-tag';
 import type { EntityId } from '../../ecs/entity-id';
 import { spawnPlayerEntity } from '../../ecs/spawn/entity-factory';
+import { attachPlayerCockpit, disposePlayerCockpit } from '../../ecs/services/player-cockpit-service';
 import { World } from '../../ecs/world';
 import {
   getShipPosition,
@@ -214,6 +216,15 @@ export class MissionManager {
       weapons: playerWeapons,
       flightDefaults: this.combatConfig.defaults.flight,
     });
+    const playerId = this.world.playerEntity!;
+    const cockpit = await attachPlayerCockpit(
+      this.world,
+      playerId,
+      this.host.scene,
+      RuntimePaths.assetsBase,
+      shipEntry,
+    );
+    this.camera.setCockpitConfig(cockpit?.config ?? null);
     this.engineVfx.attach(
       this.host.scene,
       playerLoaded.root,
@@ -416,6 +427,9 @@ export class MissionManager {
 
     for (const id of [...this.world.allEntities()]) {
       const role = this.world.get(id, 'role');
+      if (role === Role.Player) {
+        disposePlayerCockpit(this.world, id);
+      }
       if (role === Role.Npc && isShipEntity(this.world, id)) {
         prepareShipForPool(this.world, id);
       }
