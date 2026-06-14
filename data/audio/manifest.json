@@ -1,0 +1,100 @@
+{
+  "version": 2,
+  "libraries": {
+    "sfx": "audio/libraries/sfx.json",
+    "ui": "audio/libraries/ui.json"
+  },
+  "music": {
+    "menu_loop": {
+      "path": "audio/music/menu_loop.mp3",
+      "loop": true,
+      "volume": 0.6
+    },
+    "asteroid_field_explore": {
+      "path": "audio/music/asteroid_field_explore.mp3",
+      "loop": true,
+      "volume": 0.5
+    },
+    "asteroid_field_combat": {
+      "path": "audio/music/asteroid_field_combat.mp3",
+      "loop": true,
+      "volume": 0.55
+    },
+    "mission_space_explore": {
+      "path": "audio/music/mission_space_explore.mp3",
+      "loop": true,
+      "volume": 0.5
+    },
+    "mission_space_combat": {
+      "path": "audio/music/mission_space_combat.mp3",
+      "loop": true,
+      "volume": 0.55
+    },
+    "mission_hoth_explore": {
+      "path": "audio/music/mission_hoth_explore.mp3",
+      "loop": true,
+      "volume": 0.48
+    },
+    "mission_hoth_surface": {
+      "path": "audio/music/mission_hoth_surface.mp3",
+      "loop": true,
+      "volume": 0.5
+    },
+    "mission_tatooine_explore": {
+      "path": "audio/music/mission_tatooine_explore.mp3",
+      "loop": true,
+      "volume": 0.48
+    },
+    "mission_tatooine": {
+      "path": "audio/music/mission_tatooine.mp3",
+      "loop": true,
+      "volume": 0.5
+    }
+  },
+  "musicSets": {
+    "asteroid_field_space": {
+      "layers": [
+        { "id": "asteroid_field_explore", "role": "calm", "volume": 0.5 },
+        { "id": "asteroid_field_combat", "role": "combat", "volume": 0.55 }
+      ],
+      "crossfadeMs": 2800,
+      "attackThreshold": 0.32,
+      "releaseThreshold": 0.14,
+      "smoothing": 2.4
+    },
+    "mission_space": {
+      "layers": [
+        { "id": "mission_space_explore", "role": "calm", "volume": 0.5 },
+        { "id": "mission_space_combat", "role": "combat", "volume": 0.55 }
+      ],
+      "crossfadeMs": 3000,
+      "attackThreshold": 0.35,
+      "releaseThreshold": 0.15,
+      "smoothing": 2.2
+    },
+    "mission_hoth": {
+      "layers": [
+        { "id": "mission_hoth_explore", "role": "calm", "volume": 0.48 },
+        { "id": "mission_hoth_surface", "role": "combat", "volume": 0.5 }
+      ],
+      "crossfadeMs": 3200,
+      "attackThreshold": 0.3,
+      "releaseThreshold": 0.12,
+      "smoothing": 2.0
+    },
+    "mission_tatooine": {
+      "layers": [
+        { "id": "mission_tatooine_explore", "role": "calm", "volume": 0.48 },
+        { "id": "mission_tatooine", "role": "combat", "volume": 0.5 }
+      ],
+      "crossfadeMs": 2800,
+      "attackThreshold": 0.33,
+      "releaseThreshold": 0.14,
+      "smoothing": 2.3
+    }
+  },
+  "engineAudio": {
+    "speedPitchMin": 0.5,
+    "speedPitchMax": 1.1
+  }
+}

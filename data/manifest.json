@@ -1,0 +1,113 @@
+{
+  "ships": {
+    "xwing": {
+      "lod": [
+        "models/ships/xwing/x-wing_LOD0.glb"
+      ],
+      "scale": 1.0,
+      "colliderRadius": 2.5,
+      "axes": {
+        "forward": "-z",
+        "right": "-x",
+        "up": "+y",
+        "mirror": "+x"
+      },
+      "faction": "rebel",
+      "flight": {
+        "maxSpeed": 85,
+        "cruiseSpeed": 60,
+        "pitchRate": 1.9,
+        "yawRate": 1.9
+      },
+      "defaultWeapons": {
+        "laser": "rebel_laser",
+        "projectile": "proton_torpedo"
+      },
+      "anchors": {
+        "weapons": {},
+        "engines": {}
+      },
+      "animations": {
+        "initialState": "folded",
+        "transitions": [
+          {
+            "clip": "sfoil",
+            "speed": 2,
+            "toState": "open"
+          },
+          {
+            "clip": "sfoil",
+            "speed": -2,
+            "toState": "folded"
+          }
+        ]
+      },
+      "abilities": {
+        "sfoil": {
+          "closingBoostMultiplier": 1.6,
+          "sfx": {
+            "basePath": "audio/sfx/xwing",
+            "files": [
+              "xwing_sfoil_01.wav",
+              "xwing_sfoil_02.wav"
+            ]
+          }
+        }
+      }
+    },
+    "tie_fighter": {
+      "lod": [
+        "models/ships/tie_fighter/tie_fighter_LOD0.glb"
+      ],
+      "scale": 1.0,
+      "colliderRadius": 2.0,
+      "axes": {
+        "forward": "-z",
+        "right": "-x",
+        "up": "+y",
+        "mirror": "+x"
+      },
+      "faction": "imperial",
+      "flight": {
+        "maxSpeed": 95,
+        "cruiseSpeed": 65,
+        "pitchRate": 2.1,
+        "yawRate": 2.0
+      },
+      "defaultWeapons": {
+        "laser": "imperial_laser"
+      },
+      "anchors": {
+        "engines": {}
+      }
+    }
+  },
+  "props": {
+    "asteroid": {
+      "colliderSource": "visual",
+      "variants": [
+        "models/props/asteroid/asteroid_01.glb",
+        "models/props/asteroid/asteroid_02.glb",
+        "models/props/asteroid/asteroid_03.glb",
+        "models/props/asteroid/asteroid_04.glb",
+        "models/props/asteroid/asteroid_05.glb"
+      ],
+      "scale": [
+        0.01,
+        0.1
+      ],
+      "colliderRadius": 3.0
+    }
+  },
+  "skyboxes": {
+    "asteroid_field_space": {
+      "type": "photodome",
+      "textures": [
+        "textures/skybox/asteroid_field_space/asteroid_field_space_01.png",
+        "textures/skybox/asteroid_field_space/asteroid_field_space_02.png"
+      ],
+      "resolution": 32,
+      "size": 5000
+    }
+  }
+}

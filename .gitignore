@@ -3,3 +3,7 @@ dist/
 .angular/
 *.log
 .DS_Store
+
+# Binary game assets — distributed via GitHub Release zip, not versioned in git
+assets/*
+!assets/README.md

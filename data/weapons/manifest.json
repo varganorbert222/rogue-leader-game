@@ -1,0 +1,195 @@
+{
+  "defaults": {
+    "laser": "rebel_laser",
+    "projectile": "proton_torpedo"
+  },
+  "weapons": {
+    "rebel_laser": {
+      "delivery": "laser",
+      "behavior": "standard",
+      "faction": "rebel",
+      "fireGroup": "primary",
+      "cooldownSec": 0.15,
+      "damage": 20,
+      "visualProfile": "rebel_laser",
+      "projectile": {
+        "speed": 420,
+        "maxRange": 280,
+        "hitRadius": 0.12
+      },
+      "audio": {
+        "fire": "rebel_cannon_fire",
+        "hit": "bullet_hit"
+      }
+    },
+    "imperial_laser": {
+      "delivery": "laser",
+      "behavior": "standard",
+      "faction": "imperial",
+      "fireGroup": "primary",
+      "cooldownSec": 0.9,
+      "damage": 8,
+      "visualProfile": "imperial_laser",
+      "projectile": {
+        "speed": 360,
+        "maxRange": 220,
+        "hitRadius": 0.12
+      },
+      "audio": {
+        "fire": "imperial_cannon_fire",
+        "hit": "bullet_hit"
+      }
+    },
+    "ion_laser": {
+      "delivery": "laser",
+      "behavior": "disabling",
+      "faction": "rebel",
+      "fireGroup": "secondary",
+      "cooldownSec": 0.35,
+      "damage": 5,
+      "visualProfile": "ion_laser",
+      "projectile": {
+        "speed": 380,
+        "maxRange": 240,
+        "hitRadius": 0.14
+      },
+      "audio": {
+        "fire": "rebel_cannon_fire",
+        "hit": "bullet_hit"
+      }
+    },
+    "proton_torpedo": {
+      "delivery": "projectile",
+      "behavior": "missile_homing",
+      "faction": "rebel",
+      "fireGroup": "secondary",
+      "cooldownSec": 2.0,
+      "damage": 45,
+      "visualProfile": "rebel_missile",
+      "projectile": {
+        "speed": 140,
+        "maxRange": 420,
+        "hitRadius": 0.35
+      },
+      "homing": {
+        "turnRate": 3.5,
+        "acquireRange": 220
+      },
+      "audio": {
+        "hit": "missile_hit"
+      }
+    },
+    "concussion_rocket": {
+      "delivery": "projectile",
+      "behavior": "rocket",
+      "faction": "rebel",
+      "fireGroup": "secondary",
+      "cooldownSec": 1.2,
+      "damage": 30,
+      "visualProfile": "rebel_rocket",
+      "projectile": {
+        "speed": 200,
+        "maxRange": 320,
+        "hitRadius": 0.25
+      },
+      "audio": {
+        "hit": "missile_hit"
+      }
+    },
+    "concussion_bomb": {
+      "delivery": "projectile",
+      "behavior": "bomb",
+      "faction": "rebel",
+      "fireGroup": "secondary",
+      "cooldownSec": 3.0,
+      "damage": 55,
+      "visualProfile": "rebel_bomb",
+      "projectile": {
+        "speed": 90,
+        "maxRange": 180,
+        "hitRadius": 0.5
+      },
+      "audio": {
+        "hit": "missile_hit"
+      }
+    },
+    "unguided_missile": {
+      "delivery": "projectile",
+      "behavior": "missile_unguided",
+      "faction": "imperial",
+      "fireGroup": "secondary",
+      "cooldownSec": 1.8,
+      "damage": 25,
+      "visualProfile": "imperial_missile",
+      "projectile": {
+        "speed": 160,
+        "maxRange": 300,
+        "hitRadius": 0.3
+      },
+      "audio": {
+        "hit": "missile_hit"
+      }
+    }
+  },
+  "visualProfiles": {
+    "rebel_laser": {
+      "boltLength": 0.75,
+      "boltDiameter": 0.1,
+      "emissive": [0.2, 0.85, 1]
+    },
+    "imperial_laser": {
+      "boltLength": 0.65,
+      "boltDiameter": 0.09,
+      "emissive": [1, 0.25, 0.15]
+    },
+    "ion_laser": {
+      "boltLength": 0.85,
+      "boltDiameter": 0.12,
+      "emissive": [0.4, 0.5, 1]
+    },
+    "rebel_missile": {
+      "boltLength": 1.2,
+      "boltDiameter": 0.22,
+      "emissive": [0.9, 0.7, 0.2]
+    },
+    "rebel_rocket": {
+      "boltLength": 0.9,
+      "boltDiameter": 0.18,
+      "emissive": [1, 0.55, 0.1]
+    },
+    "rebel_bomb": {
+      "boltLength": 0.55,
+      "boltDiameter": 0.35,
+      "emissive": [0.6, 0.6, 0.65]
+    },
+    "imperial_missile": {
+      "boltLength": 1.0,
+      "boltDiameter": 0.2,
+      "emissive": [0.75, 0.2, 0.9]
+    }
+  },
+  "engineVfx": {
+    "rebel_ion_engine": {
+      "emitRate": 90,
+      "color1": [0.3, 0.6, 1, 0.85],
+      "color2": [0.1, 0.2, 0.8, 0],
+      "minSize": 0.15,
+      "maxSize": 0.55,
+      "blendMode": "add",
+      "bloom": true,
+      "direction1": [-0.2, 0, 0.5],
+      "direction2": [0.2, 0, 1]
+    },
+    "imperial_ion_engine": {
+      "emitRate": 75,
+      "color1": [0.85, 0.25, 1, 0.9],
+      "color2": [0.3, 0.05, 0.5, 0],
+      "minSize": 0.12,
+      "maxSize": 0.45,
+      "blendMode": "add",
+      "bloom": true,
+      "direction1": [-0.15, 0, 0.45],
+      "direction2": [0.15, 0, 0.95]
+    }
+  }
+}
