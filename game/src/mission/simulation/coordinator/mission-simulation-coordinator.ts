@@ -8,7 +8,6 @@ import { runPlayerSystem } from '../../../ecs/systems/player-system';
 import type { EntityId } from '../../../ecs/entity-id';
 import type { PlayerInput } from '../../../player/input/player-input';
 import type { GameAudioUpdateContext } from '../../../audio/game-audio-bridge';
-import type { EngineVfxController } from '../../../vfx/engine-vfx-controller';
 import type { WreckDebrisManager } from '../../../vfx/wreck-debris-manager';
 import { buildMissionAudioContext } from '../services/mission-audio-context';
 import type { MissionRuntimeContext } from '../mission-runtime-context';
@@ -27,7 +26,6 @@ export interface MissionSimulationTickInput {
   playerInput: PlayerInput;
   boundary?: { center: Vector3; radius: number };
   shipLoader: GltfShipLoader;
-  engineVfx: EngineVfxController;
   wreckDebris: WreckDebrisManager;
   prevListenerPosition: Vector3 | null;
 }
@@ -67,7 +65,7 @@ export class MissionSimulationCoordinator {
   }
 
   tick(input: MissionSimulationTickInput): MissionSimulationTickResult {
-    const { dt, playerId, playerInput, boundary, shipLoader, engineVfx, wreckDebris } =
+    const { dt, playerId, playerInput, boundary, shipLoader, wreckDebris } =
       input;
     const world = this.runtime.world;
 
@@ -146,7 +144,6 @@ export class MissionSimulationCoordinator {
     updateMissionLodStates(this.runtime.host.scene, world.collectLodRuntimes());
 
     wreckDebris.update(dt);
-    engineVfx.update();
 
     const audioFrame = buildMissionAudioContext({
       world,

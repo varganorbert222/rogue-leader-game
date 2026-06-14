@@ -1,4 +1,3 @@
-import type { EngineVfxProfile } from '@rogue-leader/engine';
 import type { ShipWeaponDefinitionPatch } from '@rogue-leader/engine';
 import type { ProjectileVisualConfig } from '../../combat/projectiles/projectile-config';
 import type { ResolvedShipWeaponsConfig } from './ship-weapons-config';
@@ -44,11 +43,16 @@ export interface WeaponDefinitionEntry {
   audio?: WeaponAudioConfig;
 }
 
+export interface FactionVisualDefaults {
+  emissive: [number, number, number];
+  tailWidthRatio?: number;
+}
+
 export interface WeaponsManifest {
   defaults: Partial<Record<WeaponDelivery, string>>;
   weapons: Record<string, WeaponDefinitionEntry>;
   visualProfiles: Record<string, ProjectileVisualConfig>;
-  engineVfx: Record<string, EngineVfxProfile>;
+  factionVisualDefaults?: Partial<Record<WeaponFaction, FactionVisualDefaults>>;
 }
 
 const BEHAVIOR_HINT_MAP: Record<string, ProjectileBehavior> = {
@@ -64,6 +68,27 @@ export async function loadWeaponsManifest(url: string): Promise<WeaponsManifest>
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to load weapons manifest: ${url}`);
   return (await res.json()) as WeaponsManifest;
+}
+
+export function resolveProjectileVisual(
+  manifest: WeaponsManifest,
+  profileId: string,
+  weaponFaction?: WeaponFaction,
+): ProjectileVisualConfig | null {
+  const profile = manifest.visualProfiles[profileId];
+  if (!profile) return null;
+
+  const factionDefaults =
+    weaponFaction && manifest.factionVisualDefaults
+      ? manifest.factionVisualDefaults[weaponFaction]
+      : undefined;
+
+  return {
+    ...profile,
+    emissive: profile.emissive ?? factionDefaults?.emissive ?? [1, 1, 1],
+    tailWidthRatio:
+      profile.tailWidthRatio ?? factionDefaults?.tailWidthRatio,
+  };
 }
 
 export function weaponIdExists(
@@ -203,25 +228,4 @@ export function resolveWeaponDefinitionEntry(
     shipDef ? stripDefinitionMeta(shipDef) : undefined,
     slotOverride ? stripDefinitionMeta(slotOverride) : undefined,
   );
-}
-
-export function resolveEngineVfxProfile(
-  manifest: WeaponsManifest,
-  slotId: string,
-  engineBindings: Record<string, string> | undefined,
-  faction?: WeaponFaction,
-): EngineVfxProfile | undefined {
-  const profileId = engineBindings?.[slotId];
-  if (profileId && manifest.engineVfx[profileId]) {
-    return manifest.engineVfx[profileId];
-  }
-
-  if (faction === 'imperial' && manifest.engineVfx['imperial_ion_engine']) {
-    return manifest.engineVfx['imperial_ion_engine'];
-  }
-  if (manifest.engineVfx['rebel_ion_engine']) {
-    return manifest.engineVfx['rebel_ion_engine'];
-  }
-
-  return undefined;
 }

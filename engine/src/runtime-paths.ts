@@ -10,6 +10,7 @@ export const RuntimePaths = {
   weaponsManifest: `${DATA_BASE_URL}/weapons/manifest.json`,
   combatConfig: `${DATA_BASE_URL}/combat.json`,
   npcBehaviorConfig: `${DATA_BASE_URL}/npc-behavior.json`,
+  renderConfig: `${DATA_BASE_URL}/render.json`,
   audioManifest: `${DATA_BASE_URL}/audio/manifest.json`,
   audioConfigBase: `${DATA_BASE_URL}/audio`,
 } as const;

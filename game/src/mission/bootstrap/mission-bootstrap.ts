@@ -3,6 +3,7 @@ import type { BabylonHost } from '@rogue-leader/engine';
 import { loadCombatConfig, type CombatConfig } from '../../data/config/combat-config';
 import { loadWeaponsManifest, type WeaponsManifest } from '../../data/config/weapons-manifest';
 import { loadNpcBehaviorConfig, type NpcBehaviorConfig } from '../../data/config/npc-behavior-config';
+import { loadRenderConfig, type RenderConfig } from '../../data/config/render-config';
 import { MissionNavigation } from '../../ai/navigation/mission-navigation';
 import { CombatSystem } from '../../combat/systems/combat-system';
 import { GameEvents, type GameEventBus } from '../../core/events/game-events';
@@ -37,6 +38,7 @@ export interface MissionBootstrapResult {
   weaponsManifest: WeaponsManifest;
   combatConfig: CombatConfig;
   npcBehaviorConfig: NpcBehaviorConfig;
+  renderConfig: RenderConfig;
   missionNavigation: MissionNavigation;
   shipLoader: GltfShipLoader;
   combat: CombatSystem;
@@ -55,10 +57,12 @@ export class MissionBootstrap {
     const hitSfxResolver = new WeaponHitSfxResolver(weaponsManifest);
     const combatConfig = await loadCombatConfig(RuntimePaths.combatConfig);
     const npcBehaviorConfig = await loadNpcBehaviorConfig(RuntimePaths.npcBehaviorConfig);
+    const renderConfig = await loadRenderConfig(RuntimePaths.renderConfig);
     const missionNavigation = new MissionNavigation(config.navigation);
 
     const lodLoader = new LodShipLoader(input.host.scene, RuntimePaths.assetsBase);
     const shipLoader = new GltfShipLoader(input.host.scene, RuntimePaths.assetsBase, lodLoader);
+    shipLoader.setEmissiveBloomStrength(renderConfig.bloom.emissive.strength);
     shipLoader.setLodProgressCallback((progress) => {
       input.onLoadMessage?.(progress.message);
       input.onLoadProgress?.(progress);
@@ -78,6 +82,7 @@ export class MissionBootstrap {
 
     const combat = new CombatSystem(input.host.scene, input.events);
     combat.setWeaponsManifest(weaponsManifest);
+    combat.setProjectileBloomStrength(renderConfig.bloom.projectiles.strength);
     combat.initProjectilePassBy((_weaponId, point, velocity) => {
       input.events.emit(
         GameEvents.projectileWhoosh({
@@ -99,6 +104,7 @@ export class MissionBootstrap {
       weaponsManifest,
       combatConfig,
       npcBehaviorConfig,
+      renderConfig,
       missionNavigation,
       hitSfxResolver,
       events: input.events,
@@ -118,6 +124,7 @@ export class MissionBootstrap {
       weaponsManifest,
       combatConfig,
       npcBehaviorConfig,
+      renderConfig,
       missionNavigation,
       shipLoader,
       combat,

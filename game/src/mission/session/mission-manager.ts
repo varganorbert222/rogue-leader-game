@@ -4,6 +4,7 @@ import {
   ParticleFx,
   disposeParticleFxPool,
   RuntimePaths,
+  SceneBloomPipeline,
   type AssetManifest,
   DebugFloor,
   DebugAxes,
@@ -20,7 +21,6 @@ import {
 } from '../../debug/debug-preferences';
 import { GameDebugOverlay } from '../../debug/game-debug-overlay';
 import { hasActiveDebugWork } from '../../debug/debug-overlay-utils';
-import { EngineVfxController } from '../../vfx/engine-vfx-controller';
 import {
   WreckDebrisManager,
   resolveMissionEnvironment,
@@ -106,7 +106,7 @@ export class MissionManager {
   private missionNavigation!: MissionNavigation;
   private debugPreferences: DebugPreferences = loadDebugPreferences();
   private readonly gameDebugOverlay = new GameDebugOverlay();
-  private readonly engineVfx = new EngineVfxController();
+  private readonly bloomPipeline = new SceneBloomPipeline();
   private wreckDebris!: WreckDebrisManager;
   private assetPreloader = new MissionAssetPreloader();
   private prevListenerPosition: Vector3 | null = null;
@@ -190,6 +190,11 @@ export class MissionManager {
     this.assetPreloader = bootstrap.assetPreloader;
     this.simulation = bootstrap.simulation;
     this.wreckDebris.setEnvironment(resolveMissionEnvironment(this.config));
+    this.bloomPipeline.attach(
+      this.host.scene,
+      this.camera.getCamera(),
+      bootstrap.renderConfig.bloom,
+    );
 
     const shipEntry = this.assetManifest.ships[this.config.player.shipId];
     if (!shipEntry) {
@@ -238,13 +243,6 @@ export class MissionManager {
       shipEntry,
     );
     this.camera.setCockpitConfig(cockpit?.config ?? null);
-    this.engineVfx.attach(
-      this.host.scene,
-      playerLoaded.root,
-      shipEntry,
-      this.weaponsManifest,
-      playerLoaded.anchors,
-    );
 
     if (
       this.config.asteroids &&
@@ -382,7 +380,6 @@ export class MissionManager {
       playerInput,
       boundary,
       shipLoader: this.shipLoader,
-      engineVfx: this.engineVfx,
       wreckDebris: this.wreckDebris,
       prevListenerPosition: this.prevListenerPosition,
     });
@@ -453,7 +450,7 @@ export class MissionManager {
     }
     this.world.dispose();
 
-    this.engineVfx.dispose();
+    this.bloomPipeline.dispose();
     this.wreckDebris.dispose();
     disposeParticleFxPool(this.host.scene);
     this.assetPreloader.dispose();

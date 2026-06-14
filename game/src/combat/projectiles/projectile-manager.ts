@@ -1,13 +1,8 @@
 import type { Scene } from '@babylonjs/core';
+import { Vector3 } from '@babylonjs/core';
 import { CollisionSystem, type SphereBody } from '../../collision/collision-system';
 import { Projectile, type ProjectileHit, type ProjectileSpawnOptions } from './projectile';
-import {
-  ProjectileMeshPool,
-  syncProjectileMeshTransform,
-} from '@rogue-leader/engine';
-
-import { Vector3 } from '@babylonjs/core';
-import type { ProjectilePassByObserver } from '../../audio/projectile-pass-by';
+import { ProjectileMeshPool } from '@rogue-leader/engine';import type { ProjectilePassByObserver } from '../../audio/projectile-pass-by';
 
 export type ProjectileHitCallback = (hit: ProjectileHit) => void;
 export type ProjectilePassByCallback = (
@@ -45,6 +40,10 @@ export class ProjectileManager {
 
   spawn(options: ProjectileSpawnOptions): void {
     this.projectiles.push(Projectile.spawn(this.scene, this.meshPool, options));
+  }
+
+  setBloomStrength(strength: number): void {
+    this.meshPool.setBloomStrength(strength);
   }
 
   update(dt: number): void {

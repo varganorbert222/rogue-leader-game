@@ -60,7 +60,6 @@
         }
       },
       "anchors": {
-        "engines": {}
       },
       "animations": {
         "initialState": "folded",
@@ -159,7 +158,6 @@
         }
       },
       "anchors": {
-        "engines": {}
       }
     }
   },

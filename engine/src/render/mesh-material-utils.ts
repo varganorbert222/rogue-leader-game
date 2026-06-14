@@ -53,3 +53,46 @@ export function disableMeshBackfaceCulling(meshes: AbstractMesh[]): void {
     disableMaterialBackfaceCulling(mesh.material);
   }
 }
+
+function materialHasEmissive(material: PBRMaterial | StandardMaterial): boolean {
+  if (material.emissiveTexture) return true;
+  const { r, g, b } = material.emissiveColor;
+  return r + g + b > 1e-4;
+}
+
+function applyMaterialEmissiveBloomStrength(
+  material: Material | null | undefined,
+  strength: number,
+): void {
+  if (!material || strength === 1) return;
+  if (material instanceof MultiMaterial) {
+    for (const sub of material.subMaterials) {
+      applyMaterialEmissiveBloomStrength(sub, strength);
+    }
+    return;
+  }
+  if (material instanceof PBRMaterial) {
+    if (!materialHasEmissive(material)) return;
+    material.emissiveIntensity *= strength;
+    return;
+  }
+  if (material instanceof StandardMaterial) {
+    if (!materialHasEmissive(material)) return;
+    material.emissiveColor.scaleInPlace(strength);
+  }
+}
+
+/** Scale emissive output on meshes that use emissive maps/colors (for bloom tuning). */
+export function applyMeshEmissiveBloomStrength(
+  meshes: readonly AbstractMesh[],
+  strength: number,
+): void {
+  if (strength === 1) return;
+  const seen = new Set<Material>();
+  for (const mesh of meshes) {
+    const material = mesh.material;
+    if (!material || seen.has(material)) continue;
+    seen.add(material);
+    applyMaterialEmissiveBloomStrength(material, strength);
+  }
+}

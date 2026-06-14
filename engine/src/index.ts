@@ -62,6 +62,7 @@ export {
   type SpatialMotionState,
 } from './audio/spatial-audio';
 export { SkyboxLoader, type SkyboxApplyOptions } from './render/skybox-loader';
+export { SceneBloomPipeline, type SceneBloomConfig } from './render/scene-bloom-pipeline';
 export { DebugFloor, type DebugFloorOptions } from './render/debug-floor';
 export { DebugAxes, type DebugAxesOptions } from './render/debug-axes';
 export { TimeOfDayService } from './render/time-of-day';
@@ -132,13 +133,6 @@ export {
   type ShipAxisConventionConfig,
   type ShipVisualOptions,
 } from './loaders/ship-axis-convention';
-export {
-  createEngineTrail,
-  updateEngineTrailEmitter,
-  DEFAULT_ENGINE_VFX,
-  type EngineVfxProfile,
-} from './vfx/engine-vfx';
-export type { TrailMesh } from '@babylonjs/core/Meshes/trailMesh';
 export { GltfShipLoader, type LoadedEntity } from './loaders/gltf-ship-loader';
 export {
   preparePropInstanceTemplate,

@@ -30,6 +30,10 @@ export class CombatSystem {
     this.projectiles = new ProjectileManager(scene);
   }
 
+  setProjectileBloomStrength(strength: number): void {
+    this.projectiles.setBloomStrength(strength);
+  }
+
   setWeaponsManifest(manifest: WeaponsManifest): void {
     this.weaponsManifest = manifest;
   }

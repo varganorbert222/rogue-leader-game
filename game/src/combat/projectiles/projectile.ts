@@ -91,7 +91,12 @@ export class Projectile {
     this.direction = options.direction.clone().normalize();
     this.mesh.setEnabled(true);
     this.mesh.isVisible = true;
-    syncProjectileMeshTransform(this.mesh, options.origin, this.direction);
+    syncProjectileMeshTransform(
+      this.mesh,
+      options.origin,
+      this.direction,
+      this.config.visual.length,
+    );
   }
 
   update(

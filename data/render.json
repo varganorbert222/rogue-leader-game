@@ -1,0 +1,15 @@
+{
+  "bloom": {
+    "enabled": true,
+    "weight": 2.0,
+    "threshold": 0.25,
+    "kernel": 64,
+    "scale": 1.0,
+    "projectiles": {
+      "strength": 2
+    },
+    "emissive": {
+      "strength": 1
+    }
+  }
+}

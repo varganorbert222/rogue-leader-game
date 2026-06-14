@@ -48,7 +48,7 @@ import {
   findVisualRoot,
   remapLodMeshGroups,
 } from "./clone-entity-utils";
-import { disableMeshBackfaceCulling } from "../render/mesh-material-utils";
+import { disableMeshBackfaceCulling, applyMeshEmissiveBloomStrength } from "../render/mesh-material-utils";
 import {
   shareMaterialsFromTemplate,
   optimizeLoadedEntityMeshes,
@@ -154,12 +154,26 @@ function finalizeLoadedEntity(
 
 export class GltfShipLoader {
   private lodProgressCallback?: LodProgressCallback;
+  private emissiveBloomStrength = 1;
 
   constructor(
     private readonly scene: Scene,
     private readonly baseUrl: string,
     private readonly lodLoader: LodShipLoader,
   ) {}
+
+  /** Scales emissive on loaded ship materials (applied once per template at load). */
+  setEmissiveBloomStrength(strength: number): void {
+    this.emissiveBloomStrength = Math.max(0, strength);
+  }
+
+  private applyShipEmissiveBloom(loaded: LoadedEntity): void {
+    if (this.emissiveBloomStrength === 1) return;
+    applyMeshEmissiveBloomStrength(loaded.meshes, this.emissiveBloomStrength);
+    for (const group of loaded.lodMeshes) {
+      applyMeshEmissiveBloomStrength(group, this.emissiveBloomStrength);
+    }
+  }
 
   setLodProgressCallback(callback?: LodProgressCallback): void {
     this.lodProgressCallback = callback;
@@ -192,6 +206,7 @@ export class GltfShipLoader {
         },
       );
       optimizeLoadedEntityMeshes(loaded);
+      this.applyShipEmissiveBloom(loaded);
       return loaded;
     }
 

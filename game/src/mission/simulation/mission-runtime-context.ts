@@ -2,6 +2,7 @@ import type { AssetManifest, BabylonHost } from '@rogue-leader/engine';
 import type { WeaponsManifest } from '../../data/config/weapons-manifest';
 import type { CombatConfig } from '../../data/config/combat-config';
 import type { NpcBehaviorConfig } from '../../data/config/npc-behavior-config';
+import type { RenderConfig } from '../../data/config/render-config';
 import type { MissionNavigation } from '../../ai/navigation/mission-navigation';
 import type { MissionAssetPreloader } from '../loading/mission-asset-preloader';
 import type { WeaponHitSfxResolver } from '../../audio/weapon-hit-sfx';
@@ -27,6 +28,7 @@ export interface MissionRuntimeContext {
   weaponsManifest: WeaponsManifest;
   combatConfig: CombatConfig;
   npcBehaviorConfig: NpcBehaviorConfig;
+  renderConfig: RenderConfig;
   missionNavigation: MissionNavigation;
   hitSfxResolver?: WeaponHitSfxResolver;
   events: GameEventBus;

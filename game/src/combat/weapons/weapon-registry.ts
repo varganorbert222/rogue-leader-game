@@ -8,6 +8,7 @@ import type {
   WeaponDefinitionEntry,
 } from '../../data/config/weapons-manifest';
 import {
+  resolveProjectileVisual,
   resolveWeaponDefinitionEntry,
   resolveWeaponIdForMount,
 } from '../../data/config/weapons-manifest';
@@ -20,7 +21,11 @@ function toResolvedWeaponDefinition(
   weaponId: string,
   entry: WeaponDefinitionEntry,
 ): ResolvedWeaponDefinition | null {
-  const visual = manifest.visualProfiles[entry.visualProfile];
+  const visual = resolveProjectileVisual(
+    manifest,
+    entry.visualProfile,
+    entry.faction,
+  );
   if (!visual) return null;
 
   const projectile: ProjectileConfig = {
