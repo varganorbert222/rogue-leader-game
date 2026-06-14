@@ -22,15 +22,16 @@ function resolveClipFiles(
 export async function loadAudioLibraries(
   manifest: AudioManifest,
   clips: ClipPlayer,
-  baseUrl: string,
-  registry: SfxRegistry | null
+  configBaseUrl: string,
+  assetsBaseUrl: string,
+  registry: SfxRegistry | null,
 ): Promise<Map<string, AudioLibraryDef>> {
   const loaded = new Map<string, AudioLibraryDef>();
   if (!manifest.libraries) return loaded;
 
   for (const [libraryKey, relativePath] of Object.entries(manifest.libraries)) {
     try {
-      const url = `${baseUrl}/${relativePath}`.replace(/\/+/g, '/').replace(':/', '://');
+      const url = `${configBaseUrl}/${relativePath}`.replace(/\/+/g, '/').replace(':/', '://');
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const library = (await res.json()) as AudioLibraryDef;
@@ -44,8 +45,8 @@ export async function loadAudioLibraries(
           clipKey,
           { ...clipDef, files: resolved.files },
           resolved.basePath,
-          baseUrl,
-          library.category
+          assetsBaseUrl,
+          library.category,
         );
       };
 

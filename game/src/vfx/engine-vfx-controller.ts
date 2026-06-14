@@ -3,6 +3,7 @@ import {
   createEngineTrail,
   DEFAULT_ENGINE_VFX,
   detectShipAnchors,
+  RuntimePaths,
   type EngineVfxProfile,
 } from '@rogue-leader/engine';
 import type { ShipAnchors, ShipManifestEntry } from '@rogue-leader/engine';
@@ -21,7 +22,7 @@ export class EngineVfxController {
   private trails: EngineTrailSlot[] = [];
   private manifest: WeaponsManifest | null = null;
 
-  async loadManifest(url = '/assets/weapons/manifest.json'): Promise<void> {
+  async loadManifest(url = RuntimePaths.weaponsManifest): Promise<void> {
     this.manifest = await loadWeaponsManifest(url);
   }
 

@@ -8,6 +8,7 @@ import {
 } from '@babylonjs/core';
 import { createGraphicsEngine, type GraphicsBackend } from './backend';
 import { AudioManager } from '../audio/audio-manager';
+import { RuntimePaths } from '../runtime-paths';
 
 export class BabylonHost {
   readonly engine: AbstractEngine;
@@ -39,7 +40,11 @@ export class BabylonHost {
     dir.intensity = 1.1;
 
     const audio = new AudioManager(scene);
-    await audio.loadManifest('/assets/audio/manifest.json');
+    await audio.loadManifest(
+      RuntimePaths.audioManifest,
+      RuntimePaths.assetsBase,
+      RuntimePaths.audioConfigBase,
+    );
 
     const host = new BabylonHost(engine, backend, scene, audio);
 

@@ -1,8 +1,8 @@
 {
   "version": 2,
   "libraries": {
-    "sfx": "audio/libraries/sfx.json",
-    "ui": "audio/libraries/ui.json"
+    "sfx": "libraries/sfx.json",
+    "ui": "libraries/ui.json"
   },
   "music": {
     "menu_loop": {

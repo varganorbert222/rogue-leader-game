@@ -9,7 +9,8 @@
   "scripts": {
     "start": "npm run start --workspace=frontend",
     "build": "npm run build --workspace=frontend",
-    "audio:registry": "node scripts/generate-audio-registry.mjs"
+    "audio:registry": "node scripts/generate-audio-registry.mjs",
+    "assets:fetch": "node scripts/fetch-assets.mjs"
   },
   "engines": {
     "node": ">=20"

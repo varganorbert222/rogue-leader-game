@@ -6,6 +6,7 @@ import {
   type TransformNode,
 } from '@babylonjs/core';
 import type { BabylonHost } from '../core/babylon-host';
+import { RuntimePaths } from '../runtime-paths';
 import { ensureMeshWorldMatrix } from '../render/mesh-world-utils';
 import type { LodConfig, LodManifestValue, LodMetric } from '../loaders/lod-config';
 import { resolveLodPlan } from '../loaders/lod-config';
@@ -69,7 +70,7 @@ export class LodPreviewScene {
 
   constructor(
     private readonly host: BabylonHost,
-    assetsBaseUrl = '/assets',
+    assetsBaseUrl = RuntimePaths.assetsBase,
   ) {
     const scene = host.scene;
     const canvas = host.engine.getRenderingCanvas()!;

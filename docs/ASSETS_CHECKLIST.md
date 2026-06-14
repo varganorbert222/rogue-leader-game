@@ -1,6 +1,20 @@
 # Asset drop-in checklist
 
-Place files exactly as listed. Restart `npm run start` after adding assets.
+Place **binary files** under `assets/` exactly as listed. JSON manifests and tuning live in [`data/`](../data/). Restart `npm run start` after adding assets.
+
+## Download release assets
+
+`assets/` is not versioned in git. Download and extract the release zip into `assets/`:
+
+```bash
+npm run assets:fetch
+```
+
+URL: `scripts/fetch-assets.config.json`. One-off override:
+
+```bash
+ASSETS_ZIP_URL=https://example.com/assets.zip npm run assets:fetch
+```
 
 ## Ships (GLB + fire/engine empties)
 
@@ -11,7 +25,7 @@ Place files exactly as listed. Restart `npm run start` after adding assets.
 - [ ] `models/ships/tie_fighter/tie_fighter_LOD1.glb`
 - [ ] `models/ships/tie_fighter/tie_fighter_LOD2.glb`
 
-**Ship axes** — visual export correction only (`assets/manifest.json`, does not affect flight/physics):
+**Ship axes** — visual export correction only (`data/manifest.json`, does not affect flight/physics):
 
 ```json
 "axes": {
@@ -31,7 +45,7 @@ Place files exactly as listed. Restart `npm run start` after adding assets.
 
 Axis values: `+x`, `-x`, `+y`, `-y`, `+z`, `-z`. Visual pivot only — no re-export needed.
 
-**LOD** — per ship/prop in `assets/manifest.json` (Unity-style screen %, defaults applied when omitted):
+**LOD** — per ship/prop in `data/manifest.json` (Unity-style screen %, defaults applied when omitted):
 
 ```json
 "lod": [
@@ -77,11 +91,11 @@ Missing manual LOD files fall back to the last successfully loaded level. Auto L
 | Projectile mount | `weapon_projectile_{NN}` | `weapon_projectile_01`               |
 | Typed projectile | `weapon_{behavior}_{NN}` | `weapon_missile_01`                  |
 
-All detected mounts are used automatically. Per-slot weapon/VFX overrides go in `assets/manifest.json` → `anchors.weapons` / `anchors.engines`; otherwise `defaultWeapons` applies (e.g. every `weapon_laser_*` → `rebel_laser`).
+All detected mounts are used automatically. Per-slot weapon/VFX overrides go in `data/manifest.json` → `anchors.weapons` / `anchors.engines`; otherwise `defaultWeapons` applies (e.g. every `weapon_laser_*` → `rebel_laser`).
 
 Legacy (still supported): `fire_left_01`, `engine_left`, `engine_right`.
 
-Weapon behavior (bomb, homing missile, disabling laser, rebel/imperial visuals) is configured in `assets/weapons/manifest.json` and bound per ship slot in `assets/manifest.json`.
+Weapon behavior (bomb, homing missile, disabling laser, rebel/imperial visuals) is configured in `data/weapons/manifest.json` and bound per ship slot in `data/manifest.json`.
 
 ## Props
 

@@ -12,10 +12,29 @@ Angular 19 + Babylon.js 7 monorepo. MVP mission: **Asteroid Field (Space)**.
 ```bash
 cd rogue-leader-game
 npm install
+npm run assets:fetch
 npm run start
 ```
 
 Open http://localhost:4200
+
+`assets/` is not versioned in git — `assets:fetch` downloads the release zip before the first run (see below).
+
+## Download release assets
+
+Binary media (GLB, WAV, PNG, …) ship in a GitHub Release zip, not in the repo:
+
+```bash
+npm run assets:fetch
+```
+
+Default URL: `scripts/fetch-assets.config.json`. One-off override:
+
+```bash
+ASSETS_ZIP_URL=https://example.com/assets.zip npm run assets:fetch
+```
+
+Manual drop-in is also fine — see `docs/ASSETS_CHECKLIST.md`. After assets are in place, tune manifests in `data/`.
 
 ## Controls
 
@@ -63,11 +82,12 @@ Click **Start Game** once to unlock browser audio. Connect a gamepad before load
 - `frontend/` — Angular UI
 - `engine/` — Babylon host, loaders, audio, VFX
 - `game/` — flight, AI, missions, collision
-- `assets/` — **your** models, textures, audio (see `assets/ASSETS_CHECKLIST.md`)
+- `data/` — JSON manifests & tuning (ships, weapons, combat, audio libraries)
+- `assets/` — binary media only (GLB, WAV, PNG — not in git; `npm run assets:fetch`)
 
 ## Adding your assets
 
-Copy GLB, cubemap faces, and MP3 files into `assets/` following `ASSETS_CHECKLIST.md`. Missing files use procedural placeholders and log a single console warning per asset id.
+Copy files manually per `docs/ASSETS_CHECKLIST.md`, or use `npm run assets:fetch` (see **Download release assets** above). Tune ship/weapon/combat settings in `data/`. Missing files use procedural placeholders and log a single console warning per asset id.
 
 ## Missions
 

@@ -1,4 +1,4 @@
-import { GltfShipLoader, LodShipLoader, loadAssetManifest, type AssetManifest, type LodLoadProgress } from '@rogue-leader/engine';
+import { GltfShipLoader, LodShipLoader, loadAssetManifest, RuntimePaths, type AssetManifest, type LodLoadProgress } from '@rogue-leader/engine';
 import type { BabylonHost } from '@rogue-leader/engine';
 import { loadCombatConfig, type CombatConfig } from '../../data/config/combat-config';
 import { loadWeaponsManifest, type WeaponsManifest } from '../../data/config/weapons-manifest';
@@ -50,15 +50,15 @@ export interface MissionBootstrapResult {
 export class MissionBootstrap {
   static async run(input: MissionBootstrapInput): Promise<MissionBootstrapResult> {
     const config = requireMissionConfig(input.missionId);
-    const assetManifest = await loadAssetManifest('/assets/manifest.json');
-    const weaponsManifest = await loadWeaponsManifest('/assets/weapons/manifest.json');
+    const assetManifest = await loadAssetManifest(RuntimePaths.assetManifest);
+    const weaponsManifest = await loadWeaponsManifest(RuntimePaths.weaponsManifest);
     const hitSfxResolver = new WeaponHitSfxResolver(weaponsManifest);
-    const combatConfig = await loadCombatConfig('/assets/combat.json');
-    const npcBehaviorConfig = await loadNpcBehaviorConfig('/assets/npc-behavior.json');
+    const combatConfig = await loadCombatConfig(RuntimePaths.combatConfig);
+    const npcBehaviorConfig = await loadNpcBehaviorConfig(RuntimePaths.npcBehaviorConfig);
     const missionNavigation = new MissionNavigation(config.navigation);
 
-    const lodLoader = new LodShipLoader(input.host.scene, '/assets');
-    const shipLoader = new GltfShipLoader(input.host.scene, '/assets', lodLoader);
+    const lodLoader = new LodShipLoader(input.host.scene, RuntimePaths.assetsBase);
+    const shipLoader = new GltfShipLoader(input.host.scene, RuntimePaths.assetsBase, lodLoader);
     shipLoader.setLodProgressCallback((progress) => {
       input.onLoadMessage?.(progress.message);
       input.onLoadProgress?.(progress);

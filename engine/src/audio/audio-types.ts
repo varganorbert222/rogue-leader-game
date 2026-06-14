@@ -22,7 +22,7 @@ export interface LegacySfxEntry {
 export interface AudioClipDef {
   /** Filenames relative to the library basePath (or registry group path). */
   files?: string[];
-  /** Reference into assets/audio/sfx/registry.json → groups. */
+  /** Reference into data/audio/sfx/registry.json → groups. */
   registry?: string;
   volume?: number;
   volumeRange?: [number, number];

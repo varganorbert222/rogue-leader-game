@@ -1,4 +1,5 @@
 export { BabylonHost } from './core/babylon-host';
+export { RuntimePaths, ASSETS_BASE_URL, DATA_BASE_URL } from './runtime-paths';
 export { createGraphicsEngine, type GraphicsBackend } from './core/backend';
 export {
   clamp,

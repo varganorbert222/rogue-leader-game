@@ -1,10 +1,10 @@
 import type { SfxRegistry } from './audio-types';
 
 export async function loadSfxRegistry(
-  baseUrl: string
+  configBaseUrl: string,
 ): Promise<SfxRegistry | null> {
   try {
-    const url = `${baseUrl}/audio/sfx/registry.json`
+    const url = `${configBaseUrl}/sfx/registry.json`
       .replace(/\/+/g, '/')
       .replace(':/', '://');
     const res = await fetch(url);
