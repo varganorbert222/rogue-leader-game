@@ -1,0 +1,33 @@
+.page-back-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+
+  &.compact {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+  }
+
+  a,
+  button {
+    color: #8ec8ff;
+    background: rgba(10, 24, 40, 0.5);
+    border: 1px solid #2a4a6a;
+    border-radius: 6px;
+    padding: 0.45rem 0.75rem;
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-decoration: none;
+
+    &:hover {
+      border-color: #4a8ec0;
+      background: rgba(20, 40, 64, 0.65);
+    }
+  }
+
+  button {
+    color: #e8f4ff;
+  }
+}

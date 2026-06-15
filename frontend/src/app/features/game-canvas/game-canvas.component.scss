@@ -99,6 +99,10 @@ canvas {
   z-index: 1;
 }
 
+.hud.hidden {
+  visibility: hidden;
+}
+
 .bars {
   position: absolute;
   top: 1rem;
@@ -184,7 +188,23 @@ canvas {
 
 .overlay.loading {
   background: rgba(0, 8, 20, 0.92);
-  pointer-events: none;
+  pointer-events: auto;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 1.25rem;
+
+  .page-back-nav {
+    align-self: flex-start;
+  }
+}
+
+.loading-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
 }
 
 .overlay.loading h2 {

@@ -21,6 +21,7 @@ export interface ShipEngineAudioSource {
 export class ShipEngineAudioManager {
   private playerHandle = '';
   private playerClipId: SfxClipId | null = null;
+  private playerLoopClipId: SfxClipId | null = null;
   private playerPosition = Vector3.Zero();
   private playerVelocity = Vector3.Zero();
   private config: EngineAudioConfig = resolveEngineAudioConfig();
@@ -34,6 +35,7 @@ export class ShipEngineAudioManager {
     this.stopPlayer(audio);
     this.stopAllNpcs(audio);
     this.playerClipId = null;
+    this.playerLoopClipId = null;
   }
 
   setPlayerShip(shipId: string): void {
@@ -57,6 +59,10 @@ export class ShipEngineAudioManager {
     const clipId = this.playerClipId;
     if (!clipId) return;
 
+    if (this.playerHandle && this.playerLoopClipId !== clipId) {
+      this.stopPlayer(audio);
+    }
+
     const pitch = enginePitchFromSpeedRatio(speedRatio, this.config);
     const transform = {
       pitch,
@@ -70,6 +76,7 @@ export class ShipEngineAudioManager {
         position: this.playerPosition.clone(),
         velocity: this.playerVelocity.clone(),
       });
+      this.playerLoopClipId = clipId;
       return;
     }
 
@@ -133,6 +140,7 @@ export class ShipEngineAudioManager {
     if (!this.playerHandle) return;
     audio.stopLoop(this.playerHandle);
     this.playerHandle = '';
+    this.playerLoopClipId = null;
   }
 
   private stopAllNpcs(audio: AudioManager): void {

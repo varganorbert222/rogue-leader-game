@@ -15,6 +15,7 @@ import { collectDescendantMeshes } from './scene-graph-utils';
 import { filterVisualMeshes } from './collider-mesh-detector';
 import { attachGltfImportToParent } from './gltf-import-utils';
 import { findVisualBankPivot } from './visual-pivot';
+import { markSceneNodeGenerated } from './scene-node-origin';
 
 export interface CockpitAttachment {
   root: TransformNode;
@@ -59,7 +60,19 @@ export function applyCockpitViewMode(
 
 export function disposeCockpitAttachment(cockpit: CockpitAttachment | undefined): void {
   if (!cockpit || cockpit.root.isDisposed()) return;
-  cockpit.root.dispose();
+  cockpit.root.dispose(false, true);
+}
+
+/** Remove any dynamically attached cockpit interior from a ship hierarchy. */
+export function stripCockpitFromRoot(root: TransformNode): void {
+  const attachment = findCockpitAttachment(root);
+  if (attachment) {
+    disposeCockpitAttachment(attachment);
+  }
+}
+
+export function stripCockpitFromLoadedEntity(loaded: LoadedEntity): void {
+  stripCockpitFromRoot(loaded.root);
 }
 
 export async function loadCockpitForShip(
@@ -76,6 +89,7 @@ export async function loadCockpitForShip(
   try {
     const result = await SceneLoader.ImportMeshAsync('', url, '', scene);
     const cockpitRoot = new TransformNode(`${loaded.root.name}${COCKPIT_ROOT_SUFFIX}`, scene);
+    markSceneNodeGenerated(cockpitRoot);
     cockpitRoot.parent = findVisualBankPivot(loaded.visualRoot) ?? loaded.visualRoot;
     attachGltfImportToParent(result, cockpitRoot);
 

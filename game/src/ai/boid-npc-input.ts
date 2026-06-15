@@ -50,7 +50,7 @@ export class BoidNpcInput implements NpcInput {
       getShipForward(context.vehicleRotation),
     );
 
-    this.updateDefensiveState(playerDist, dt);
+    this.updateDefensiveState(playerDist, dt, context.playerIsHostile);
 
     const separation = computeSeparation(
       context.vehiclePosition,
@@ -126,7 +126,16 @@ export class BoidNpcInput implements NpcInput {
     return { vehicle, wantsFire: fire.wantsFire };
   }
 
-  private updateDefensiveState(playerDist: number, dt: number): void {
+  private updateDefensiveState(
+    playerDist: number,
+    dt: number,
+    playerIsHostile: boolean,
+  ): void {
+    if (!playerIsHostile) {
+      this.defensive = false;
+      this.defensiveLinger = 0;
+      return;
+    }
     if (playerDist <= THREAT_ENTER_RADIUS) {
       this.defensive = true;
       this.defensiveLinger = DEFENSIVE_LINGER_SEC;

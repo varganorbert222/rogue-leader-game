@@ -1,0 +1,11 @@
+<section class="export">
+  <h3>{{ title }}</h3>
+  @if (hint) {
+    <p class="hint">{{ hint }}</p>
+  }
+  <textarea readonly [rows]="rows" [value]="json"></textarea>
+  <button type="button" (click)="copy()">Copy JSON</button>
+  @if (copyStatus) {
+    <span class="copy-status">{{ copyStatus }}</span>
+  }
+</section>

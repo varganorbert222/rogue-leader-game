@@ -37,6 +37,7 @@ function presetForClip(def: AudioClipDef, category?: AudioLibraryCategory): Part
   if (id.includes('explosion') || id.includes('asteroid')) return SPATIAL_PRESETS.explosion;
   if (id.includes('cannon') || id.includes('projectile')) return SPATIAL_PRESETS.weapon;
   if (id.includes('inbound') || id.includes('whoosh')) return SPATIAL_PRESETS.flyby;
+  if (id.includes('crash')) return SPATIAL_PRESETS.hit;
   if (id.includes('hit') || id.includes('bullet')) return SPATIAL_PRESETS.hit;
   return {};
 }

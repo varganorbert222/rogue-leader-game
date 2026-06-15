@@ -4,6 +4,7 @@ import {
   prepareLoadedEntityForPool,
   resetLoadedEntityTransform,
   setLoadedEntityVisible,
+  stripCockpitFromLoadedEntity,
 } from '@rogue-leader/engine';
 
 const MAX_INSTANCES_PER_SHIP = 256;
@@ -35,8 +36,17 @@ export class ShipTemplatePool {
     if (!template) {
       throw new Error(`Ship template not preloaded: ${shipId}`);
     }
-    setLoadedEntityVisible(template, true);
+    resetLoadedEntityTransform(template);
+    prepareLoadedEntityForAcquire(template);
     return template;
+  }
+
+  releasePlayerShip(loaded: LoadedEntity): void {
+    if (loaded.root.isDisposed()) return;
+    stripCockpitFromLoadedEntity(loaded);
+    prepareLoadedEntityForPool(loaded);
+    setLoadedEntityVisible(loaded, false);
+    loaded.root.position.set(0, POOL_HIDE_Y, 0);
   }
 
   acquireNpcShip(shipId: string, instanceId: string, loader: GltfShipLoader): LoadedEntity {
@@ -44,11 +54,13 @@ export class ShipTemplatePool {
     const reused = pooled?.pop();
     if (reused && !reused.root.isDisposed()) {
       reused.root.name = `${instanceId}_root`;
+      stripCockpitFromLoadedEntity(reused);
       resetLoadedEntityTransform(reused);
       prepareLoadedEntityForAcquire(reused);
       return reused;
     }
     const loaded = this.cloneNpcShip(shipId, instanceId, loader);
+    stripCockpitFromLoadedEntity(loaded);
     resetLoadedEntityTransform(loaded);
     prepareLoadedEntityForAcquire(loaded);
     return loaded;

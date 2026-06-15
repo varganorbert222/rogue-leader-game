@@ -8,6 +8,8 @@ import { MissionNavigation } from '../../ai/navigation/mission-navigation';
 import { CombatSystem } from '../../combat/systems/combat-system';
 import { GameEvents, type GameEventBus } from '../../core/events/game-events';
 import { WeaponHitSfxResolver } from '../../audio/weapon-hit-sfx';
+import { WeaponFireSfxResolver, isWarheadPassByWeapon } from '../../audio/weapon-pass-by-sfx';
+import { SfxClipIds } from '../../data/constants/audio-clips';
 import type { WreckDebrisManager } from '../../vfx/wreck-debris-manager';
 import type { CameraController } from '../../flight/camera-controller';
 import type { CollisionSystem } from '../../collision/collision-system';
@@ -43,6 +45,7 @@ export interface MissionBootstrapResult {
   shipLoader: GltfShipLoader;
   combat: CombatSystem;
   hitSfxResolver: WeaponHitSfxResolver;
+  fireSfxResolver: WeaponFireSfxResolver;
   assetPreloader: MissionAssetPreloader;
   simulation: MissionSimulationCoordinator;
   runtime: MissionRuntimeContext;
@@ -55,6 +58,7 @@ export class MissionBootstrap {
     const assetManifest = await loadAssetManifest(RuntimePaths.assetManifest);
     const weaponsManifest = await loadWeaponsManifest(RuntimePaths.weaponsManifest);
     const hitSfxResolver = new WeaponHitSfxResolver(weaponsManifest);
+    const fireSfxResolver = new WeaponFireSfxResolver(weaponsManifest);
     const combatConfig = await loadCombatConfig(RuntimePaths.combatConfig);
     const npcBehaviorConfig = await loadNpcBehaviorConfig(RuntimePaths.npcBehaviorConfig);
     const renderConfig = await loadRenderConfig(RuntimePaths.renderConfig);
@@ -83,11 +87,14 @@ export class MissionBootstrap {
     const combat = new CombatSystem(input.host.scene, input.events);
     combat.setWeaponsManifest(weaponsManifest);
     combat.setProjectileBloomStrength(renderConfig.bloom.projectiles.strength);
-    combat.initProjectilePassBy((_weaponId, point, velocity) => {
+    combat.initProjectilePassBy((weaponId, point, velocity) => {
       input.events.emit(
         GameEvents.projectileWhoosh({
           position: point,
           velocity,
+          sfx: isWarheadPassByWeapon(weaponsManifest, weaponId)
+            ? SfxClipIds.WarheadWhoosh
+            : undefined,
         }),
       );
     });
@@ -129,6 +136,7 @@ export class MissionBootstrap {
       shipLoader,
       combat,
       hitSfxResolver,
+      fireSfxResolver,
       assetPreloader,
       simulation,
       runtime,

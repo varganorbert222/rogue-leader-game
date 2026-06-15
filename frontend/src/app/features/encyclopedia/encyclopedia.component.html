@@ -1,0 +1,51 @@
+<app-dev-editor-shell
+  title="Model Encyclopedia"
+  badge="view"
+  leftTitle="Catalog"
+  rightTitle="Details"
+  (canvasReady)="onCanvasReady($event)"
+>
+  <div devEditorLeft>
+    <app-dev-model-picker
+      assetLabel="Model"
+      [models]="models"
+      [modelId]="selectedModelId"
+      [variantId]="selectedVariantId"
+      [disabled]="loading"
+      (modelChange)="onModelChange($event)"
+      (variantChange)="onVariantChange($event)"
+    />
+
+    <p class="hint">Orbit: drag · Zoom: wheel · Same bloom/emissive tuning as in-game.</p>
+
+    <app-dev-editor-status
+      [loading]="loading"
+      [loadingMessage]="loadingMessage"
+      [errorMessage]="errorMessage"
+    />
+
+    <app-dev-scene-hierarchy
+      [resetKey]="hierarchyRevision"
+      [nodes]="hierarchy"
+      [selectedId]="selectedNodeId"
+      [animations]="animations"
+      [playingAnimationIndex]="playingAnimationIndex"
+      [nodeTransform]="nodeTransform"
+      (nodeSelect)="onHierarchySelect($event)"
+      (viewportVisibilityChange)="onHierarchyViewportChange($event)"
+      (playAnimation)="onPlayAnimation($event)"
+      (stopAnimations)="onStopAnimations()"
+    />
+  </div>
+
+  <div devEditorRight>
+    <dl class="details">
+      <div><dt>Asset</dt><dd>{{ selectedModelLabel() }}</dd></div>
+      @if (showVariantSelector()) {
+        <div><dt>Variant</dt><dd>{{ selectedVariantLabel() }}</dd></div>
+      }
+      <div><dt>Kind</dt><dd>{{ selectedModelKind() }}</dd></div>
+    </dl>
+    <p class="hint">Read-only viewer for ships and props from manifest.json.</p>
+  </div>
+</app-dev-editor-shell>

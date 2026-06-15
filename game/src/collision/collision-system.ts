@@ -34,6 +34,56 @@ export function buildSphereBody(body: {
   };
 }
 
+/** World-space bounding sphere for mesh colliders (or root fallback). */
+export function getEffectiveCollisionBounds(
+  body: SphereBody,
+  fallbackRadius: number,
+): { center: Vector3; radius: number } {
+  const meshes = body.colliderMeshes;
+  if (meshes?.length) {
+    let minX = Number.POSITIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let minZ = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+    let maxZ = Number.NEGATIVE_INFINITY;
+    let any = false;
+
+    for (const mesh of meshes) {
+      if (mesh.isDisposed() || !mesh.isEnabled()) continue;
+      ensureMeshWorldMatrix(mesh);
+      const bounds = mesh.getBoundingInfo().boundingBox;
+      minX = Math.min(minX, bounds.minimumWorld.x);
+      minY = Math.min(minY, bounds.minimumWorld.y);
+      minZ = Math.min(minZ, bounds.minimumWorld.z);
+      maxX = Math.max(maxX, bounds.maximumWorld.x);
+      maxY = Math.max(maxY, bounds.maximumWorld.y);
+      maxZ = Math.max(maxZ, bounds.maximumWorld.z);
+      any = true;
+    }
+
+    if (any) {
+      const center = new Vector3(
+        (minX + maxX) * 0.5,
+        (minY + maxY) * 0.5,
+        (minZ + maxZ) * 0.5,
+      );
+      const half = new Vector3(
+        (maxX - minX) * 0.5,
+        (maxY - minY) * 0.5,
+        (maxZ - minZ) * 0.5,
+      );
+      const radius = Math.max(half.x, half.y, half.z, 0.5);
+      return { center, radius };
+    }
+  }
+
+  return {
+    center: body.position.clone(),
+    radius: Math.max(fallbackRadius, body.radius, 0.5),
+  };
+}
+
 export interface RaycastHit {
   hit: boolean;
   distance: number;

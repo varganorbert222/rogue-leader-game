@@ -40,6 +40,7 @@ export function buildMissionAudioContext(params: {
   input: PlayerInput;
   dt: number;
   camera: Camera;
+  cockpitView: boolean;
   npcBehaviorConfig: NpcBehaviorConfig;
   prevListenerPosition: Vector3 | null;
 }): {
@@ -94,6 +95,7 @@ export function buildMissionAudioContext(params: {
         ? getEngineSpeedRatio(world, playerId)
         : 0,
       npcEngines: buildNpcEngineSources(world),
+      cockpitView: params.cockpitView,
     },
   };
 }

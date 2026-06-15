@@ -80,6 +80,15 @@ export class ShipAnimationController {
     return true;
   }
 
+  /** Snap all clips to the configured initial state without playing a transition. */
+  snapToInitialState(): void {
+    this.clearEndObserver();
+    this.playing = false;
+    this.activeGroup = null;
+    this.state = this.config.initialState;
+    this.applyInitialPose();
+  }
+
   dispose(): void {
     this.clearEndObserver();
     for (const group of this.groups.values()) {

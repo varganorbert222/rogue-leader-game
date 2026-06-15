@@ -61,10 +61,16 @@ export {
   applySpatialMotionToSound,
   type SpatialMotionState,
 } from './audio/spatial-audio';
+export type { CockpitAudioFilterConfig } from './audio/cockpit-audio-filter';
 export { SkyboxLoader, type SkyboxApplyOptions } from './render/skybox-loader';
 export { SceneBloomPipeline, type SceneBloomConfig } from './render/scene-bloom-pipeline';
 export { DebugFloor, type DebugFloorOptions } from './render/debug-floor';
 export { DebugAxes, type DebugAxesOptions } from './render/debug-axes';
+export { startDevPreviewRenderLoop } from './dev/dev-preview-loop';
+export {
+  computeViewportAxisGizmoLines,
+  type ViewportAxisGizmoLine,
+} from './render/viewport-axis-gizmo';
 export { TimeOfDayService } from './render/time-of-day';
 export {
   WireframeLinePool,
@@ -110,8 +116,10 @@ export {
   detectColliderMeshes,
   configureColliderMesh,
   isVisualColliderMesh,
+  isHierarchyColliderMesh,
   hasColliderGeometry,
   filterVisualMeshes,
+  collectShipPreviewVisualMeshes,
   filterVisualLodMeshes,
 } from './loaders/collider-mesh-detector';
 export {
@@ -201,6 +209,74 @@ export {
   LodPreviewScene,
 } from './dev/lod-preview-scene';
 export {
+  EncyclopediaPreviewScene,
+} from './dev/encyclopedia-preview-scene';
+export {
+  ParticlePreviewScene,
+} from './dev/particle-preview-scene';
+export {
+  DevPreviewRendering,
+  loadDevRenderBloomConfig,
+} from './dev/dev-preview-rendering';
+export {
+  buildSceneHierarchy,
+  buildModelContentHierarchy,
+  findSceneNodeByName,
+} from './dev/scene-hierarchy-builder';
+export {
+  DevScenePreviewExtras,
+  type DevPreviewAnimationInfo,
+  type HierarchyNodeTransformInfo,
+} from './dev/dev-scene-preview-extras';
+export {
+  type HierarchyNode,
+  type HierarchyNodeKind,
+  type HierarchyReorderEvent,
+  reorderFlatHierarchy,
+} from './dev/hierarchy-types';
+export {
+  cloneHierarchyOutlinerState,
+  createDefaultViewportState,
+  createHierarchyOutlinerState,
+  flattenOutlinerHierarchy,
+  resolveNodeSelfViewportVisible,
+  resolveViewportVisible,
+  seedExpandedHierarchyNodes,
+  toggleNodeViewportVisibility,
+  type HierarchyOutlinerRow,
+  type HierarchyOutlinerState,
+} from './dev/hierarchy-outliner';
+export { HierarchyViewportSync } from './dev/hierarchy-viewport-sync';
+export {
+  setColliderMeshWireframeVisible,
+  DEV_HIERARCHY_COLLIDER_WIRE_COLOR,
+} from './render/debug/collider-wireframe-debug';
+export {
+  type ParticleSystemEditable,
+  type ParticleEffectEditable,
+  type ParticlePresetEntry,
+  type ParticleBlendMode,
+  type ParticlePlayMode,
+  type ParticleTextureKind,
+  type Vec3Editable,
+  type Color4Editable,
+  buildParticleEffectHierarchy,
+  cloneParticleEffect,
+  defaultParticleEffect,
+  defaultParticleSystem,
+  nextParticleSystemId,
+} from './dev/particle-editor-types';
+export {
+  applyEditableToParticleSystem,
+  createParticleSystemFromEditable,
+  readEditableFromParticleSystem,
+} from './dev/particle-preset-factory';
+export {
+  loadParticlePresets,
+  getBuiltinParticlePresets,
+  newBlankParticlePreset,
+} from './dev/particle-presets';
+export {
   CockpitPreviewScene,
   type CockpitPreviewLiveState,
 } from './dev/cockpit-preview-scene';
@@ -218,11 +294,15 @@ export {
   type CockpitPreviewMotion,
   previewMotionToVehicleInput,
 } from './dev/cockpit-editor-types';
+export { ShipWireframePreviewScene } from './dev/ship-wireframe-preview-scene';
 export {
   lodManifestToEditableConfig,
   editableConfigToManifestValue,
+  mergeLodBaseGlbPath,
+  resolveModelVariantPath,
   type LodEditorModelEntry,
   type LodEditorModelKind,
+  type LodEditorModelVariant,
   type LodPreviewLiveState,
   type LodPreviewSnapshot,
   type LodPreviewLevelInfo,
@@ -233,6 +313,8 @@ export {
   loadCockpitForShip,
   setCockpitVisible,
   setExteriorShipVisible,
+  stripCockpitFromLoadedEntity,
+  stripCockpitFromRoot,
   type CockpitAttachment,
 } from './loaders/cockpit-loader';
 export {
@@ -268,6 +350,7 @@ export {
 export {
   ShipAnimationController,
 } from './animation/ship-animation-controller';
+export { resetShipAnimations } from './animation/reset-ship-animations';
 export { resolveWreckPath } from './loaders/wreck-path';
 export {
   ProjectileMeshPool,

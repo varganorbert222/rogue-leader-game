@@ -1,0 +1,113 @@
+.ship-select {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(228, 240, 255, 0.96);
+  background: radial-gradient(circle at 50% 35%, rgba(20, 40, 70, 0.92), rgba(4, 8, 16, 0.96));
+  z-index: 20;
+}
+
+.ship-select-panel {
+  width: min(920px, 94vw);
+  padding: 1.5rem;
+  border: 1px solid rgba(100, 180, 255, 0.35);
+  background: rgba(8, 14, 24, 0.88);
+  box-shadow: 0 0 40px rgba(0, 120, 255, 0.15);
+  color: inherit;
+}
+
+.ship-select-header h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #e8f4ff;
+}
+
+.ship-select-header p {
+  margin: 0;
+  color: rgba(180, 210, 240, 0.88);
+}
+
+.ship-select-body {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.preview-wrap {
+  min-height: 280px;
+  border: 1px solid rgba(80, 160, 255, 0.25);
+  background: #02060f;
+}
+
+.preview-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  display: block;
+}
+
+.ship-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.ship-card {
+  width: 100%;
+  text-align: left;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(100, 160, 220, 0.25);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(230, 242, 255, 0.96);
+  cursor: pointer;
+}
+
+.ship-card.selected {
+  border-color: rgba(90, 200, 255, 0.85);
+  background: rgba(40, 120, 200, 0.18);
+}
+
+.ship-name {
+  display: block;
+  font-weight: 600;
+  color: #f0f8ff;
+}
+
+.ship-faction {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.85rem;
+  color: rgba(170, 205, 235, 0.85);
+}
+
+.ship-select-footer {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.launch-btn {
+  min-width: 140px;
+  padding: 0.65rem 1.2rem;
+  border: 1px solid rgba(120, 220, 255, 0.6);
+  background: rgba(30, 110, 190, 0.35);
+  color: #e8f4ff;
+  cursor: pointer;
+}
+
+.launch-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .ship-select-body {
+    grid-template-columns: 1fr;
+  }
+}

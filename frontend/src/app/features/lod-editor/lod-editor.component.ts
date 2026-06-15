@@ -1,13 +1,11 @@
 import {
   Component,
-  ElementRef,
   OnDestroy,
   OnInit,
-  ViewChild,
+  ViewEncapsulation,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import {
   BabylonHost,
   defaultDistanceThresholds,
@@ -18,26 +16,58 @@ import {
   RuntimePaths,
   LodPreviewScene,
   lodManifestToEditableConfig,
+  type DevPreviewAnimationInfo,
+  type HierarchyNode,
+  type HierarchyNodeTransformInfo,
+  type HierarchyOutlinerState,
   type LodConfig,
   type LodEditorModelEntry,
   type LodMetric,
   type LodPreviewLiveState,
   type LodPreviewSnapshot,
 } from '@rogue-leader/engine';
+import { DevEditorShellComponent } from '../../shared/dev-editor/dev-editor-shell.component';
+import { DevEditorStatusComponent } from '../../shared/dev-editor/dev-editor-status.component';
+import { DevJsonExportComponent } from '../../shared/dev-editor/dev-json-export.component';
+import { DevModelPickerComponent } from '../../shared/dev-editor/dev-model-picker.component';
+import { DevSceneHierarchyComponent } from '../../shared/dev-editor/dev-scene-hierarchy.component';
+import {
+  beginSceneHierarchyLoad,
+  commitSceneHierarchyLoad,
+  createDevBabylonHost,
+  disposeDevBabylonHost,
+  failSceneHierarchyLoad,
+  findModelEntry,
+  firstVariantId,
+  hierarchySceneName,
+  LoadSequenceGuard,
+  refreshScenePreviewUi,
+  resolveCatalogBaseGlbPath,
+  startDevPreviewRenderLoop,
+  toErrorMessage,
+  type DevEditorCanvases,
+} from '../../shared/dev-editor/dev-editor.utils';
 
 @Component({
   selector: 'app-lod-editor',
   standalone: true,
-  imports: [FormsModule, RouterLink, DecimalPipe],
+  imports: [
+    FormsModule,
+    DecimalPipe,
+    DevEditorShellComponent,
+    DevEditorStatusComponent,
+    DevModelPickerComponent,
+    DevSceneHierarchyComponent,
+    DevJsonExportComponent,
+  ],
   templateUrl: './lod-editor.component.html',
   styleUrl: './lod-editor.component.scss',
+  encapsulation: ViewEncapsulation.None,
 })
 export class LodEditorComponent implements OnInit, OnDestroy {
-  @ViewChild('previewCanvas', { static: true })
-  canvasRef!: ElementRef<HTMLCanvasElement>;
-
   models: LodEditorModelEntry[] = [];
   selectedModelId = '';
+  selectedVariantId = '';
   loading = true;
   loadingMessage = 'Loading manifest…';
   errorMessage = '';
@@ -57,11 +87,18 @@ export class LodEditorComponent implements OnInit, OnDestroy {
 
   previewCoverageSlider = 60;
   exportJson = '';
-  copyStatus = '';
+  hierarchy: HierarchyNode[] = [];
+  hierarchyRevision = 0;
+  selectedNodeId = '';
+  animations: DevPreviewAnimationInfo[] = [];
+  playingAnimationIndex: number | null = null;
+  nodeTransform: HierarchyNodeTransformInfo | null = null;
 
   private host: BabylonHost | null = null;
   private preview: LodPreviewScene | null = null;
   private reloadTimer: number | null = null;
+  private readonly modelLoads = new LoadSequenceGuard();
+  private previewReady = false;
 
   async ngOnInit(): Promise<void> {
     try {
@@ -69,27 +106,44 @@ export class LodEditorComponent implements OnInit, OnDestroy {
       this.models = listLodEditorModels(manifest);
       if (this.models.length > 0) {
         this.selectedModelId = this.models[0].id;
+        this.selectedVariantId = firstVariantId(this.models, this.selectedModelId);
       }
+      if (this.previewReady && this.selectedModelId) {
+        await this.selectModel(this.selectedModelId);
+      }
+    } catch (err) {
+      this.errorMessage = toErrorMessage(err);
+      this.loading = false;
+    }
+  }
 
-      this.host = await BabylonHost.create(this.canvasRef.nativeElement);
+  async onCanvasReady(canvases: DevEditorCanvases): Promise<void> {
+    try {
+      this.host = await createDevBabylonHost(canvases.preview);
       this.preview = new LodPreviewScene(this.host);
+      await this.preview.initRendering();
       this.preview.setProgressCallback((progress) => {
         this.loadingMessage = progress.message;
       });
 
-      this.host.startRenderLoop(() => {
-        if (this.preview && this.snapshot) {
-          this.live = this.preview.getLiveState();
-        }
+      startDevPreviewRenderLoop(this.host, {
+        updateAxisGizmo: canvases.updateAxisGizmo,
+        getCamera: () => this.preview?.getCamera() ?? null,
+        onUpdate: () => {
+          if (this.preview && this.snapshot) {
+            this.live = this.preview.getLiveState();
+          }
+        },
       });
 
+      this.previewReady = true;
       if (this.selectedModelId) {
         await this.selectModel(this.selectedModelId);
       } else {
         this.loading = false;
       }
     } catch (err) {
-      this.errorMessage = err instanceof Error ? err.message : String(err);
+      this.errorMessage = toErrorMessage(err);
       this.loading = false;
     }
   }
@@ -98,10 +152,9 @@ export class LodEditorComponent implements OnInit, OnDestroy {
     if (this.reloadTimer != null) {
       window.clearTimeout(this.reloadTimer);
     }
-    this.preview?.dispose();
-    this.host?.dispose();
-    this.preview = null;
+    disposeDevBabylonHost(this.host, this.preview);
     this.host = null;
+    this.preview = null;
   }
 
   isDistanceMetric(): boolean {
@@ -114,16 +167,44 @@ export class LodEditorComponent implements OnInit, OnDestroy {
 
   async onModelChange(modelId: string): Promise<void> {
     this.selectedModelId = modelId;
+    this.selectedVariantId = firstVariantId(this.models, modelId);
     await this.selectModel(modelId);
   }
 
+  async onVariantChange(variantId: string): Promise<void> {
+    this.selectedVariantId = variantId;
+    await this.applySelectedVariantToConfig();
+    await this.reloadPreview(true);
+  }
+
+  private applySelectedVariantToConfig(): void {
+    const entry = findModelEntry(this.models, this.selectedModelId);
+    if (!entry) return;
+    const variantPath = resolveCatalogBaseGlbPath(
+      this.models,
+      this.selectedModelId,
+      this.selectedVariantId,
+    );
+    if (!variantPath) return;
+
+    this.config.basePath = variantPath;
+    if (this.config.paths?.length) {
+      this.config.paths[0] = variantPath;
+    }
+    this.syncPathsFromConfig();
+  }
+
   private async selectModel(modelId: string): Promise<void> {
-    const entry = this.models.find((m) => m.id === modelId);
+    const entry = findModelEntry(this.models, modelId);
     if (!entry || !this.preview) return;
 
     this.config = lodManifestToEditableConfig(entry.lod);
+    this.selectedVariantId = firstVariantId(this.models, modelId);
+    this.applySelectedVariantToConfig();
     this.syncPathsFromConfig();
     this.syncAutoQualitiesFromConfig();
+    this.snapshot = null;
+    beginSceneHierarchyLoad(this, this.preview ?? undefined);
     await this.reloadPreview(false);
   }
 
@@ -219,19 +300,6 @@ export class LodEditorComponent implements OnInit, OnDestroy {
     this.exportJson = JSON.stringify(value, null, 2);
   }
 
-  async copyExport(): Promise<void> {
-    this.exportManifestSnippet();
-    try {
-      await navigator.clipboard.writeText(this.exportJson);
-      this.copyStatus = 'Copied to clipboard';
-    } catch {
-      this.copyStatus = 'Copy failed — select JSON manually';
-    }
-    window.setTimeout(() => {
-      this.copyStatus = '';
-    }, 2500);
-  }
-
   activeLodLabel(): string {
     if (this.live.culled) return 'Culled';
     if (this.live.activeLodIndex < 0) return '—';
@@ -302,6 +370,27 @@ export class LodEditorComponent implements OnInit, OnDestroy {
     return segments;
   }
 
+  onHierarchySelect(node: HierarchyNode): void {
+    this.selectedNodeId = node.id;
+    if (!this.preview) return;
+    this.nodeTransform = this.preview.highlightNode(hierarchySceneName(node));
+    refreshScenePreviewUi(this.preview, this);
+  }
+
+  onHierarchyViewportChange(state: HierarchyOutlinerState): void {
+    this.preview?.applyHierarchyViewport(state);
+  }
+
+  onPlayAnimation(index: number): void {
+    this.preview?.playAnimation(index);
+    if (this.preview) refreshScenePreviewUi(this.preview, this);
+  }
+
+  onStopAnimations(): void {
+    this.preview?.stopAnimations();
+    if (this.preview) refreshScenePreviewUi(this.preview, this);
+  }
+
   private scheduleReload(): void {
     if (this.reloadTimer != null) {
       window.clearTimeout(this.reloadTimer);
@@ -312,40 +401,55 @@ export class LodEditorComponent implements OnInit, OnDestroy {
   }
 
   private async reloadPreview(showLoading: boolean): Promise<void> {
-    const entry = this.models.find((m) => m.id === this.selectedModelId);
+    const entry = findModelEntry(this.models, this.selectedModelId);
     if (!entry || !this.preview) return;
 
+    const loadSeq = this.modelLoads.begin();
     this.syncConfigFromPaths();
     this.syncConfigFromAutoQualities();
 
     if (showLoading) {
       this.loading = true;
       this.errorMessage = '';
+      beginSceneHierarchyLoad(this, this.preview ?? undefined);
     }
 
     try {
       const manifestValue = editableConfigToManifestValue(this.config);
-      if (this.snapshot) {
-        this.snapshot = await this.preview.reloadWithConfig(this.config);
+      const baseGlbPath = resolveCatalogBaseGlbPath(
+        this.models,
+        this.selectedModelId,
+        this.selectedVariantId,
+      );
+      if (this.snapshot?.modelId === entry.id) {
+        this.snapshot = await this.preview.reloadWithConfig(this.config, { baseGlbPath });
       } else {
         this.snapshot = await this.preview.loadModelEntry(
           entry.id,
           manifestValue,
           entry.scale,
+          { baseGlbPath },
         );
       }
+      if (!this.modelLoads.isCurrent(loadSeq)) return;
+
       this.syncThresholdsFromSnapshot();
       this.exportManifestSnippet();
       this.live = this.preview.getLiveState();
+      commitSceneHierarchyLoad(this, this.preview);
       if (this.isDistanceMetric()) {
         this.previewCoverageSlider = this.live.cameraDistanceMeters;
       } else {
         this.previewCoverageSlider = this.live.coveragePercent;
       }
     } catch (err) {
-      this.errorMessage = err instanceof Error ? err.message : String(err);
+      if (!this.modelLoads.isCurrent(loadSeq)) return;
+      if (err instanceof Error && err.message === 'Model load superseded') return;
+      this.errorMessage = toErrorMessage(err);
     } finally {
-      this.loading = false;
+      if (this.modelLoads.isCurrent(loadSeq)) {
+        this.loading = false;
+      }
     }
   }
 

@@ -42,6 +42,8 @@ export interface GameAudioUpdateContext extends CombatIntensitySnapshot {
   playerVelocity: Vector3;
   playerSpeedRatio: number;
   npcEngines: ShipEngineAudioSource[];
+  /** True when the player camera is in first-person cockpit view. */
+  cockpitView: boolean;
 }
 
 function spatialOptions(
@@ -85,9 +87,21 @@ export class GameAudioBridge {
     });
 
     events.on(GameEventTypes.ProjectileWhoosh, (e) => {
+      const clipId = readPayloadSfx(e.payload, SfxClipIds.BulletWhoosh);
+      if (clipId === SfxClipIds.WarheadWhoosh) {
+        this.audio.playOneShot(clipId, spatialOptions(e.payload));
+        return;
+      }
       this.audio.playRandomFile(
         BULLET_WHOOSH_BASE_PATH,
         BULLET_WHOOSH_FILES,
+        spatialOptions(e.payload),
+      );
+    });
+
+    events.on(GameEventTypes.ShipCollision, (e) => {
+      this.audio.playOneShot(
+        SfxClipIds.ShipCrash,
         spatialOptions(e.payload),
       );
     });
@@ -119,10 +133,6 @@ export class GameAudioBridge {
 
     events.on(GameEventTypes.AsteroidImpact, (e) => {
       this.intensity.notifyDamage(DamageSeverities.Asteroid);
-      this.audio.playOneShot(
-        SfxClipIds.AsteroidExplosion,
-        spatialOptions(e.payload),
-      );
     });
 
     events.on(GameEventTypes.SfoilToggled, (e) => {
@@ -180,23 +190,43 @@ export class GameAudioBridge {
       this.audio.crossfadeMusic(musicId, 1200);
     });
 
+    events.on(GameEventTypes.PlayerSpawned, (e) => {
+      if (!this.missionActive) return;
+      const shipId =
+        readPayloadString(e.payload, GameEventPayloadKeys.PlayerShipId) ??
+        DEFAULT_PLAYER_SHIP_ID;
+      this.engines.reset(this.audio);
+      this.engines.setPlayerShip(shipId);
+    });
+
+    events.on(GameEventTypes.PlayerDespawned, () => {
+      if (!this.missionActive) return;
+      this.engines.reset(this.audio);
+    });
+
     events.on(GameEventTypes.MissionEnded, () => {
       this.missionActive = false;
       this.engines.reset(this.audio);
       this.inbound.reset();
       this.intensity.reset();
+      this.audio.setCockpitMode(false);
       this.audio.stopMusic(800);
     });
 
     events.on(GameEventTypes.MenuOpened, () => {
       this.missionActive = false;
       this.engines.reset(this.audio);
+      this.audio.setCockpitMode(false);
       this.audio.playMusic(MusicTrackIds.MenuLoop, { fadeInMs: 400 });
     });
   }
 
   update(dt: number, context?: GameAudioUpdateContext): void {
+    this.audio.update(dt);
+
     if (!this.missionActive || !context) return;
+
+    this.audio.setCockpitMode(context.cockpitView);
 
     this.audio.updateListener(
       context.listenerPosition,

@@ -1,0 +1,28 @@
+<div class="dev-editor">
+  <canvas #previewCanvas class="preview-canvas"></canvas>
+  <app-dev-viewport-axes />
+
+  <header class="top-bar">
+    <a routerLink="/" class="back-link">← Main menu</a>
+    <h1>{{ title }}</h1>
+    @if (badge === 'dev') {
+      <span class="dev-badge">Developer tool</span>
+    } @else if (badge === 'view') {
+      <span class="view-badge">View only</span>
+    }
+  </header>
+
+  <aside class="panel panel-left">
+    @if (leftTitle) {
+      <h2>{{ leftTitle }}</h2>
+    }
+    <ng-content select="[devEditorLeft]" />
+  </aside>
+
+  <aside class="panel panel-right">
+    @if (rightTitle) {
+      <h2>{{ rightTitle }}</h2>
+    }
+    <ng-content select="[devEditorRight]" />
+  </aside>
+</div>

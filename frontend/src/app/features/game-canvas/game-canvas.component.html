@@ -3,10 +3,17 @@
 
   @if (loading) {
     <div class="overlay loading" aria-live="polite">
-      <h2>{{ missionName }}</h2>
-      <p class="loading-status">{{ loadingMessage }}</p>
-      <div class="loading-bar" aria-hidden="true">
-        <div class="loading-bar-pulse"></div>
+      <app-page-back-nav
+        [items]="loadingBackLinks"
+        [compact]="true"
+        (action)="onAbortMission($event)"
+      />
+      <div class="loading-content">
+        <h2>{{ missionName }}</h2>
+        <p class="loading-status">{{ loadingMessage }}</p>
+        <div class="loading-bar" aria-hidden="true">
+          <div class="loading-bar-pulse"></div>
+        </div>
       </div>
     </div>
   }
@@ -47,7 +54,7 @@
     ></div>
   }
 
-  <div class="hud">
+  <div class="hud" [class.hidden]="showShipSelect">
     <div class="bars">
       <div class="bar health">
         <span>Hull</span>
@@ -83,6 +90,7 @@
       <button type="button" (click)="openControls()">Irányítás</button>
       <button type="button" (click)="openDebug()">Debug</button>
       <button type="button" (click)="quitToMenu()">Quit to Menu</button>
+      <button type="button" (click)="quitToMissionSelect()">Mission Select</button>
     </div>
   }
 
@@ -123,11 +131,24 @@
     </div>
   }
 
+  @if (showShipSelect) {
+    <app-ship-select-overlay
+      [ships]="selectableShips"
+      [title]="sessionPhase === 'ship_select' && endState === null ? 'Choose your fighter' : 'Choose your fighter'"
+      subtitle="Faction follows ship type — Rebel or Imperial."
+      (previewReady)="onShipPreviewReady($event)"
+      (previewShip)="onPreviewShip($event)"
+      (confirmShip)="onConfirmShip($event)"
+      (backNavigate)="onShipSelectBack($event)"
+    />
+  }
+
   @if (endState) {
     <div class="overlay end">
       <h2>{{ endState === 'won' ? 'Mission Complete' : 'Mission Failed' }}</h2>
       <p>{{ missionName }}</p>
       <button type="button" (click)="quitToMenu()">Return to Menu</button>
+      <button type="button" (click)="quitToMissionSelect()">Mission Select</button>
     </div>
   }
 </div>

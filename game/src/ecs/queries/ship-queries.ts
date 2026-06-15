@@ -107,6 +107,24 @@ export function applyShipFlightInput(
   flight.controller.update(dt, input, boundary);
 }
 
+export function applyShipCollisionResponse(
+  world: World,
+  id: EntityId,
+  separation: Vector3,
+  relativeApproachSpeed: number,
+  velocityDelta?: Vector3,
+): void {
+  const flight = world.get(id, "flight");
+  if (!flight) return;
+
+  flight.controller.root.position.addInPlace(separation);
+  flight.controller.applyCollisionResponse(
+    separation.normalizeToNew(),
+    relativeApproachSpeed,
+    velocityDelta,
+  );
+}
+
 function updateVisualYawBank(
   flight: FlightComponent,
   dt: number,

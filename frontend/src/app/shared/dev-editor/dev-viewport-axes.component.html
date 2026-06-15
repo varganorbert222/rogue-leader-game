@@ -1,0 +1,22 @@
+<svg class="viewport-axis-gizmo" viewBox="0 0 80 80" aria-hidden="true">
+  @for (line of lines(); track line.label) {
+    <line
+      x1="40"
+      y1="40"
+      [attr.x2]="line.x2"
+      [attr.y2]="line.y2"
+      [attr.stroke]="line.color"
+      stroke-width="2"
+      stroke-linecap="round"
+    />
+    <text
+      [attr.x]="line.labelX"
+      [attr.y]="line.labelY"
+      [attr.fill]="line.color"
+      font-size="10"
+      font-weight="600"
+    >
+      {{ line.label }}
+    </text>
+  }
+</svg>

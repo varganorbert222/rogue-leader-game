@@ -127,5 +127,9 @@
   ],
   "winCondition": { "type": "destroy_all_enemies" },
   "loseCondition": { "type": "player_health_zero" },
+  "spawnPolicy": {
+    "shipSelectBeforeSpawn": true,
+    "respawnOnDeath": true
+  },
   "introCinematicSec": 5
 }

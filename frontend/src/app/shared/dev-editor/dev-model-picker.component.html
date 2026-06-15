@@ -1,0 +1,27 @@
+<label class="field">
+  <span>{{ assetLabel }}</span>
+  <select
+    [ngModel]="modelId"
+    (ngModelChange)="modelChange.emit($event)"
+    [disabled]="disabled"
+  >
+    @for (model of models; track model.id) {
+      <option [value]="model.id">{{ model.label }}</option>
+    }
+  </select>
+</label>
+
+@if (showVariantPicker()) {
+  <label class="field">
+    <span>Variant</span>
+    <select
+      [ngModel]="variantId"
+      (ngModelChange)="variantChange.emit($event)"
+      [disabled]="disabled"
+    >
+      @for (variant of variants(); track variant.id) {
+        <option [value]="variant.id">{{ variant.label }}</option>
+      }
+    </select>
+  </label>
+}

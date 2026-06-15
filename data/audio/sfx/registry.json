@@ -1,20 +1,20 @@
 {
   "version": 1,
-  "generatedAt": "2026-06-11T19:53:54.914Z",
+  "generatedAt": "2026-06-15T17:14:41.124Z",
   "preferredFormats": [
     ".wav",
     ".ogg",
     ".mp3"
   ],
   "groups": {
-    "asteroid/explosion": {
+    "asteroid/asteroid_splash": {
       "basePath": "audio/sfx/asteroid",
       "files": [
         "asteroid_splash_01.wav",
         "asteroid_splash_02.wav"
       ]
     },
-    "bullet/hit": {
+    "bullet/cannon_bullet_hit": {
       "basePath": "audio/sfx/bullet",
       "files": [
         "cannon_bullet_hit_01.wav",
@@ -22,7 +22,7 @@
         "cannon_bullet_hit_03.wav"
       ]
     },
-    "bullet/whoosh": {
+    "bullet/cannon_bullet_whoosh": {
       "basePath": "audio/sfx/bullet",
       "files": [
         "cannon_bullet_whoosh_01.wav",
@@ -43,14 +43,14 @@
         "cannon_bullet_whoosh_16.wav"
       ]
     },
-    "cannon/imperial": {
+    "cannon/imperial_cannon": {
       "basePath": "audio/sfx/cannon",
       "files": [
         "imperial_cannon_01.wav",
         "imperial_cannon_02.wav"
       ]
     },
-    "cannon/rebel": {
+    "cannon/rebel_cannon": {
       "basePath": "audio/sfx/cannon",
       "files": [
         "rebel_cannon_01.wav",
@@ -59,7 +59,16 @@
         "rebel_cannon_04.wav"
       ]
     },
-    "explosion/fighter": {
+    "crash/ship_crash": {
+      "basePath": "audio/sfx/crash",
+      "files": [
+        "ship_crash_01.wav",
+        "ship_crash_02.wav",
+        "ship_crash_03.wav",
+        "ship_crash_04.wav"
+      ]
+    },
+    "explosion/fighter_explosion": {
       "basePath": "audio/sfx/explosion",
       "files": [
         "fighter_explosion_01.wav",
@@ -77,13 +86,37 @@
         "missile_hit_01.wav"
       ]
     },
-    "tie_fighter/engine": {
+    "projectile/proton_torpedo": {
+      "basePath": "audio/sfx/projectile",
+      "files": [
+        "proton_torpedo_01.wav",
+        "proton_torpedo_02.wav",
+        "proton_torpedo_03.wav",
+        "proton_torpedo_04.wav",
+        "proton_torpedo_05.wav",
+        "proton_torpedo_06.wav",
+        "proton_torpedo_07.wav",
+        "proton_torpedo_08.wav",
+        "proton_torpedo_09.wav",
+        "proton_torpedo_10.wav"
+      ]
+    },
+    "projectile/warhead_whoosh": {
+      "basePath": "audio/sfx/projectile",
+      "files": [
+        "warhead_whoosh_01.wav",
+        "warhead_whoosh_02.wav",
+        "warhead_whoosh_03.wav",
+        "warhead_whoosh_04.wav"
+      ]
+    },
+    "tie_fighter/tie_fighter_engine": {
       "basePath": "audio/sfx/tie_fighter",
       "files": [
         "tie_fighter_engine.wav"
       ]
     },
-    "tie_fighter/inbound": {
+    "tie_fighter/tie_fighter_inbound": {
       "basePath": "audio/sfx/tie_fighter",
       "files": [
         "tie_fighter_inbound_01.wav",
@@ -114,20 +147,20 @@
         "hover.ogg"
       ]
     },
-    "xwing/engine": {
+    "xwing/xwing_engine": {
       "basePath": "audio/sfx/xwing",
       "files": [
         "xwing_engine.wav"
       ]
     },
-    "xwing/inbound": {
+    "xwing/xwing_inbound": {
       "basePath": "audio/sfx/xwing",
       "files": [
         "xwing_inbound_01.wav",
         "xwing_inbound_02.wav"
       ]
     },
-    "xwing/sfoil": {
+    "xwing/xwing_sfoil": {
       "basePath": "audio/sfx/xwing",
       "files": [
         "xwing_sfoil_01.wav",

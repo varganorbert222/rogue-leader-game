@@ -100,6 +100,7 @@ export class BehaviorNpcInput implements NpcInput {
     const effectiveHostileDist = this.effectiveHostileDistance(
       playerDist,
       inZone,
+      context.playerIsHostile,
     );
     const state = this.stateMachine.update({ hostileDistance: effectiveHostileDist });
     const stateParams = this.stateMachine.getStateParams();
@@ -197,7 +198,14 @@ export class BehaviorNpcInput implements NpcInput {
     return { vehicle, wantsFire: fire.wantsFire };
   }
 
-  private effectiveHostileDistance(playerDist: number, inZone: boolean): number {
+  private effectiveHostileDistance(
+    playerDist: number,
+    inZone: boolean,
+    playerIsHostile: boolean,
+  ): number {
+    if (!playerIsHostile) {
+      return this.config.loseRadarRange + 1;
+    }
     if (this.combatRole === 'patrol_only') {
       return this.config.loseRadarRange + 1;
     }

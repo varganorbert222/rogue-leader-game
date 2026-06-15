@@ -76,6 +76,7 @@
         "acquireRange": 220
       },
       "audio": {
+        "fire": "proton_torpedo_fire",
         "hit": "missile_hit"
       }
     },

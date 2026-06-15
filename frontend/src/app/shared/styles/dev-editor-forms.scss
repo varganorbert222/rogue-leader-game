@@ -1,0 +1,143 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  min-width: 0;
+
+  span {
+    color: #9aa3b2;
+    overflow-wrap: anywhere;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    background: #0f1115;
+    border: 1px solid #3a4048;
+    border-radius: 4px;
+    color: #e8edf5;
+    padding: 0.35rem 0.45rem;
+    font: inherit;
+  }
+
+  select {
+    cursor: pointer;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 4rem;
+    font-family: ui-monospace, monospace;
+    font-size: 0.72rem;
+  }
+}
+
+.field.checkbox {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.45rem;
+
+  input[type='checkbox'] {
+    width: auto;
+    margin-top: 0.15rem;
+    accent-color: #6ea8ff;
+    cursor: pointer;
+  }
+}
+
+.field.inline {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+}
+
+.primary-btn,
+.secondary-btn,
+.snap-btn,
+.scrub-actions button,
+.export button {
+  background: #2a3140;
+  border: 1px solid #4a5568;
+  color: #e8edf5;
+  border-radius: 4px;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+
+  &:hover {
+    background: #343d4f;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.primary-btn {
+  background: #3d5a8c;
+  border-color: #5a7ab8;
+  margin-top: 0.25rem;
+}
+
+.secondary-btn {
+  margin-top: 0.15rem;
+}
+
+.hint,
+.status {
+  font-size: 0.72rem;
+  color: #8b95a5;
+  margin: 0;
+}
+
+.status.loading {
+  color: #8ab4ff;
+}
+
+.status.error {
+  color: #ff8a80;
+}
+
+.export {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  h3 {
+    margin: 0.5rem 0 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #aeb7c4;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  textarea {
+    width: 100%;
+    background: #0f1115;
+    border: 1px solid #3a4048;
+    border-radius: 4px;
+    color: #c5d0e0;
+    font-family: ui-monospace, monospace;
+    font-size: 0.68rem;
+    padding: 0.45rem;
+    box-sizing: border-box;
+  }
+}
+
+.copy-status {
+  font-size: 0.72rem;
+  color: #7dcea0;
+}
+
+.panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}

@@ -18,7 +18,14 @@ import {
   type FlightPreferences,
   type MissionEndState,
   type MissionHudState,
+  type MissionSessionPhase,
+  type SelectableShipInfo,
 } from '@rogue-leader/game';
+import { ShipSelectOverlayComponent } from './ship-select-overlay.component';
+import {
+  PageBackNavComponent,
+  type PageBackNavItem,
+} from '../../shared/components/page-back-nav/page-back-nav.component';
 import { ControlsPanelComponent } from '../../shared/components/controls-panel/controls-panel.component';
 import { AudioBootstrapService } from '../../core/services/audio-bootstrap.service';
 import { AudioSettingsService } from '../../core/services/audio-settings.service';
@@ -33,7 +40,7 @@ import {
 @Component({
   selector: 'app-game-canvas',
   standalone: true,
-  imports: [RouterLink, SettingsPanelComponent, ControlsPanelComponent, DebugPanelComponent],
+  imports: [SettingsPanelComponent, ControlsPanelComponent, DebugPanelComponent, ShipSelectOverlayComponent, PageBackNavComponent],
   templateUrl: './game-canvas.component.html',
   styleUrl: './game-canvas.component.scss',
 })
@@ -72,9 +79,17 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
   showControls = false;
   showDebug = false;
   endState: MissionEndState | null = null;
+  sessionPhase: MissionSessionPhase = 'playing';
+  showShipSelect = false;
+  selectableShips: SelectableShipInfo[] = [];
   missionName = '';
   loading = true;
   loadingMessage = 'Loading mission…';
+
+  readonly loadingBackLinks: PageBackNavItem[] = [
+    { label: '← Mission Select', actionId: 'mission-select' },
+    { label: '← Main Menu', actionId: 'main-menu' },
+  ];
 
   async ngOnInit(): Promise<void> {
     const missionId =
@@ -102,8 +117,11 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
     try {
       await this.mission.load(missionId);
       this.loading = false;
+      await this.syncShipSelectState();
       canvas.setAttribute('tabindex', '0');
-      canvas.focus();
+      if (!this.showShipSelect) {
+        canvas.focus();
+      }
       canvas.addEventListener('pointerdown', () => wakeGamepads());
     } catch (err) {
       this.loading = false;
@@ -114,7 +132,10 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
     }
 
     this.host.startRenderLoop((dt) => {
-      if (!this.paused && this.endState === null) {
+      this.sessionPhase = this.mission?.getSessionPhase() ?? 'playing';
+      this.showShipSelect = this.sessionPhase === 'ship_select';
+
+      if (!this.paused && this.endState === null && !this.showShipSelect) {
         this.mission?.update(dt);
         const state = this.mission?.getEndState();
         if (state && state !== 'playing') {
@@ -125,6 +146,29 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
         this.hud = this.mission.getHudState();
       }
     });
+  }
+
+  private async syncShipSelectState(): Promise<void> {
+    if (!this.mission) return;
+    this.sessionPhase = this.mission.getSessionPhase();
+    this.showShipSelect = this.sessionPhase === 'ship_select';
+    this.selectableShips = this.mission.getSelectableShips();
+  }
+
+  async onShipPreviewReady(canvas: HTMLCanvasElement): Promise<void> {
+    if (!this.mission) return;
+    await this.mission.initShipPreview(canvas);
+  }
+
+  async onPreviewShip(shipId: string): Promise<void> {
+    await this.mission?.previewShip(shipId);
+  }
+
+  async onConfirmShip(shipId: string): Promise<void> {
+    if (!this.mission) return;
+    await this.mission.confirmShipSelection(shipId);
+    await this.syncShipSelectState();
+    this.canvasRef.nativeElement.focus();
   }
 
   ngOnDestroy(): void {
@@ -247,9 +291,30 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
     this.mission?.setPaused(this.paused);
   }
 
+  onShipSelectBack(target: 'mission-select' | 'main-menu'): void {
+    this.abortMission();
+    void this.router.navigate(target === 'mission-select' ? ['/mission-select'] : ['/']);
+  }
+
+  onAbortMission(target: string): void {
+    if (target !== 'mission-select' && target !== 'main-menu') return;
+    this.onShipSelectBack(target);
+  }
+
   quitToMenu(): void {
+    this.abortMission();
+    void this.router.navigate(['/']);
+  }
+
+  quitToMissionSelect(): void {
+    this.abortMission();
+    void this.router.navigate(['/mission-select']);
+  }
+
+  private abortMission(): void {
     this.mission?.dispose();
     this.host?.dispose();
-    void this.router.navigate(['/']);
+    this.mission = null;
+    this.host = null;
   }
 }

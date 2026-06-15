@@ -3,6 +3,7 @@ import {
   disposeCockpitAttachment,
   loadCockpitForShip,
   resolveCockpitConfig,
+  stripCockpitFromLoadedEntity,
   type ShipManifestEntry,
 } from '@rogue-leader/engine';
 import type { CockpitComponent } from '../components/cockpit-component';
@@ -22,6 +23,7 @@ export async function attachPlayerCockpit(
   const shipIdentity = world.get(playerId, 'shipIdentity');
   if (!shipIdentity) return null;
 
+  stripCockpitFromLoadedEntity(shipIdentity.loadedEntity);
   const attachment = await loadCockpitForShip(
     scene,
     baseUrl,

@@ -17,6 +17,7 @@ import {
 import { resolveDistanceThresholdsForLevelCount, resolveThresholdsForLevelCount } from './lod-babylon';
 import { createLodRuntimeState, type LodRuntimeState } from './lod-runtime';
 import { attachGltfImportToParent } from './gltf-import-utils';
+import { markSceneNodeGenerated } from './scene-node-origin';
 import { discoverSiblingLodPaths } from './lod-discovery';
 
 export interface LodLoadProgress {
@@ -44,6 +45,7 @@ function cloneMeshGroup(
 ): AbstractMesh[] {
   return meshes.map((m) => {
     const clone = m.clone(`${m.name}${suffix}`, root) as AbstractMesh;
+    markSceneNodeGenerated(clone);
     clone.setEnabled(false);
     clone.isVisible = false;
     return clone;
@@ -90,11 +92,13 @@ async function generateAutoLodGroup(
       const result = await simplifyMesh(source, quality);
       result.parent = root;
       result.name = `${source.name}${suffix}`;
+      markSceneNodeGenerated(result);
       result.setEnabled(false);
       result.isVisible = false;
       simplified.push(result);
     } catch {
       const fallback = source.clone(`${source.name}${suffix}_fb`, root) as AbstractMesh;
+      markSceneNodeGenerated(fallback);
       fallback.setEnabled(false);
       fallback.isVisible = false;
       simplified.push(fallback);
@@ -104,6 +108,7 @@ async function generateAutoLodGroup(
   const nonMesh = sourceMeshes.filter((m) => !(m instanceof Mesh));
   for (const m of nonMesh) {
     const fallback = m.clone(`${m.name}${suffix}_fb`, root) as AbstractMesh;
+    markSceneNodeGenerated(fallback);
     fallback.setEnabled(false);
     fallback.isVisible = false;
     simplified.push(fallback);
@@ -210,6 +215,7 @@ export class LodShipLoader {
       });
 
       const lodContainer = new TransformNode(`${id}_lod${lodIndex}`, this.scene);
+      markSceneNodeGenerated(lodContainer);
       lodContainer.parent = root;
       const generated = await generateAutoLodGroup(
         source,

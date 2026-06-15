@@ -2,7 +2,8 @@ import { Vector3 } from '@babylonjs/core';
 import type { AssetManifest, GltfShipLoader } from '@rogue-leader/engine';
 import { BehaviorNpcInput } from '../../../ai/behavior-npc-input';
 import type { MissionNavigation } from '../../../ai/navigation/mission-navigation';
-import { resolveFaction } from '../../../combat/faction';
+import { resolveFaction, type FactionId } from '../../../combat/faction';
+import { resolveWaveEnemyShipId } from '../../../data/config/faction-ship-roster';
 import type { CombatConfig } from '../../../data/config/combat-config';
 import type { NpcBehaviorConfig } from '../../../data/config/npc-behavior-config';
 import { WinConditionTypes } from '../../../data/constants';
@@ -29,6 +30,8 @@ export interface WaveSpawnContext {
   combatConfig: CombatConfig;
   npcBehaviorConfig: NpcBehaviorConfig;
   missionNavigation: MissionNavigation;
+  /** Faction of the current player ship — drives hostile hull swapping. */
+  playerFaction: FactionId;
 }
 
 export function createInitialWaveState(config: MissionConfig): WaveSpawnState {
@@ -89,11 +92,16 @@ export function updateWaveSpawning(
 
 export function spawnWave(wave: MissionWave, ctx: WaveSpawnContext): void {
   for (const spec of wave.enemies) {
-    const entry = ctx.assetManifest.ships[spec.shipId];
+    const shipId = resolveWaveEnemyShipId(
+      spec.shipId,
+      ctx.playerFaction,
+      ctx.assetManifest,
+    );
+    const entry = ctx.assetManifest.ships[shipId];
     if (!entry) continue;
     const npcId = `enemy_${ctx.world.getNpcCount()}`;
     const loaded = ctx.assetPreloader.shipPool.acquireNpcShip(
-      spec.shipId,
+      shipId,
       npcId,
       ctx.shipLoader,
     );
@@ -117,7 +125,7 @@ export function spawnWave(wave: MissionWave, ctx: WaveSpawnContext): void {
     spawnNpcEntity(ctx.world, {
       id: npcId,
       flockId: wave.id,
-      shipId: spec.shipId,
+      shipId,
       shipEntry: entry,
       loaded,
       faction,

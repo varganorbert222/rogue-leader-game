@@ -1,5 +1,9 @@
 import { Mesh, TransformNode, type AbstractMesh } from '@babylonjs/core';
-import { meshLookupLeafKey, walkSceneNodes } from './scene-graph-utils';
+import {
+  collectDescendantMeshes,
+  meshLookupLeafKey,
+  walkSceneNodes,
+} from './scene-graph-utils';
 
 const COLLIDER_PREFIX = 'collider_';
 
@@ -12,6 +16,11 @@ function isColliderMesh(mesh: Mesh): boolean {
   if (mesh.metadata?.usesVisualCollider === true) return false;
   if (mesh.metadata?.isColliderMesh === true) return true;
   return isColliderMeshName(mesh.name);
+}
+
+/** Classify meshes for hierarchy outliner (colliders hidden by default). */
+export function isHierarchyColliderMesh(mesh: Mesh): boolean {
+  return isColliderMesh(mesh);
 }
 
 export function isVisualColliderMesh(mesh: AbstractMesh): boolean {
@@ -71,6 +80,22 @@ export function filterVisualLodMeshes(
 ): AbstractMesh[][] {
   if (!colliders.length) return lodMeshes.map((group) => [...group]);
   return lodMeshes.map((group) => filterVisualMeshes(group, colliders));
+}
+
+/** Render meshes for hangar / ship-select wireframe preview (no colliders or empty geometry). */
+export function collectShipPreviewVisualMeshes(root: TransformNode): AbstractMesh[] {
+  const colliders = detectColliderMeshes(root);
+  const colliderSet = new Set<AbstractMesh>(colliders);
+  for (const collider of colliders) {
+    collider.setEnabled(false);
+  }
+
+  return collectDescendantMeshes(root).filter((mesh) => {
+    if (colliderSet.has(mesh)) return false;
+    if (!hasColliderGeometry(mesh)) return false;
+    if (mesh instanceof Mesh && isColliderMesh(mesh)) return false;
+    return true;
+  });
 }
 
 /** Use visible render meshes as collision geometry (asteroids stay visible). */

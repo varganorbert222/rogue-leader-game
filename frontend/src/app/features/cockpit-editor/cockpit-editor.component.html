@@ -1,40 +1,45 @@
-<div class="cockpit-editor">
-  <canvas #previewCanvas class="preview-canvas"></canvas>
+<app-dev-editor-shell
+  title="Cockpit View Editor"
+  badge="dev"
+  leftTitle="Ship"
+  rightTitle="Camera"
+  (canvasReady)="onCanvasReady($event)"
+>
+  <div devEditorLeft>
+    <app-dev-model-picker
+      [models]="ships"
+      [modelId]="selectedShipId"
+      variantId=""
+      [disabled]="loading"
+      (modelChange)="onShipChange($event)"
+    />
 
-  <header class="top-bar">
-    <a routerLink="/" class="back-link">← Main menu</a>
-    <h1>Cockpit View Editor</h1>
-    <span class="dev-badge">Developer tool</span>
-  </header>
-
-  <aside class="panel panel-left">
-    <h2>Ship</h2>
-    <label class="field">
-      <span>Asset</span>
-      <select
-        [ngModel]="selectedShipId"
-        (ngModelChange)="onShipChange($event)"
-        [disabled]="loading"
-      >
-        @for (ship of ships; track ship.id) {
-          <option [value]="ship.id">{{ ship.label }}</option>
-        }
-      </select>
-    </label>
     <p class="hint">
       WASD + Shift/Ctrl — fly preview · Arrows — look around · Exterior hidden, cockpit GLB shown.
     </p>
-    @if (loading) {
-      <p class="status loading">{{ loadingMessage }}</p>
-    }
-    @if (errorMessage) {
-      <p class="status error">{{ errorMessage }}</p>
-    }
-  </aside>
 
-  <aside class="panel panel-right">
-    <h2>Camera</h2>
+    <app-dev-editor-status
+      [loading]="loading"
+      [loadingMessage]="loadingMessage"
+      [errorMessage]="errorMessage"
+    />
 
+    <app-dev-scene-hierarchy
+      [resetKey]="hierarchyRevision"
+      [nodes]="hierarchy"
+      [selectedId]="selectedNodeId"
+      emptyMessage="Load a ship to inspect its hierarchy"
+      [animations]="animations"
+      [playingAnimationIndex]="playingAnimationIndex"
+      [nodeTransform]="nodeTransform"
+      (nodeSelect)="onHierarchySelect($event)"
+      (viewportVisibilityChange)="onHierarchyViewportChange($event)"
+      (playAnimation)="onPlayAnimation($event)"
+      (stopAnimations)="onStopAnimations()"
+    />
+  </div>
+
+  <div devEditorRight>
     <label class="field">
       <span>Model path</span>
       <input type="text" [(ngModel)]="config.modelPath" (ngModelChange)="onConfigChange()" />
@@ -124,12 +129,11 @@
       {{ live.inputOffsetZ | number:'1.3-3' }}) m
     </p>
 
-    <h2>Export</h2>
-    <p class="hint">Paste under the ship entry in <code>data/manifest.json</code>.</p>
-    <textarea class="export-box" readonly rows="10" [value]="exportJson"></textarea>
-    <button type="button" class="btn" (click)="copyExport()">Copy JSON</button>
-    @if (copyStatus) {
-      <span class="copy-status">{{ copyStatus }}</span>
-    }
-  </aside>
-</div>
+    <app-dev-json-export
+      title="Export"
+      [json]="exportJson"
+      [rows]="10"
+      hint="Paste under the ship entry in data/manifest.json."
+    />
+  </div>
+</app-dev-editor-shell>

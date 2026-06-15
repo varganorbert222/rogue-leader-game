@@ -158,8 +158,10 @@ export { MissionBootstrap } from "./mission/bootstrap/mission-bootstrap";
 export { MissionSimulationCoordinator } from "./mission/simulation/coordinator/mission-simulation-coordinator";
 export type { MissionRuntimeContext } from "./mission/simulation/mission-runtime-context";
 export type { MissionHudState, MissionLoadState } from "./mission/presentation/mission-hud-state";
-export type { MissionConfig, MissionEndState } from "./mission/mission-types";
+export type { MissionConfig, MissionEndState, MissionSessionPhase } from "./mission/mission-types";
 export { MissionEndStates } from "./mission/mission-types";
+export type { SelectableShipInfo } from "./mission/spawn/selectable-ships";
+export type { MissionSpawnPolicy } from "./mission/spawn/mission-spawn-policy";
 export {
   SfxClipIds,
   MusicTrackIds,

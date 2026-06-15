@@ -1,8 +1,10 @@
 import { TransformNode, type Scene } from '@babylonjs/core';
+import { markSceneNodeGenerated } from './scene-node-origin';
 
 /** Reparents ship meshes under a child node for cosmetic roll/pitch offsets. */
 export function attachVisualPivot(root: TransformNode, scene: Scene): TransformNode {
   const visual = new TransformNode(`${root.name}_visual`, scene);
+  markSceneNodeGenerated(visual);
   visual.parent = root;
   for (const child of [...root.getChildren()]) {
     if (child !== visual) {

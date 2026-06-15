@@ -6,6 +6,8 @@ import { ControlsComponent } from './features/controls/controls.component';
 import { SettingsComponent } from './features/settings/settings.component';
 import { LodEditorComponent } from './features/lod-editor/lod-editor.component';
 import { CockpitEditorComponent } from './features/cockpit-editor/cockpit-editor.component';
+import { ParticleEditorComponent } from './features/particle-editor/particle-editor.component';
+import { EncyclopediaComponent } from './features/encyclopedia/encyclopedia.component';
 
 export const routes: Routes = [
   { path: '', component: MainMenuComponent },
@@ -13,6 +15,8 @@ export const routes: Routes = [
   { path: 'play/:missionId', component: GameCanvasComponent },
   { path: 'dev/lod-editor', component: LodEditorComponent },
   { path: 'dev/cockpit-editor', component: CockpitEditorComponent },
+  { path: 'dev/particle-editor', component: ParticleEditorComponent },
+  { path: 'encyclopedia', component: EncyclopediaComponent },
   { path: 'settings', component: SettingsComponent },
   { path: 'controls', component: ControlsComponent },
   { path: '**', redirectTo: '' },

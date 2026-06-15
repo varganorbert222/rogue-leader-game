@@ -1,0 +1,13 @@
+.viewport-axis-gizmo {
+  position: absolute;
+  top: 4.25rem;
+  right: calc(min(22rem, 34vw) + 1.25rem);
+  width: 80px;
+  height: 80px;
+  pointer-events: none;
+  z-index: 3;
+  background: rgba(12, 14, 18, 0.75);
+  border: 1px solid #4a5568;
+  border-radius: 6px;
+  box-sizing: border-box;
+}

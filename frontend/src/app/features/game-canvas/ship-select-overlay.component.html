@@ -1,0 +1,46 @@
+<div class="ship-select" role="dialog" aria-labelledby="ship-select-title">
+  <div class="ship-select-panel">
+    <header class="ship-select-header">
+      <app-page-back-nav
+        [items]="backLinks"
+        [compact]="true"
+        (action)="onBackNavigate($event)"
+      />
+      <h2 id="ship-select-title">{{ title }}</h2>
+      <p>{{ subtitle }}</p>
+    </header>
+
+    <div class="ship-select-body">
+      <div class="preview-wrap" aria-label="Ship wireframe preview">
+        <canvas #previewCanvas class="preview-canvas"></canvas>
+      </div>
+
+      <ul class="ship-list">
+        @for (ship of ships; track ship.shipId) {
+          <li>
+            <button
+              type="button"
+              class="ship-card"
+              [class.selected]="selectedShipId === ship.shipId"
+              (click)="selectShip(ship)"
+            >
+              <span class="ship-name">{{ ship.displayName }}</span>
+              <span class="ship-faction">{{ ship.factionLabel }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <footer class="ship-select-footer">
+      <button
+        type="button"
+        class="launch-btn"
+        [disabled]="!selectedShipId"
+        (click)="launch()"
+      >
+        Launch
+      </button>
+    </footer>
+  </div>
+</div>

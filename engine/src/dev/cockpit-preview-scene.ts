@@ -19,6 +19,16 @@ import { LodShipLoader } from '../loaders/lod-ship-loader';
 import type { ShipManifestEntry } from '../loaders/asset-manifest';
 import { applyCockpitViewMode, loadCockpitForShip, type CockpitAttachment } from '../loaders/cockpit-loader';
 import { DebugFloor } from '../render/debug-floor';
+import { collectDescendantMeshes } from '../loaders/scene-graph-utils';
+import { DevPreviewRendering } from './dev-preview-rendering';
+import { buildModelContentHierarchy } from './scene-hierarchy-builder';
+import {
+  createDefaultViewportState,
+  createHierarchyOutlinerState,
+  type HierarchyOutlinerState,
+} from './hierarchy-outliner';
+import { HierarchyViewportSync } from './hierarchy-viewport-sync';
+import type { HierarchyNode } from './hierarchy-types';
 import {
   editableToResolvedCockpitConfig,
   previewMotionToVehicleInput,
@@ -28,6 +38,7 @@ import {
 import { DEFAULT_COCKPIT_FOV_DEG, DEFAULT_COCKPIT_INPUT_RESPONSE } from '../loaders/cockpit-config';
 import { BABYLON_MIN_CAMERA_NEAR_Z } from '../render/camera-near-plane';
 import { smoothDampedScalar, radToDeg } from '../math';
+import { DevScenePreviewExtras, type HierarchyNodeTransformInfo } from './dev-scene-preview-extras';
 
 const PREVIEW_MOTION_SMOOTH_TIME = 0.14;
 
@@ -80,6 +91,11 @@ export class CockpitPreviewScene {
   private speed = 0;
   private inputOffsetState: CockpitInputOffsetState = createCockpitInputOffsetState();
   private loadingMessage = '';
+  private hierarchy: HierarchyNode[] = [];
+  private readonly devRendering = new DevPreviewRendering();
+  private readonly viewportSync = new HierarchyViewportSync(null);
+  private defaultViewportState: HierarchyOutlinerState = createHierarchyOutlinerState();
+  private readonly previewExtras = new DevScenePreviewExtras();
 
   constructor(private readonly host: BabylonHost) {
     const scene = host.scene;
@@ -91,6 +107,14 @@ export class CockpitPreviewScene {
     const lodLoader = new LodShipLoader(scene, RuntimePaths.assetsBase);
     this.shipLoader = new GltfShipLoader(scene, RuntimePaths.assetsBase, lodLoader);
     this.floor = new DebugFloor(scene, { center: Vector3.Zero(), extent: 40, step: 5, y: -2 });
+  }
+
+  async initRendering(): Promise<void> {
+    await this.devRendering.attach(this.host, this.camera);
+  }
+
+  getCamera(): FreeCamera {
+    return this.camera;
   }
 
   setProgressCallback(cb: (message: string) => void): void {
@@ -129,7 +153,49 @@ export class CockpitPreviewScene {
     this.shipRoot.position = Vector3.Zero();
     this.shipRoot.rotationQuaternion = Quaternion.Identity();
     applyCockpitViewMode(loaded, this.cockpit ?? undefined, true);
+    this.hierarchy = buildModelContentHierarchy(loaded.root);
+    this.previewExtras.bindAnimations(loaded.animationGroups);
+    this.devRendering.applyEmissiveBloomToMeshes(collectDescendantMeshes(loaded.root));
+    this.viewportSync.setRoot(loaded.root);
+    this.defaultViewportState = createDefaultViewportState(this.hierarchy);
+    this.viewportSync.apply(this.hierarchy, this.defaultViewportState);
     this.loadingMessage = '';
+  }
+
+  getHierarchy(): HierarchyNode[] {
+    return this.hierarchy;
+  }
+
+  getDefaultViewportState(): HierarchyOutlinerState {
+    return this.defaultViewportState;
+  }
+
+  applyHierarchyViewport(state: HierarchyOutlinerState): void {
+    this.viewportSync.apply(this.hierarchy, state);
+  }
+
+  highlightNode(sceneName: string | undefined): HierarchyNodeTransformInfo | null {
+    return this.previewExtras.highlightNode(this.host.scene, this.shipRoot, sceneName);
+  }
+
+  clearHighlight(): void {
+    this.previewExtras.clearHighlight();
+  }
+
+  listAnimations() {
+    return this.previewExtras.listAnimations();
+  }
+
+  getPlayingAnimationIndex(): number | null {
+    return this.previewExtras.getPlayingAnimationIndex();
+  }
+
+  playAnimation(index: number): void {
+    this.previewExtras.playAnimation(index);
+  }
+
+  stopAnimations(): void {
+    this.previewExtras.stopAnimations();
   }
 
   setEditableConfig(editable: CockpitEditableConfig): void {
@@ -229,10 +295,12 @@ export class CockpitPreviewScene {
   dispose(): void {
     this.disposeShip();
     this.floor.dispose();
+    this.devRendering.dispose();
     this.camera.dispose();
   }
 
   private disposeShip(): void {
+    this.previewExtras.dispose();
     resetCockpitInputOffsetState(this.inputOffsetState);
     this.smoothedPitchRate = 0;
     this.smoothedYawRate = 0;
@@ -244,5 +312,7 @@ export class CockpitPreviewScene {
     this.shipRoot = null;
     this.loaded = null;
     this.cockpit = null;
+    this.hierarchy = [];
+    this.viewportSync.setRoot(null);
   }
 }

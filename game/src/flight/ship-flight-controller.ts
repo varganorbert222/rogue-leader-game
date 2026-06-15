@@ -18,7 +18,7 @@ import {
 import type { ResolvedShipFlightStats } from '../data/config/ship-flight-stats';
 import { computeRogueFlightAxes } from './rogue-flight-controls';
 import { applySoftBoundary, type SoftBoundary } from './soft-boundary';
-import { getShipForward } from './ship-forward';
+import { getShipForward, shipRotationFromHeading } from './ship-forward';
 
 /** P gain for auto-roll: error (rad) → commanded roll rate (rad/s). */
 const AUTO_ROLL_KP = 2.8;
@@ -142,6 +142,43 @@ export class ShipFlightController {
 
   getCruiseSpeed(): number {
     return this.stats.cruiseSpeed;
+  }
+
+  /** Collision response — separation, bounce, and slide along the contact surface. */
+  applyCollisionResponse(
+    normalAwayFromOther: Vector3,
+    relativeApproachSpeed: number,
+    velocityDelta?: Vector3,
+    slideBlend = 0.28,
+  ): void {
+    const impact = Math.max(0, relativeApproachSpeed);
+    if (impact < 1e-3 && (!velocityDelta || velocityDelta.lengthSquared() < 1e-6)) {
+      return;
+    }
+
+    if (velocityDelta && velocityDelta.lengthSquared() > 1e-6) {
+      const postVel = this.velocity.add(velocityDelta);
+      const rot = this.root.rotationQuaternion ?? Quaternion.Identity();
+      const fwd = getShipForward(rot);
+      const slideFwd = postVel.clone();
+      slideFwd.y *= 0.25;
+      if (slideFwd.lengthSquared() > 4) {
+        const blended = fwd.add(slideFwd.normalize().scale(slideBlend)).normalize();
+        this.root.rotationQuaternion = shipRotationFromHeading(blended);
+      }
+      const newSpeed = Math.max(
+        this.stats.minSpeed * 0.55,
+        postVel.length() * 0.92,
+      );
+      this.speed = Math.min(this.speed, newSpeed);
+      this.velocity.copyFrom(getShipForward(rot).scale(this.speed));
+      return;
+    }
+
+    const speedLoss = Math.min(this.speed * 0.55, impact * 0.65);
+    this.speed = Math.max(this.stats.minSpeed * 0.75, this.speed - speedLoss);
+    const idleRot = this.root.rotationQuaternion ?? Quaternion.Identity();
+    this.velocity.copyFrom(getShipForward(idleRot).scale(this.speed));
   }
 
   resetKinematics(): void {

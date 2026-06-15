@@ -1,5 +1,5 @@
 <div class="page">
   <app-controls-panel locale="hu" (controlsChange)="onControlsChange($event)" />
 
-  <a routerLink="/" (click)="audio.playUiBack()" (mouseenter)="audio.playUiHover()">Vissza a főmenübe</a>
+  <app-page-back-nav [items]="backLinks" />
 </div>

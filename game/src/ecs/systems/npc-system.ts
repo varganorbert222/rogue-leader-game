@@ -4,6 +4,7 @@ import {
   BehaviorNpcInput,
   type NpcSteeringDebugInfo,
 } from '../../ai/behavior-npc-input';
+import { areFactionsHostile } from '../../combat/faction';
 import { updateWeaponAimForObserver } from '../../combat/targeting/weapon-aim-controller';
 import type { CombatConfig } from '../../data/config/combat-config';
 import type { NpcBehaviorConfig } from '../../data/config/npc-behavior-config';
@@ -53,6 +54,7 @@ export function runNpcSystem(
   const playerPos = getShipPosition(world, playerId);
   const playerVel = getShipVelocity(world, playerId);
   const playerTarget = entityToTargetEntity(world, playerId);
+  const playerFaction = world.get(playerId, 'faction');
 
   const npcIds = world.queryByRole(Role.Npc);
   const flockMembers = new Map<string, EntityId[]>();
@@ -91,6 +93,8 @@ export function runNpcSystem(
     }
 
     const npcPos = getShipPosition(world, npcId);
+    const playerIsHostile =
+      playerFaction !== undefined && areFactionsHostile(faction, playerFaction);
     const flock = flockMembers.get(steering.flockId) ?? [];
     const flockMates = flock
       .filter((mateId) => mateId !== npcId)
@@ -105,6 +109,7 @@ export function runNpcSystem(
       });
 
     const result = steering.input.update(dt, {
+      playerIsHostile,
       playerPosition: playerPos,
       flockMates,
       flockCenter: flockCenters.get(steering.flockId) ?? npcPos,
@@ -119,7 +124,7 @@ export function runNpcSystem(
     resolveFlockOverlap(npcPos, collider.radius, flockMates);
 
     const enemyForward = getShipForward(getShipRotation(world, npcId));
-    if (playerTarget) {
+    if (playerTarget && playerIsHostile) {
       updateWeaponAimForObserver({
         scene: ctx.scene,
         combat: ctx.combat,
@@ -138,7 +143,7 @@ export function runNpcSystem(
       });
     }
 
-    if (result.wantsFire) {
+    if (result.wantsFire && playerIsHostile) {
       ctx.combat.tryFireAtTarget(
         weapons.system,
         shipIdentity.combatTeam,

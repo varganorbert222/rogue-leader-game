@@ -1,5 +1,10 @@
 import type { AssetManifest } from '../loaders/asset-manifest';
-import type { LodEditorModelEntry } from './lod-editor-types';
+import type { LodEditorModelEntry, LodEditorModelVariant } from './lod-editor-types';
+
+function variantFromGlbPath(path: string): LodEditorModelVariant {
+  const label = path.split('/').pop()?.replace(/\.glb$/i, '') ?? path;
+  return { id: label, label, glbPath: path };
+}
 
 export function listLodEditorModels(manifest: AssetManifest): LodEditorModelEntry[] {
   const entries: LodEditorModelEntry[] = [];
@@ -15,12 +20,18 @@ export function listLodEditorModels(manifest: AssetManifest): LodEditorModelEntr
   }
 
   for (const [id, prop] of Object.entries(manifest.props)) {
+    const variants = prop.variants?.map(variantFromGlbPath);
     entries.push({
       id,
       kind: 'prop',
       label: `Prop · ${id}`,
       scale: prop.scale,
-      lod: prop.lod ?? (prop.variants?.length ? { mode: 'none' as const } : undefined),
+      lod:
+        prop.lod ??
+        (variants?.length
+          ? { mode: 'none' as const, basePath: variants[0].glbPath }
+          : undefined),
+      variants,
     });
   }
 

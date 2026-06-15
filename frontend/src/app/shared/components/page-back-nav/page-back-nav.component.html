@@ -1,0 +1,15 @@
+<nav class="page-back-nav" [class.compact]="compact" aria-label="Back navigation">
+  @for (item of items; track item.label) {
+    @if (item.route) {
+      <a
+        [routerLink]="item.route"
+        (click)="onRouteClick()"
+        (mouseenter)="audio.playUiHover()"
+      >{{ item.label }}</a>
+    } @else if (item.actionId) {
+      <button type="button" (click)="onAction(item.actionId)" (mouseenter)="audio.playUiHover()">
+        {{ item.label }}
+      </button>
+    }
+  }
+</nav>

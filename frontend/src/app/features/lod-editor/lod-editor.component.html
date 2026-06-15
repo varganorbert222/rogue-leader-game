@@ -1,38 +1,42 @@
-<div class="lod-editor">
-  <canvas #previewCanvas class="preview-canvas"></canvas>
+<app-dev-editor-shell
+  title="LOD Group Editor"
+  badge="dev"
+  leftTitle="Models"
+  rightTitle="LOD Group"
+  (canvasReady)="onCanvasReady($event)"
+>
+  <div devEditorLeft>
+    <app-dev-model-picker
+      [models]="models"
+      [modelId]="selectedModelId"
+      [variantId]="selectedVariantId"
+      [disabled]="loading"
+      (modelChange)="onModelChange($event)"
+      (variantChange)="onVariantChange($event)"
+    />
 
-  <header class="top-bar">
-    <a routerLink="/" class="back-link">← Main menu</a>
-    <h1>LOD Group Editor</h1>
-    <span class="dev-badge">Developer tool</span>
-  </header>
-
-  <aside class="panel panel-left">
-    <h2>Models</h2>
-    <label class="field">
-      <span>Asset</span>
-      <select
-        [ngModel]="selectedModelId"
-        (ngModelChange)="onModelChange($event)"
-        [disabled]="loading"
-      >
-        @for (model of models; track model.id) {
-          <option [value]="model.id">{{ model.label }}</option>
-        }
-      </select>
-    </label>
     <p class="hint">Orbit: drag · Zoom: wheel · Preview scene only (not shipped in production).</p>
-  </aside>
 
-  <aside class="panel panel-right">
-    <h2>LOD Group</h2>
+    <app-dev-scene-hierarchy
+      [resetKey]="hierarchyRevision"
+      [nodes]="hierarchy"
+      [selectedId]="selectedNodeId"
+      [animations]="animations"
+      [playingAnimationIndex]="playingAnimationIndex"
+      [nodeTransform]="nodeTransform"
+      (nodeSelect)="onHierarchySelect($event)"
+      (viewportVisibilityChange)="onHierarchyViewportChange($event)"
+      (playAnimation)="onPlayAnimation($event)"
+      (stopAnimations)="onStopAnimations()"
+    />
+  </div>
 
-    @if (loading) {
-      <p class="status loading">{{ loadingMessage }}</p>
-    }
-    @if (errorMessage) {
-      <p class="status error">{{ errorMessage }}</p>
-    }
+  <div devEditorRight>
+    <app-dev-editor-status
+      [loading]="loading"
+      [loadingMessage]="loadingMessage"
+      [errorMessage]="errorMessage"
+    />
 
     <label class="field">
       <span>LOD metric</span>
@@ -145,7 +149,7 @@
 
     <section class="live-stats">
       <h3>Live</h3>
-      <dl>
+      <dl class="stats-dl">
         <div><dt>Metric</dt><dd>{{ live.metric === 'distance' ? 'Distance (m)' : 'Screen %' }}</dd></div>
         <div><dt>Screen coverage</dt><dd>{{ live.coveragePercent | number:'1.1-1' }}%</dd></div>
         <div><dt>Camera distance</dt><dd>{{ live.cameraDistanceMeters | number:'1.1-1' }} m</dd></div>
@@ -199,13 +203,6 @@
       </section>
     }
 
-    <section class="export">
-      <h3>Manifest snippet</h3>
-      <textarea readonly rows="8" [value]="exportJson"></textarea>
-      <button type="button" (click)="copyExport()">Copy JSON</button>
-      @if (copyStatus) {
-        <span class="copy-status">{{ copyStatus }}</span>
-      }
-    </section>
-  </aside>
-</div>
+    <app-dev-json-export title="Manifest snippet" [json]="exportJson" />
+  </div>
+</app-dev-editor-shell>

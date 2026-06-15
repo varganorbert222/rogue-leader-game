@@ -1,0 +1,57 @@
+<section class="hierarchy-panel">
+  <h3>{{ title }}</h3>
+
+  @if (!rows.length) {
+    <p class="empty">{{ emptyMessage }}</p>
+  } @else {
+    <ul class="tree" role="tree">
+      @for (row of rows; track row.node.id + ':' + resetKey) {
+        <li
+          class="tree-node"
+          [class.selected]="selectedId === row.node.id"
+          [class.dimmed]="!row.viewportVisible"
+          [class.draggable]="canDrag(row)"
+          [attr.draggable]="canDrag(row) ? true : null"
+          (click)="onNodeClick(row.node)"
+          (dragstart)="onDragStart(row, $event)"
+          (dragover)="onDragOver(row, $event)"
+          (drop)="onDrop(row, $event)"
+          (dragend)="onDragEnd()"
+        >
+          <div class="row" [style.padding-left.rem]="row.depth * 0.85">
+            @if (row.hasChildren) {
+              <button
+                type="button"
+                class="expand-btn"
+                (click)="toggleExpanded(row.node.id, $event)"
+                [attr.aria-expanded]="isExpanded(row.node.id)"
+              >
+                {{ isExpanded(row.node.id) ? '▼' : '▶' }}
+              </button>
+            } @else {
+              <span class="expand-spacer"></span>
+            }
+            <button
+              type="button"
+              class="visibility-btn"
+              [class.off]="!row.selfViewportVisible"
+              (click)="onVisibilityClick(row, $event)"
+              [attr.aria-label]="row.selfViewportVisible ? 'Hide in viewport' : 'Show in viewport'"
+              title="Toggle viewport visibility (children follow in 3D)"
+            >
+              {{ row.selfViewportVisible ? '●' : '○' }}
+            </button>
+            <span class="kind">{{ kindIcon(row.node.kind) }}</span>
+            <span class="label">{{ row.node.label }}</span>
+            <span class="meta">
+              @if (row.node.isGenerated) {
+                <span class="gen-badge" title="Generált elem (nem az eredeti modellből)">GEN</span>
+              }
+              <span class="kind-tag">{{ row.node.kind }}</span>
+            </span>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

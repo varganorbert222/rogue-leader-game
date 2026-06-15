@@ -10,6 +10,12 @@ import {
   DebugAxes,
   type BabylonHost,
   type LodLoadProgress,
+  ShipWireframePreviewScene,
+  type LoadedEntity,
+  prepareLoadedEntityForPool,
+  resetLoadedEntityTransform,
+  prepareLoadedEntityForAcquire,
+  resetShipAnimations,
 } from '@rogue-leader/engine';
 import type { CombatConfig } from '../../data/config/combat-config';
 import type { WeaponsManifest } from '../../data/config/weapons-manifest';
@@ -76,9 +82,17 @@ import { collectMissionDebugFrame } from '../presentation/mission-debug-snapshot
 import { MissionSimulationCoordinator } from '../simulation/coordinator/mission-simulation-coordinator';
 import { MissionBootstrap } from '../bootstrap/mission-bootstrap';
 import { isDestroyAllEnemiesWon } from '../simulation/systems/wave-spawn-system';
-import type { MissionConfig, MissionEndState } from '../mission-types';
+import type { MissionConfig, MissionEndState, MissionSessionPhase } from '../mission-types';
 import { MissionEndStates } from '../mission-types';
 import type { MissionNavigation } from '../../ai/navigation/mission-navigation';
+import {
+  resolveMissionSpawnPolicy,
+  type MissionSpawnPolicy,
+} from '../spawn/mission-spawn-policy';
+import {
+  listSelectableShips,
+  type SelectableShipInfo,
+} from '../spawn/selectable-ships';
 
 /**
  * Mission session facade: input, HUD, win/lose, and debug API.
@@ -113,6 +127,13 @@ export class MissionManager {
   private debugFloor?: DebugFloor;
   private debugWorldAxes?: DebugAxes;
   private debugShipAxes?: DebugAxes;
+  private spawnPolicy: MissionSpawnPolicy = resolveMissionSpawnPolicy();
+  private awaitingShipSelection = false;
+  private respawnPending = false;
+  private missionStartedEmitted = false;
+  private activePlayerLoaded?: LoadedEntity;
+  private shipPreview?: ShipWireframePreviewScene;
+  private previewShipId?: string;
 
   constructor(
     private readonly host: BabylonHost,
@@ -179,6 +200,7 @@ export class MissionManager {
     });
 
     this.config = bootstrap.config;
+    this.spawnPolicy = resolveMissionSpawnPolicy(this.config.spawnPolicy);
     this.assetManifest = bootstrap.assetManifest;
     this.weaponsManifest = bootstrap.weaponsManifest;
     this.combatConfig = bootstrap.combatConfig;
@@ -196,14 +218,68 @@ export class MissionManager {
       bootstrap.renderConfig.bloom,
     );
 
-    const shipEntry = this.assetManifest.ships[this.config.player.shipId];
-    if (!shipEntry) {
-      throw new Error(`Missing ship: ${this.config.player.shipId}`);
+    const spawnPoint = Vector3.FromArray(this.config.player.spawn);
+
+    if (
+      this.config.asteroids &&
+      this.assetManifest.props[this.config.asteroids.prefabId]
+    ) {
+      await this.world.asteroids.spawnIntoWorld(
+        this.world,
+        this.shipLoader,
+        this.assetManifest.props[this.config.asteroids.prefabId],
+        this.config.asteroids,
+        spawnPoint,
+        this.assetPreloader.getAsteroidTemplates(),
+      );
     }
 
-    const playerLoaded = this.assetPreloader.shipPool.takePlayerShip(
-      this.config.player.shipId,
-    );
+    const volumeCenter = Vector3.FromArray(this.config.playVolume.center);
+    this.debugFloor?.dispose();
+    this.debugFloor = new DebugFloor(this.host.scene, {
+      center: volumeCenter,
+      extent: this.config.playVolume.radius,
+      step: 50,
+      y: 0,
+      boundaryRadius: this.config.playVolume.softBoundary
+        ? this.config.playVolume.radius
+        : undefined,
+    });
+
+    this.syncDebugStaticMeshes(volumeCenter);
+
+    if (this.spawnPolicy.shipSelectBeforeSpawn) {
+      this.awaitingShipSelection = true;
+      this.loadState = { loading: false, message: '' };
+      return;
+    }
+
+    await this.spawnPlayerShip(this.config.player.shipId);
+
+    if (this.config.introCinematicSec) {
+      this.camera.startIntro(this.config.introCinematicSec);
+    }
+
+    this.loadState = { loading: false, message: '' };
+  }
+
+  private async spawnPlayerShip(shipId: string): Promise<void> {
+    const shipEntry = this.assetManifest.ships[shipId];
+    if (!shipEntry) {
+      throw new Error(`Missing ship: ${shipId}`);
+    }
+
+    this.config.player.shipId = shipId;
+
+    if (this.world.playerEntity) {
+      this.despawnPlayer();
+    }
+
+    const playerLoaded = this.assetPreloader.shipPool.takePlayerShip(shipId);
+    this.activePlayerLoaded = playerLoaded;
+    resetLoadedEntityTransform(playerLoaded);
+    prepareLoadedEntityForAcquire(playerLoaded);
+    resetShipAnimations(playerLoaded, shipEntry);
     playerLoaded.root.position = Vector3.FromArray(this.config.player.spawn);
     const heading = Vector3.FromArray(this.config.player.heading).normalize();
     playerLoaded.root.rotationQuaternion = shipRotationFromHeading(heading);
@@ -222,11 +298,12 @@ export class MissionManager {
       resolveShipWeaponEnergyPool(shipWeapons),
       shipGroups.filter((group) => group.usesEnergy),
     );
+
     spawnPlayerEntity(this.world, {
       id: 'player',
       health: new HealthComponent(100, 100, 50, 50),
       weaponEnergy,
-      shipId: this.config.player.shipId,
+      shipId,
       shipEntry,
       loaded: playerLoaded,
       faction: playerFaction,
@@ -243,52 +320,137 @@ export class MissionManager {
       shipEntry,
     );
     this.camera.setCockpitConfig(cockpit?.config ?? null);
-
-    if (
-      this.config.asteroids &&
-      this.assetManifest.props[this.config.asteroids.prefabId]
-    ) {
-      await this.world.asteroids.spawnIntoWorld(
-        this.world,
-        this.shipLoader,
-        this.assetManifest.props[this.config.asteroids.prefabId],
-        this.config.asteroids,
-        playerLoaded.root.position,
-        this.assetPreloader.getAsteroidTemplates(),
-      );
-    }
+    this.camera.useFollowDriver();
 
     const volumeCenter = Vector3.FromArray(this.config.playVolume.center);
-    this.debugFloor?.dispose();
-    this.debugFloor = new DebugFloor(this.host.scene, {
-      center: volumeCenter,
-      extent: this.config.playVolume.radius,
-      step: 50,
-      y: 0,
-      boundaryRadius: this.config.playVolume.softBoundary
-        ? this.config.playVolume.radius
-        : undefined,
-    });
-
     this.syncDebugStaticMeshes(volumeCenter, playerLoaded.root);
 
-    if (this.config.introCinematicSec) {
-      this.camera.startIntro(this.config.introCinematicSec);
+    if (!this.missionStartedEmitted) {
+      this.events.emit(
+        GameEvents.missionStarted({
+          musicId: this.config.musicId,
+          musicSetId: this.config.musicSetId,
+          playerShipId: shipId,
+        }),
+      );
+      this.missionStartedEmitted = true;
+    } else {
+      this.events.emit(GameEvents.playerSpawned({ playerShipId: shipId }));
+    }
+  }
+
+  private despawnPlayer(): void {
+    const playerId = this.world.playerEntity;
+    if (!playerId) return;
+
+    this.events.emit(GameEvents.playerDespawned());
+
+    disposePlayerCockpit(this.world, playerId);
+    this.camera.setCockpitConfig(null);
+    this.camera.useFollowDriver();
+
+    const shipIdentity = this.world.get(playerId, 'shipIdentity');
+    const weapons = this.world.get(playerId, 'weapons');
+    weapons?.system.setFireEnabled(false);
+    this.world.get(playerId, 'sfoil')?.controller.dispose();
+    this.world.removeComponent(playerId, 'sfoil');
+
+    const loaded = shipIdentity?.loadedEntity;
+    const shipEntry = shipIdentity
+      ? this.assetManifest.ships[shipIdentity.shipId]
+      : undefined;
+    const flight = this.world.get(playerId, 'flight');
+    flight?.controller.resetKinematics();
+    if (loaded) {
+      if (shipEntry) {
+        resetShipAnimations(loaded, shipEntry);
+      }
+      prepareLoadedEntityForPool(loaded);
     }
 
-    this.events.emit(
-      GameEvents.missionStarted({
-        musicId: this.config.musicId,
-        musicSetId: this.config.musicSetId,
-        playerShipId: this.config.player.shipId,
-      }),
-    );
+    this.world.despawn(playerId);
 
-    this.loadState = { loading: false, message: '' };
+    if (loaded) {
+      this.assetPreloader.shipPool.releasePlayerShip(loaded);
+    }
+    this.activePlayerLoaded = undefined;
+    this.prevListenerPosition = null;
+  }
+
+  private beginPlayerDeathRespawn(): void {
+    const playerId = this.world.playerEntity;
+    if (!playerId) {
+      this.respawnPending = false;
+      return;
+    }
+
+    const shipIdentity = this.world.get(playerId, 'shipIdentity');
+    const entry = shipIdentity
+      ? this.assetManifest.ships[shipIdentity.shipId]
+      : undefined;
+    const playerRoot = getShipRoot(this.world, playerId);
+
+    if (entry) {
+      this.wreckDebris.spawnFromShip(
+        shipIdentity!.shipId,
+        entry,
+        {
+          position: getShipPosition(this.world, playerId).clone(),
+          rotationQuaternion: getShipRotation(this.world, playerId).clone(),
+          velocity: getShipVelocity(this.world, playerId).clone(),
+        },
+      );
+    }
+    playerRoot.setEnabled(false);
+    ParticleFx.explosion(this.host.scene, playerRoot.getAbsolutePosition());
+
+    this.despawnPlayer();
+    this.awaitingShipSelection = true;
+    this.respawnPending = false;
   }
 
   getEndState(): MissionEndState {
     return this.endState;
+  }
+
+  getSessionPhase(): MissionSessionPhase {
+    if (this.awaitingShipSelection) return 'ship_select';
+    return this.endState;
+  }
+
+  isAwaitingShipSelection(): boolean {
+    return this.awaitingShipSelection;
+  }
+
+  getSelectableShips(): SelectableShipInfo[] {
+    return listSelectableShips(this.assetManifest);
+  }
+
+  async initShipPreview(canvas: HTMLCanvasElement): Promise<void> {
+    this.shipPreview?.dispose();
+    this.shipPreview = await ShipWireframePreviewScene.create(canvas);
+    this.shipPreview.startRenderLoop();
+    const first = this.getSelectableShips()[0];
+    if (first) {
+      await this.previewShip(first.shipId);
+    }
+  }
+
+  resizeShipPreview(): void {
+    this.shipPreview?.resize();
+  }
+
+  async previewShip(shipId: string): Promise<void> {
+    const entry = this.assetManifest.ships[shipId];
+    if (!entry || !this.shipPreview) return;
+    this.previewShipId = shipId;
+    await this.shipPreview.setShip(shipId, entry, RuntimePaths.assetsBase);
+  }
+
+  async confirmShipSelection(shipId: string): Promise<void> {
+    if (!this.awaitingShipSelection) return;
+    await this.spawnPlayerShip(shipId);
+    this.awaitingShipSelection = false;
   }
 
   getHudState(): MissionHudState {
@@ -346,8 +508,15 @@ export class MissionManager {
   }
 
   update(dt: number): void {
+    if (this.endState !== MissionEndStates.Playing || !this.simulation) {
+      return;
+    }
+    if (this.awaitingShipSelection) {
+      return;
+    }
+
     const playerId = this.world.playerEntity;
-    if (this.endState !== MissionEndStates.Playing || !playerId || !this.simulation) {
+    if (!playerId) {
       return;
     }
 
@@ -394,6 +563,14 @@ export class MissionManager {
     this.renderGameDebug(playerId);
 
     if (!this.debugPreferences.gameplay.invincible && playerHealth.isDead()) {
+      if (this.spawnPolicy.respawnOnDeath) {
+        if (!this.respawnPending) {
+          this.respawnPending = true;
+          this.beginPlayerDeathRespawn();
+        }
+        return;
+      }
+
       this.endState = MissionEndStates.Lost;
       const entry = this.assetManifest.ships[shipIdentity.shipId];
       if (entry) {
@@ -426,6 +603,8 @@ export class MissionManager {
   }
 
   dispose(): void {
+    this.shipPreview?.dispose();
+    this.shipPreview = undefined;
     this.boundInput.dispose();
     this.combat?.dispose();
     this.debugFloor?.dispose();

@@ -59,8 +59,7 @@
           "regenDelaySec": 0.85
         }
       },
-      "anchors": {
-      },
+      "anchors": {},
       "animations": {
         "initialState": "folded",
         "transitions": [
@@ -157,7 +156,32 @@
           "regenDelaySec": 0.85
         }
       },
-      "anchors": {
+      "anchors": {},
+      "cockpit": {
+        "localOffset": [
+          0,
+          0,
+          -0.85
+        ],
+        "localRotationDeg": [
+          0,
+          0,
+          0
+        ],
+        "lookLimits": {
+          "yaw": 0.7853981633974483,
+          "pitch": 0.3490658503988659
+        },
+        "fov": 0.8726646259971648,
+        "inputResponse": {
+          "maxInputOffset": [
+            0.06,
+            0.04,
+            0.04
+          ],
+          "smoothTime": 0.5
+        },
+        "modelPath": "models/ships/tie_fighter/tie_fighter_cockpit.glb"
       }
     }
   },

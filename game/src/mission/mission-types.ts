@@ -1,4 +1,5 @@
 import type { MissionNavigationConfig } from "../ai/navigation/nav-types";
+import type { MissionSpawnPolicy } from "./spawn/mission-spawn-policy";
 
 export interface MissionWaveEnemy {
   shipId: string;
@@ -57,11 +58,15 @@ export interface MissionConfig {
   winCondition: { type: string };
   loseCondition: { type: string };
   introCinematicSec?: number;
+  /** Optional spawn / respawn testing hooks. */
+  spawnPolicy?: MissionSpawnPolicy;
   stub?: boolean;
   stubMessage?: string;
 }
 
 export type MissionEndState = "playing" | "won" | "lost";
+
+export type MissionSessionPhase = "ship_select" | MissionEndState;
 
 export const MissionEndStates = {
   Playing: "playing",

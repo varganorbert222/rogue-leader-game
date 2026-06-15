@@ -7,6 +7,7 @@ import { ShipAudioCatalog } from "../../audio/ship-audio-map";
 import { SfxClipIds } from "../../data/constants/audio-clips";
 import { resolveShipSfoilSfx } from "../../audio/sfoil-sfx";
 import { resolveFaction } from "../../combat/faction";
+import { collectSelectableShipIds } from "../spawn/selectable-ships";
 
 export interface SfoilFileVariantSet {
   basePath: string;
@@ -43,11 +44,19 @@ export function collectMissionAssetPlan(
   weaponsManifest: WeaponsManifest,
 ): MissionAssetPlan {
   const shipIds = collectMissionShipIds(config);
+  for (const shipId of collectSelectableShipIds(manifest)) {
+    shipIds.push(shipId);
+  }
+  const uniqueShipIds = [...new Set(shipIds)];
   const clipIds = new Set<string>([
     SfxClipIds.BulletHit,
     SfxClipIds.BulletWhoosh,
     SfxClipIds.FighterExplosion,
     SfxClipIds.AsteroidExplosion,
+    SfxClipIds.ShipCrash,
+    SfxClipIds.MissileHit,
+    SfxClipIds.ProtonTorpedoFire,
+    SfxClipIds.WarheadWhoosh,
     SfxClipIds.RebelCannonFire,
     SfxClipIds.ImperialCannonFire,
   ]);
@@ -85,7 +94,7 @@ export function collectMissionAssetPlan(
   }
 
   return {
-    shipIds,
+    shipIds: uniqueShipIds,
     asteroidPrefabId: config.asteroids?.prefabId,
     skyboxId: config.skyboxId,
     skyboxTexture: config.skyboxTexture,

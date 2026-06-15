@@ -25,13 +25,25 @@ import { attachVisualPivot } from '../loaders/visual-pivot';
 import { computeCameraDistanceMeters } from '../render/lod-distance';
 import { computeScreenCoveragePercent } from '../render/screen-coverage';
 import { DebugFloor } from '../render/debug-floor';
+import { collectDescendantMeshes } from '../loaders/scene-graph-utils';
+import { DevPreviewRendering } from './dev-preview-rendering';
+import { buildModelContentHierarchy } from './scene-hierarchy-builder';
+import {
+  createDefaultViewportState,
+  createHierarchyOutlinerState,
+  type HierarchyOutlinerState,
+} from './hierarchy-outliner';
+import { HierarchyViewportSync } from './hierarchy-viewport-sync';
+import type { HierarchyNode } from './hierarchy-types';
 import {
   editableConfigToManifestValue,
   resolvePreviewScale,
+  mergeLodBaseGlbPath,
   type LodPreviewLevelInfo,
   type LodPreviewLiveState,
   type LodPreviewSnapshot,
 } from './lod-editor-types';
+import { DevScenePreviewExtras, type HierarchyNodeTransformInfo } from './dev-scene-preview-extras';
 
 function countVertices(meshes: readonly AbstractMesh[]): number {
   let total = 0;
@@ -66,7 +78,14 @@ export class LodPreviewScene {
   private lodRuntime: LodRuntimeState | null = null;
   private modelId = '';
   private lastScale: number | [number, number] | [number, number, number] = 1;
+  private lastBaseGlbPath?: string;
   private onProgress?: LodProgressCallback;
+  private hierarchy: HierarchyNode[] = [];
+  private readonly devRendering = new DevPreviewRendering();
+  private readonly viewportSync = new HierarchyViewportSync(null);
+  private defaultViewportState: HierarchyOutlinerState = createHierarchyOutlinerState();
+  private readonly previewExtras = new DevScenePreviewExtras();
+  private loadSeq = 0;
 
   constructor(
     private readonly host: BabylonHost,
@@ -99,6 +118,14 @@ export class LodPreviewScene {
     });
   }
 
+  async initRendering(): Promise<void> {
+    await this.devRendering.attach(this.host, this.camera);
+  }
+
+  getCamera(): ArcRotateCamera {
+    return this.camera;
+  }
+
   setProgressCallback(callback: LodProgressCallback | undefined): void {
     this.onProgress = callback;
   }
@@ -107,25 +134,34 @@ export class LodPreviewScene {
     modelId: string,
     lod: LodManifestValue | undefined,
     scale: number | [number, number] | [number, number, number],
+    options?: { baseGlbPath?: string },
   ): Promise<LodPreviewSnapshot> {
     this.lastScale = scale;
-    return this.loadModel(modelId, lod, scale);
+    return this.loadModel(modelId, lod, scale, options);
   }
 
   async loadModel(
     modelId: string,
     lod: LodManifestValue | undefined,
     scale: number | [number, number] | [number, number, number],
+    options?: { baseGlbPath?: string },
   ): Promise<LodPreviewSnapshot> {
+    const loadSeq = ++this.loadSeq;
     this.disposeModel();
     this.modelId = modelId;
+    this.lastBaseGlbPath = options?.baseGlbPath;
 
     const result = await this.lodLoader.loadWithLod(
       modelId,
-      lod,
+      mergeLodBaseGlbPath(lod, this.lastBaseGlbPath),
       resolvePreviewScale(scale),
       this.onProgress,
     );
+
+    if (loadSeq !== this.loadSeq) {
+      result?.root.dispose();
+      throw new Error('Model load superseded');
+    }
 
     if (!result) {
       throw new Error(`Failed to load model "${modelId}"`);
@@ -135,20 +171,33 @@ export class LodPreviewScene {
     this.modelRoot = result.root;
     this.lodMeshes = result.lodMeshes;
     this.boundsMeshes = result.lodMeshes[0] ?? [];
+    this.hierarchy = buildModelContentHierarchy(result.root);
+    this.previewExtras.bindAnimations(result.animationGroups);
+    this.devRendering.applyEmissiveBloomToMeshes(collectDescendantMeshes(result.root));
+    this.viewportSync.setRoot(result.root);
+    this.defaultViewportState = createDefaultViewportState(this.hierarchy);
+    this.viewportSync.apply(this.hierarchy, this.defaultViewportState);
     this.applyNativeLod(result.root, result.lodMeshes, lod);
     this.frameModel();
 
     return this.buildSnapshot();
   }
 
-  async reloadWithConfig(config: LodConfig): Promise<LodPreviewSnapshot> {
+  async reloadWithConfig(
+    config: LodConfig,
+    options?: { baseGlbPath?: string },
+  ): Promise<LodPreviewSnapshot> {
     if (!this.modelId) {
       throw new Error('No model loaded');
+    }
+    if (options?.baseGlbPath !== undefined) {
+      this.lastBaseGlbPath = options.baseGlbPath;
     }
     return this.loadModel(
       this.modelId,
       editableConfigToManifestValue(config),
       this.lastScale,
+      { baseGlbPath: this.lastBaseGlbPath },
     );
   }
 
@@ -360,6 +409,42 @@ export class LodPreviewScene {
     };
   }
 
+  getHierarchy(): HierarchyNode[] {
+    return this.hierarchy;
+  }
+
+  getDefaultViewportState(): HierarchyOutlinerState {
+    return this.defaultViewportState;
+  }
+
+  applyHierarchyViewport(state: HierarchyOutlinerState): void {
+    this.viewportSync.apply(this.hierarchy, state);
+  }
+
+  highlightNode(sceneName: string | undefined): HierarchyNodeTransformInfo | null {
+    return this.previewExtras.highlightNode(this.host.scene, this.modelRoot, sceneName);
+  }
+
+  clearHighlight(): void {
+    this.previewExtras.clearHighlight();
+  }
+
+  listAnimations() {
+    return this.previewExtras.listAnimations();
+  }
+
+  getPlayingAnimationIndex(): number | null {
+    return this.previewExtras.getPlayingAnimationIndex();
+  }
+
+  playAnimation(index: number): void {
+    this.previewExtras.playAnimation(index);
+  }
+
+  stopAnimations(): void {
+    this.previewExtras.stopAnimations();
+  }
+
   buildSnapshot(): LodPreviewSnapshot {
     return {
       modelId: this.modelId,
@@ -378,6 +463,7 @@ export class LodPreviewScene {
   }
 
   disposeModel(): void {
+    this.previewExtras.dispose();
     if (this.modelRoot && !this.modelRoot.isDisposed()) {
       this.modelRoot.dispose();
     }
@@ -385,11 +471,15 @@ export class LodPreviewScene {
     this.lodMeshes = [];
     this.boundsMeshes = [];
     this.lodRuntime = null;
+    this.hierarchy = [];
+    this.viewportSync.setRoot(null);
   }
 
   dispose(): void {
+    ++this.loadSeq;
     this.disposeModel();
     this.floor.dispose();
+    this.devRendering.dispose();
     this.camera.dispose();
   }
 }

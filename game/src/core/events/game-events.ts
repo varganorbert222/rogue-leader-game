@@ -17,8 +17,11 @@ export const GameEventTypes = {
   MissileLaunched: "MissileLaunched",
   HarpoonAttached: "HarpoonAttached",
   ProjectileWhoosh: "ProjectileWhoosh",
+  ShipCollision: "ShipCollision",
   ShipInbound: "ShipInbound",
   SfoilToggled: "SfoilToggled",
+  PlayerSpawned: "PlayerSpawned",
+  PlayerDespawned: "PlayerDespawned",
 } as const;
 
 export type GameEventType =
@@ -132,6 +135,13 @@ export const GameEvents = {
     };
   },
 
+  shipCollision(payload: SpatialSfxPayload = {}): GameEvent {
+    return {
+      type: GameEventTypes.ShipCollision,
+      payload: asEventPayload(payload),
+    };
+  },
+
   entityDestroyed(payload: EntityDestroyedPayload): GameEvent {
     return {
       type: GameEventTypes.EntityDestroyed,
@@ -191,6 +201,17 @@ export const GameEvents = {
       type: GameEventTypes.SfoilToggled,
       payload: asEventPayload(payload),
     };
+  },
+
+  playerSpawned(payload: { playerShipId: string }): GameEvent {
+    return {
+      type: GameEventTypes.PlayerSpawned,
+      payload: asEventPayload(payload),
+    };
+  },
+
+  playerDespawned(): GameEvent {
+    return { type: GameEventTypes.PlayerDespawned };
   },
 };
 

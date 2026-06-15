@@ -41,6 +41,7 @@ function createPlaceholderLodRuntime(
   );
 }
 import { attachVisualPivot } from "./visual-pivot";
+import { markSceneNodeGenerated } from "./scene-node-origin";
 import { attachGltfImportToParent } from "./gltf-import-utils";
 import {
   cloneLoadedEntityRoot,
@@ -48,6 +49,7 @@ import {
   findVisualRoot,
   remapLodMeshGroups,
 } from "./clone-entity-utils";
+import { stripCockpitFromRoot } from "./cockpit-loader";
 import { disableMeshBackfaceCulling, applyMeshEmissiveBloomStrength } from "../render/mesh-material-utils";
 import {
   shareMaterialsFromTemplate,
@@ -346,6 +348,7 @@ export class GltfShipLoader {
 
   cloneShip(template: LoadedEntity, instanceId: string): LoadedEntity {
     const root = cloneLoadedEntityRoot(template.root, instanceId);
+    stripCockpitFromRoot(root);
     const visualRoot = findVisualRoot(root);
     const allMeshes = collectDescendantMeshes(root);
     const lodMeshes = this.resolveClonedLodMeshes(template, root, allMeshes);
@@ -445,7 +448,9 @@ export class GltfShipLoader {
   ): LoadedEntity {
     const radius = entry.colliderRadius;
     const root = new TransformNode(`placeholder_${id}`, this.scene);
+    markSceneNodeGenerated(root);
     const visualRoot = new TransformNode(`${id}_visual`, this.scene);
+    markSceneNodeGenerated(visualRoot);
     visualRoot.parent = root;
     const body = MeshBuilder.CreateBox(
       `${id}_body`,
@@ -453,6 +458,7 @@ export class GltfShipLoader {
       this.scene,
     );
     body.parent = visualRoot;
+    markSceneNodeGenerated(body);
     const nose = MeshBuilder.CreateCylinder(
       `${id}_nose`,
       { diameterTop: 0, diameterBottom: 0.8, height: 1.2 },
@@ -461,6 +467,7 @@ export class GltfShipLoader {
     nose.rotation.x = Math.PI / 2;
     nose.position.z = -2;
     nose.parent = visualRoot;
+    markSceneNodeGenerated(nose);
     disableMeshBackfaceCulling([body, nose]);
     applyModelAxisCorrection(visualRoot, entry.axes);
     return finalizeLoadedEntity(
@@ -483,6 +490,7 @@ export class GltfShipLoader {
   private createPlaceholderAsteroid(entry: PropManifestEntry): LoadedEntity {
     const radius = entry.colliderRadius;
     const root = new TransformNode("placeholder_asteroid", this.scene);
+    markSceneNodeGenerated(root);
     const visualRoot = attachVisualPivot(root, this.scene);
     const mesh = MeshBuilder.CreateIcoSphere(
       "asteroid",
@@ -490,6 +498,7 @@ export class GltfShipLoader {
       this.scene,
     );
     mesh.parent = visualRoot;
+    markSceneNodeGenerated(mesh);
     const loaded = finalizeLoadedEntity(root, visualRoot, [mesh], [[mesh]], radius, {
       firePoints: { fires: [], engines: [] },
       anchors: { engines: [], weapons: [] },

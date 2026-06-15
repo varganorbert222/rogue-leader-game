@@ -13,6 +13,10 @@ import type {
   SfxRegistry,
 } from './audio-types';
 import { ClipPlayer } from './clip-player';
+import {
+  CockpitAudioFilter,
+  type CockpitAudioFilterConfig,
+} from './cockpit-audio-filter';
 import { DynamicMusicController } from './dynamic-music';
 import { MusicController } from './music-controller';
 import { MusicTrackRegistry } from './music-track-registry';
@@ -24,6 +28,7 @@ export type {
   PlayOneShotOptions,
   StartLoopOptions,
 } from './audio-types';
+export type { CockpitAudioFilterConfig } from './cockpit-audio-filter';
 
 const warnedMissing = new Set<string>();
 
@@ -34,6 +39,7 @@ export class AudioManager {
   private readonly music: MusicController;
   private readonly dynamicMusic: DynamicMusicController;
   private readonly clips: ClipPlayer;
+  private readonly cockpitFilter: CockpitAudioFilter;
   private unlocked = false;
   private manifest: AudioManifest | null = null;
   private musicSets: Record<string, MusicSetDef> = {};
@@ -46,6 +52,7 @@ export class AudioManager {
     this.music = new MusicController(this.bus, this.musicTracks);
     this.dynamicMusic = new DynamicMusicController(this.bus, this.musicTracks);
     this.clips = new ClipPlayer(scene, this.bus, this.bufferCache);
+    this.cockpitFilter = new CockpitAudioFilter();
   }
 
   async loadManifest(
@@ -93,6 +100,19 @@ export class AudioManager {
     if (!audioEngine) return;
     audioEngine.useCustomUnlockedButton = true;
     audioEngine.unlock();
+    this.cockpitFilter.setEnabled(this.cockpitFilter.isEnabled());
+  }
+
+  setCockpitMode(enabled: boolean): void {
+    this.cockpitFilter.setEnabled(enabled);
+  }
+
+  isCockpitMode(): boolean {
+    return this.cockpitFilter.isEnabled();
+  }
+
+  update(dt: number): void {
+    this.cockpitFilter.update(dt);
   }
 
   /** Update listener state for Doppler (position follows active camera automatically). */
@@ -251,6 +271,7 @@ export class AudioManager {
   }
 
   dispose(): void {
+    this.cockpitFilter.dispose();
     this.music.dispose();
     this.dynamicMusic.dispose();
     this.clips.dispose();
@@ -258,4 +279,4 @@ export class AudioManager {
     this.bufferCache.dispose();
   }
 }
-
+

@@ -4,7 +4,7 @@
   "basePath": "audio/sfx",
   "clips": {
     "rebel_cannon_fire": {
-      "registry": "cannon/rebel",
+      "registry": "cannon/rebel_cannon",
       "volume": 0.82,
       "volumeRange": [0.88, 1.0],
       "pitchRange": [0.94, 1.06],
@@ -12,7 +12,7 @@
       "maxVoices": 8
     },
     "imperial_cannon_fire": {
-      "registry": "cannon/imperial",
+      "registry": "cannon/imperial_cannon",
       "volume": 0.85,
       "volumeRange": [0.9, 1.0],
       "pitchRange": [0.95, 1.05],
@@ -20,14 +20,14 @@
       "maxVoices": 6
     },
     "bullet_hit": {
-      "registry": "bullet/hit",
+      "registry": "bullet/cannon_bullet_hit",
       "volume": 0.88,
       "volumeRange": [0.85, 1.0],
       "pitchRange": [0.9, 1.1],
       "maxVoices": 8
     },
     "bullet_whoosh": {
-      "registry": "bullet/whoosh",
+      "registry": "bullet/cannon_bullet_whoosh",
       "volume": 0.72,
       "volumeRange": [0.8, 1.0],
       "pitchRange": [0.92, 1.08],
@@ -35,14 +35,14 @@
       "maxVoices": 4
     },
     "fighter_explosion": {
-      "registry": "explosion/fighter",
+      "registry": "explosion/fighter_explosion",
       "volume": 1.0,
       "volumeRange": [0.9, 1.0],
       "pitchRange": [0.88, 1.12],
       "maxVoices": 5
     },
     "asteroid_explosion": {
-      "registry": "asteroid/explosion",
+      "registry": "asteroid/asteroid_splash",
       "volume": 0.95,
       "volumeRange": [0.88, 1.0],
       "pitchRange": [0.9, 1.1],
@@ -53,22 +53,46 @@
       "volume": 0.95,
       "volumeRange": [0.9, 1.0],
       "pitchRange": [0.94, 1.06],
+      "maxVoices": 4
+    },
+    "ship_crash": {
+      "registry": "crash/ship_crash",
+      "volume": 0.98,
+      "volumeRange": [0.9, 1.0],
+      "pitchRange": [0.9, 1.08],
+      "cooldownMs": 180,
+      "maxVoices": 4
+    },
+    "proton_torpedo_fire": {
+      "registry": "projectile/proton_torpedo",
+      "volume": 0.92,
+      "volumeRange": [0.9, 1.0],
+      "pitchRange": [0.94, 1.06],
+      "cooldownMs": 250,
       "maxVoices": 3
     },
+    "warhead_whoosh": {
+      "registry": "projectile/warhead_whoosh",
+      "volume": 0.8,
+      "volumeRange": [0.85, 1.0],
+      "pitchRange": [0.92, 1.08],
+      "cooldownMs": 220,
+      "maxVoices": 4
+    },
     "xwing_engine": {
-      "registry": "xwing/engine",
+      "registry": "xwing/xwing_engine",
       "volume": 0.42,
       "loop": true,
       "maxVoices": 14
     },
     "tie_fighter_engine": {
-      "registry": "tie_fighter/engine",
+      "registry": "tie_fighter/tie_fighter_engine",
       "volume": 0.48,
       "loop": true,
       "maxVoices": 14
     },
     "xwing_inbound": {
-      "registry": "xwing/inbound",
+      "registry": "xwing/xwing_inbound",
       "volume": 0.78,
       "volumeRange": [0.9, 1.0],
       "pitchRange": [0.96, 1.04],
@@ -76,7 +100,7 @@
       "maxVoices": 2
     },
     "tie_fighter_inbound": {
-      "registry": "tie_fighter/inbound",
+      "registry": "tie_fighter/tie_fighter_inbound",
       "volume": 0.8,
       "volumeRange": [0.9, 1.0],
       "pitchRange": [0.95, 1.05],
@@ -84,7 +108,7 @@
       "maxVoices": 2
     },
     "xwing_sfoil": {
-      "registry": "xwing/sfoil",
+      "registry": "xwing/xwing_sfoil",
       "volume": 0.9,
       "volumeRange": [0.92, 1.0],
       "pitchRange": [0.96, 1.04],

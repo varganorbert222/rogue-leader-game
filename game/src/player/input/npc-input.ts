@@ -4,6 +4,8 @@ import type { VehicleInput } from './vehicle-input';
 
 /** World context for NPC steering each tick. */
 export interface NpcInputContext {
+  /** When false, NPCs ignore the player for radar / combat (same faction). */
+  playerIsHostile: boolean;
   playerPosition: Vector3;
   flockMates: FlockMate[];
   flockCenter: Vector3;

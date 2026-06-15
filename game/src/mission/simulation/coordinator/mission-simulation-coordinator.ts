@@ -1,6 +1,7 @@
 import { Vector3 } from '@babylonjs/core';
 import type { GltfShipLoader } from '@rogue-leader/engine';
 import { CombatTeams } from '../../../data/constants';
+import { resolveFaction } from '../../../combat/faction';
 import { GameEvents } from '../../../core/events/game-events';
 import { collectHostileTargets } from '../../../ecs/queries/combat-queries';
 import { runNpcSystem } from '../../../ecs/systems/npc-system';
@@ -12,7 +13,7 @@ import type { WreckDebrisManager } from '../../../vfx/wreck-debris-manager';
 import { buildMissionAudioContext } from '../services/mission-audio-context';
 import type { MissionRuntimeContext } from '../mission-runtime-context';
 import { resolveProjectileHit } from '../systems/damage-resolution-system';
-import { updatePlayerAsteroidCollisions } from '../systems/hazard-collision-system';
+import { updateShipCollisions, createShipCollisionState } from '../systems/ship-collision-system';
 import { updateMissionLodStates } from '../systems/lod-update-system';
 import {
   createInitialWaveState,
@@ -39,7 +40,7 @@ export interface MissionSimulationTickResult {
 /** Fixed-order per-frame mission simulation tick. */
 export class MissionSimulationCoordinator {
   private waveState: WaveSpawnState;
-  private asteroidHitCooldown = 0;
+  private readonly shipCollisionState = createShipCollisionState();
 
   constructor(
     private readonly runtime: MissionRuntimeContext,
@@ -54,7 +55,7 @@ export class MissionSimulationCoordinator {
 
   resetWaveState(config = this.runtime.config): void {
     this.waveState = createInitialWaveState(config);
-    this.asteroidHitCooldown = 0;
+    this.shipCollisionState.pairCooldowns.clear();
   }
 
   wireCombatTargets(): void {
@@ -131,15 +132,17 @@ export class MissionSimulationCoordinator {
         combatConfig: this.runtime.combatConfig,
         npcBehaviorConfig: this.runtime.npcBehaviorConfig,
         missionNavigation: this.runtime.missionNavigation,
+        playerFaction:
+          world.get(playerId, 'faction') ??
+          resolveFaction(
+            this.runtime.assetManifest.ships[this.runtime.config.player.shipId]
+              ?.faction,
+          ),
       },
     );
 
     world.updateHazards(dt);
-    this.asteroidHitCooldown = Math.max(0, this.asteroidHitCooldown - dt);
-    this.asteroidHitCooldown = updatePlayerAsteroidCollisions(
-      this.runtime,
-      this.asteroidHitCooldown,
-    );
+    updateShipCollisions(this.runtime, this.shipCollisionState, dt);
 
     updateMissionLodStates(this.runtime.host.scene, world.collectLodRuntimes());
 
@@ -151,6 +154,7 @@ export class MissionSimulationCoordinator {
       input: playerInput,
       dt,
       camera: this.runtime.camera.getCamera(),
+      cockpitView: this.runtime.camera.getMode() === 'cockpit',
       npcBehaviorConfig: this.runtime.npcBehaviorConfig,
       prevListenerPosition: input.prevListenerPosition,
     });
