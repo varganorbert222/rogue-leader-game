@@ -8,22 +8,29 @@ import { FormsModule } from '@angular/forms';
 import {
   BabylonHost,
   buildParticleEffectHierarchy,
-  ParticlePreviewScene,
   cloneParticleEffect,
   defaultParticleSystem,
+  DevConfigTools,
+  estimateEffectPreviewDurationMs,
   loadParticlePresets,
+  loadParticleTextureCatalog,
   newBlankParticlePreset,
+  ParticlePreviewScene,
   reorderFlatHierarchy,
+  syncAlbedoTextureFromCatalog,
+  syncStaticAtlasCell,
+  isAnimatedParticleAtlas,
   type HierarchyNode,
   type HierarchyReorderEvent,
   type ParticleEffectEditable,
   type ParticlePresetEntry,
   type ParticleSystemEditable,
+  type ParticleTextureEntry,
 } from '@rogue-leader/engine';
 import { HierarchyPanelComponent } from '../../shared/components/hierarchy-panel/hierarchy-panel.component';
 import { DevEditorShellComponent } from '../../shared/dev-editor/dev-editor-shell.component';
+import { DevJsonCopyComponent } from '../../shared/dev-editor/dev-json-copy.component';
 import { DevEditorStatusComponent } from '../../shared/dev-editor/dev-editor-status.component';
-import { DevJsonExportComponent } from '../../shared/dev-editor/dev-json-export.component';
 import {
   createDevBabylonHost,
   disposeDevBabylonHost,
@@ -31,6 +38,7 @@ import {
   toErrorMessage,
   type DevEditorCanvases,
 } from '../../shared/dev-editor/dev-editor.utils';
+import { ParticleSystemInspectorComponent } from './inspectors/particle-system-inspector.component';
 
 @Component({
   selector: 'app-particle-editor',
@@ -39,14 +47,17 @@ import {
     FormsModule,
     HierarchyPanelComponent,
     DevEditorShellComponent,
+    DevJsonCopyComponent,
     DevEditorStatusComponent,
-    DevJsonExportComponent,
+    ParticleSystemInspectorComponent,
   ],
   templateUrl: './particle-editor.component.html',
   styleUrl: './particle-editor.component.scss',
   encapsulation: ViewEncapsulation.None,
 })
 export class ParticleEditorComponent implements OnInit, OnDestroy {
+  readonly devTool = DevConfigTools.particleEditor;
+
   presets: ParticlePresetEntry[] = [];
   selectedPresetId = '';
   effect: ParticleEffectEditable | null = null;
@@ -55,8 +66,8 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
   hierarchyRevision = 0;
   loading = true;
   errorMessage = '';
-  exportJson = '';
   playing = false;
+  particleTextures: ParticleTextureEntry[] = [];
 
   private host: BabylonHost | null = null;
   private preview: ParticlePreviewScene | null = null;
@@ -65,6 +76,7 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     try {
+      this.particleTextures = await loadParticleTextureCatalog();
       this.presets = await loadParticlePresets();
       if (!this.presets.length) {
         this.presets = [newBlankParticlePreset()];
@@ -112,6 +124,11 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
     return this.effect.systems.find((s) => s.id === this.selectedSystemId) ?? null;
   }
 
+  get savePayload(): { presets: ParticlePresetEntry[] } {
+    this.syncCurrentPreset();
+    return { presets: this.presets };
+  }
+
   async onPresetChange(presetId: string): Promise<void> {
     this.selectedPresetId = presetId;
     await this.loadPreset(presetId);
@@ -126,17 +143,20 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
 
   async duplicatePreset(): Promise<void> {
     if (!this.effect) return;
+
     const copy = cloneParticleEffect(this.effect);
     copy.id = `effect_${Date.now()}`;
     copy.name = `${copy.name} Copy`;
     for (const system of copy.systems) {
       system.id = `ps_${Date.now()}_${system.name}`;
     }
+
     const preset: ParticlePresetEntry = {
       id: copy.id,
       label: copy.name,
       effect: copy,
     };
+
     this.presets = [...this.presets, preset];
     this.selectedPresetId = preset.id;
     await this.loadPreset(preset.id);
@@ -164,7 +184,7 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
       return existing!;
     });
     this.preview?.reorderSystems(this.effect.systems.map((s) => s.id));
-    this.exportSnippet();
+    this.syncCurrentPreset();
   }
 
   addSystem(): void {
@@ -174,7 +194,7 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
     const id = this.preview.addSystem(system);
     this.selectedSystemId = id;
     this.refreshHierarchy();
-    this.exportSnippet();
+    this.syncCurrentPreset();
   }
 
   removeSelectedSystem(): void {
@@ -184,46 +204,77 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
     this.effect.systems = this.effect.systems.filter((s) => s.id !== this.selectedSystemId);
     this.selectedSystemId = this.effect.systems[0]?.id ?? '';
     this.refreshHierarchy();
-    this.exportSnippet();
+    this.syncCurrentPreset();
+  }
+
+  onAlbedoTextureChange(): void {
+    const system = this.selectedSystem;
+    if (!system) return;
+
+    if (!system.albedoTexture.textureId) {
+      system.albedoTexture.isAtlas = false;
+    } else {
+      system.albedoTexture = syncStaticAtlasCell(
+        syncAlbedoTextureFromCatalog(system.albedoTexture),
+      );
+    }
+
+    this.onSystemFieldChange();
+  }
+
+  onEmissionModeChange(): void {
+    this.onSystemFieldChange();
+  }
+
+  onDurationChange(): void {
+    const system = this.selectedSystem;
+    if (!system) return;
+    if (system.looping && system.duration <= 0 && system.emissionMode === 'rate') {
+      system.looping = false;
+    }
+    this.onSystemFieldChange();
+  }
+
+  onLoopingChange(): void {
+    const system = this.selectedSystem;
+    if (!system) return;
+    if (system.looping && system.duration <= 0) {
+      system.duration = Math.max(system.maxLifeTime, 1);
+    }
+    this.onSystemFieldChange();
   }
 
   onSystemFieldChange(): void {
     const system = this.selectedSystem;
     if (!system || !this.preview) return;
+
+    if (!isAnimatedParticleAtlas(system.albedoTexture)) {
+      system.albedoTexture = syncStaticAtlasCell(system.albedoTexture);
+    }
+
     this.refreshHierarchy();
     this.schedulePreviewUpdate(system);
-    this.exportSnippet();
+    this.syncCurrentPreset();
   }
 
   playPreview(): void {
     this.playing = true;
     this.preview?.playAll();
+    const durationMs = this.effect ? estimateEffectPreviewDurationMs(this.effect) : 2000;
     window.setTimeout(() => {
       this.playing = false;
-    }, 2000);
+    }, durationMs);
   }
 
   playSelectedSystem(): void {
-    if (!this.selectedSystemId) return;
-    this.preview?.playSystem(this.selectedSystemId);
+    if (!this.selectedSystemId || !this.preview) return;
+    this.preview.stopAll();
+    this.preview.playSystem(this.selectedSystemId);
   }
 
   stopPreview(): void {
     this.playing = false;
     this.preview?.stopAll();
-  }
-
-  exportSnippet(): void {
-    if (!this.effect) {
-      this.exportJson = '';
-      return;
-    }
-    const preset: ParticlePresetEntry = {
-      id: this.selectedPresetId,
-      label: this.effect.name,
-      effect: this.effect,
-    };
-    this.exportJson = JSON.stringify(preset, null, 2);
   }
 
   private async loadPreset(presetId: string): Promise<void> {
@@ -234,12 +285,25 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
     await this.preview.setEffect(this.effect);
     this.selectedSystemId = this.effect.systems[0]?.id ?? '';
     this.refreshHierarchy();
-    this.exportSnippet();
   }
 
   onEffectNameChange(): void {
     this.refreshHierarchy();
-    this.exportSnippet();
+    this.syncCurrentPreset();
+  }
+
+  private syncCurrentPreset(): void {
+    if (!this.effect) return;
+    const index = this.presets.findIndex((preset) => preset.id === this.selectedPresetId);
+    if (index < 0) return;
+
+    const current = this.presets[index];
+    this.presets[index] = {
+      ...current,
+      label: this.effect.name,
+      effect: cloneParticleEffect(this.effect),
+    };
+    this.presets = [...this.presets];
   }
 
   private refreshHierarchy(): void {

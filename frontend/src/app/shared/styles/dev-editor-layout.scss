@@ -2,12 +2,63 @@
 @use 'dev-editor-forms';
 
 .dev-editor {
-  position: relative;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
   font-family: 'Segoe UI', system-ui, sans-serif;
   color: #d6dde8;
+}
+
+.dev-editor-docked {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.dock-side {
+  flex: 0 0 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #16181c;
+  border-color: #3a4048;
+}
+
+.dock-left {
+  border-right: 1px solid #3a4048;
+}
+
+.dock-right {
+  border-left: 1px solid #3a4048;
+}
+
+.dock-splitter {
+  flex: 0 0 5px;
+  cursor: col-resize;
+  background: #1e2228;
+  border-left: 1px solid #2f353d;
+  border-right: 1px solid #2f353d;
+  touch-action: none;
+
+  &:hover,
+  &:active {
+    background: #2a3548;
+  }
+}
+
+.dock-center {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #0d1014;
+}
+
+.viewport {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
 }
 
 .preview-canvas {
@@ -20,20 +71,14 @@
 }
 
 .top-bar {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 3;
+  flex: 0 0 auto;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.65rem 1.25rem;
-  background: rgba(18, 20, 24, 0.88);
-  border: 1px solid #3a4048;
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  backdrop-filter: blur(8px);
+  padding: 0.65rem 1rem;
+  background: #121418;
+  border-bottom: 1px solid #3a4048;
 
   h1 {
     margin: 0;
@@ -70,23 +115,17 @@
 }
 
 .panel {
-  position: absolute;
-  top: 3.5rem;
-  bottom: 0.75rem;
-  width: min(22rem, 34vw);
-  z-index: 2;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.85rem;
   padding: 0.85rem;
-  background: rgba(22, 24, 28, 0.94);
-  border: 1px solid #3a4048;
-  border-radius: 8px;
   overflow: auto;
-  backdrop-filter: blur(10px);
+  background: #16181c;
 
   h2 {
-    margin: 0 0 0.25rem;
+    margin: 0 0 0.35rem;
     font-size: 0.85rem;
     font-weight: 600;
     color: #eef2f8;
@@ -94,22 +133,17 @@
     letter-spacing: 0.06em;
   }
 
-  h3 {
-    margin: 0.5rem 0 0.35rem;
+  > h3 {
+    margin: 0.35rem 0 0;
     font-size: 0.78rem;
     font-weight: 600;
-    color: #aeb7c4;
+    color: #c5cdd9;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 }
 
-.panel-left {
-  left: 0.75rem;
-}
-
 .panel-right {
-  right: 0.75rem;
   overflow-x: hidden;
   min-width: 0;
 }
@@ -203,8 +237,48 @@ code {
   color: #8ab4ff;
 }
 
+.inspector-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid #343b48;
+}
+
+[devEditorLeft],
+[devEditorRight] {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-width: 0;
+}
+
 .inspector-section {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.55rem;
+  padding: 0.7rem 0.75rem;
+  background: #12151b;
+  border: 1px solid #2f3642;
+  border-radius: 6px;
+  min-width: 0;
+
+  > h3 {
+    margin: 0;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid #343b48;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #d8e0ec;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  > h3 + .hint {
+    margin-top: -0.15rem;
+  }
+
+  > .panel-actions {
+    margin-top: 0.1rem;
+  }
 }

@@ -16,6 +16,57 @@ export function toErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
+export function clamp01(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+export function color4ToHex(color: { r: number; g: number; b: number }): string {
+  const r = Math.round(clamp01(color.r) * 255);
+  const g = Math.round(clamp01(color.g) * 255);
+  const b = Math.round(clamp01(color.b) * 255);
+  return `#${toHexByte(r)}${toHexByte(g)}${toHexByte(b)}`;
+}
+
+export function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const normalized = hex.replace('#', '');
+  if (normalized.length !== 6) {
+    return { r: 1, g: 1, b: 1 };
+  }
+  return {
+    r: parseInt(normalized.slice(0, 2), 16) / 255,
+    g: parseInt(normalized.slice(2, 4), 16) / 255,
+    b: parseInt(normalized.slice(4, 6), 16) / 255,
+  };
+}
+
+export function hdrVec3ToPicker(color: { x: number; y: number; z: number }): {
+  hex: string;
+  intensity: number;
+} {
+  const intensity = Math.max(color.x, color.y, color.z);
+  if (intensity <= 0) {
+    return { hex: '#ffffff', intensity: 0 };
+  }
+  return {
+    hex: color4ToHex({
+      r: color.x / intensity,
+      g: color.y / intensity,
+      b: color.z / intensity,
+    }),
+    intensity,
+  };
+}
+
+export function pickerToHdrVec3(hex: string, intensity: number): { x: number; y: number; z: number } {
+  const { r, g, b } = hexToRgb(hex);
+  const scale = Math.max(0, intensity);
+  return { x: r * scale, y: g * scale, z: b * scale };
+}
+
+function toHexByte(value: number): string {
+  return value.toString(16).padStart(2, '0');
+}
+
 export interface DevEditorCanvases {
   preview: HTMLCanvasElement;
   updateAxisGizmo: (camera: Camera) => void;
@@ -171,15 +222,14 @@ export function hierarchySceneName(node: HierarchyNode): string | undefined {
   return node.sceneName ?? node.label;
 }
 
-export async function copyJsonToClipboard(text: string): Promise<'ok' | 'failed'> {
-  try {
-    await navigator.clipboard.writeText(text);
-    return 'ok';
-  } catch {
-    return 'failed';
-  }
-}
-
 export function markViewForCheck(cdr?: ChangeDetectorRef): void {
   cdr?.markForCheck();
+}
+
+export async function copyJsonToClipboard(data: unknown): Promise<void> {
+  const text = JSON.stringify(data, null, 2);
+  if (!navigator.clipboard?.writeText) {
+    throw new Error('Clipboard API is not available in this browser.');
+  }
+  await navigator.clipboard.writeText(text);
 }

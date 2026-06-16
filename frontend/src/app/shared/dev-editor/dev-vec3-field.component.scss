@@ -1,0 +1,31 @@
+.vec3-field .vec3-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.3rem;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+    min-width: 0;
+  }
+
+  .axis {
+    font-size: 0.66rem;
+    color: #7b8494;
+    line-height: 1;
+  }
+
+  input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    background: #0f1115;
+    border: 1px solid #3a4048;
+    border-radius: 4px;
+    color: #e8edf5;
+    padding: 0.28rem 0.35rem;
+    font: inherit;
+    font-size: 0.76rem;
+  }
+}

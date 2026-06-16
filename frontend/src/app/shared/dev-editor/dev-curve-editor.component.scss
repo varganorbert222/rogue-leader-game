@@ -1,0 +1,75 @@
+@use '../../shared/styles/dev-editor-forms.scss';
+
+.dev-curve-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.curve-plot {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #343b48;
+  border-radius: 4px;
+  background: #0d1016;
+  touch-action: none;
+  user-select: none;
+}
+
+.plot-bg {
+  fill: #10141c;
+  stroke: #2d3440;
+}
+
+.grid-line {
+  stroke: #2a3140;
+  stroke-width: 1;
+}
+
+.curve-line {
+  fill: none;
+  stroke: #6ea8ff;
+  stroke-width: 2;
+}
+
+.curve-point {
+  fill: #9ec1ff;
+  stroke: #1a2230;
+  stroke-width: 1.5;
+  cursor: grab;
+
+  &.selected {
+    fill: #ffd27d;
+    stroke: #6ea8ff;
+    r: 6;
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.axis-label {
+  fill: #7b8494;
+  font-size: 8px;
+  text-anchor: middle;
+
+  &.y {
+    text-anchor: start;
+  }
+}
+
+.axis-title {
+  fill: #9aa3b2;
+  font-size: 8px;
+  text-anchor: middle;
+
+  &.y {
+    text-anchor: start;
+  }
+}
+
+.curve-point-editor .field.inline {
+  grid-template-columns: 1fr 1fr auto;
+}

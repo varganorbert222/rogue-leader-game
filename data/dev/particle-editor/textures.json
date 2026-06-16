@@ -1,0 +1,22 @@
+{
+  "textures": [
+    {
+      "id": "flare",
+      "label": "Flare",
+      "file": "flare.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "id": "particles_01",
+      "label": "Particle Atlas 1",
+      "file": "atlased_particles_01.png",
+      "width": 4096,
+      "height": 4096,
+      "atlas": {
+        "tileWidth": 256,
+        "tileHeight": 256
+      }
+    }
+  ]
+}

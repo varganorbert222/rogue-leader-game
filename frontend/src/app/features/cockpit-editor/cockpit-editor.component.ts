@@ -11,9 +11,9 @@ import {
   BabylonHost,
   CockpitPreviewScene,
   defaultCockpitEditable,
-  editableToManifestCockpit,
   listCockpitEditorShips,
   loadAssetManifest,
+  loadCockpitEditorOverride,
   RuntimePaths,
   type AssetManifest,
   type CockpitEditableConfig,
@@ -26,8 +26,8 @@ import {
   type LodEditorModelEntry,
 } from '@rogue-leader/engine';
 import { DevEditorShellComponent } from '../../shared/dev-editor/dev-editor-shell.component';
+import { DevJsonCopyComponent } from '../../shared/dev-editor/dev-json-copy.component';
 import { DevEditorStatusComponent } from '../../shared/dev-editor/dev-editor-status.component';
-import { DevJsonExportComponent } from '../../shared/dev-editor/dev-json-export.component';
 import { DevModelPickerComponent } from '../../shared/dev-editor/dev-model-picker.component';
 import { DevSceneHierarchyComponent } from '../../shared/dev-editor/dev-scene-hierarchy.component';
 import {
@@ -52,7 +52,7 @@ import {
     DevEditorStatusComponent,
     DevModelPickerComponent,
     DevSceneHierarchyComponent,
-    DevJsonExportComponent,
+    DevJsonCopyComponent,
   ],
   templateUrl: './cockpit-editor.component.html',
   styleUrl: './cockpit-editor.component.scss',
@@ -84,7 +84,6 @@ export class CockpitEditorComponent implements OnInit, OnDestroy {
     stickYaw: 0,
     stickThrottle: 0,
   };
-  exportJson = '';
   hierarchy: HierarchyNode[] = [];
   hierarchyRevision = 0;
   selectedNodeId = '';
@@ -173,7 +172,10 @@ export class CockpitEditorComponent implements OnInit, OnDestroy {
 
   onConfigChange(): void {
     this.schedulePreviewRefresh();
-    this.refreshExport();
+  }
+
+  get cockpitSavePayload(): CockpitEditableConfig {
+    return this.config;
   }
 
   onHierarchySelect(node: HierarchyNode): void {
@@ -205,11 +207,14 @@ export class CockpitEditorComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     beginSceneHierarchyLoad(this, this.preview ?? undefined);
     this.config = defaultCockpitEditable(entry);
+    const override = await loadCockpitEditorOverride(shipId);
+    if (override) {
+      this.config = { ...this.config, ...override };
+    }
     try {
       await this.preview.loadShip(shipId, entry);
       this.preview.setEditableConfig(this.config);
       commitSceneHierarchyLoad(this, this.preview);
-      this.refreshExport();
     } catch (err) {
       this.errorMessage = toErrorMessage(err);
       this.hierarchy = [];
@@ -225,11 +230,6 @@ export class CockpitEditorComponent implements OnInit, OnDestroy {
       this.preview?.setEditableConfig(this.config);
       this.reloadTimer = null;
     }, 200);
-  }
-
-  private refreshExport(): void {
-    const snippet = editableToManifestCockpit(this.config);
-    this.exportJson = JSON.stringify({ cockpit: snippet }, null, 2);
   }
 
   private applyKeyboardMotion(): void {

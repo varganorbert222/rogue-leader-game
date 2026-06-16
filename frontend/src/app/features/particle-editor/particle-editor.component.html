@@ -1,225 +1,90 @@
-<app-dev-editor-shell
-  title="Particle System Editor"
-  badge="dev"
-  leftTitle="Effect"
-  rightTitle="Particle System"
-  (canvasReady)="onCanvasReady($event)"
->
-  <div devEditorLeft>
-    <label class="field">
-      <span>Preset</span>
-      <select
-        [ngModel]="selectedPresetId"
-        (ngModelChange)="onPresetChange($event)"
-        [disabled]="loading"
-      >
-        @for (preset of presets; track preset.id) {
-          <option [value]="preset.id">{{ preset.label }}</option>
-        }
-      </select>
-    </label>
-
-    <div class="panel-actions">
-      <button type="button" class="secondary-btn" (click)="newPreset()">New</button>
-      <button type="button" class="secondary-btn" (click)="duplicatePreset()">Duplicate</button>
-    </div>
-
-    @if (effect) {
-      <label class="field">
-        <span>Effect name</span>
-        <input type="text" [(ngModel)]="effect.name" (ngModelChange)="onEffectNameChange()" />
-      </label>
-    }
-
-    <app-hierarchy-panel
-      title="Modules"
-      [resetKey]="hierarchyRevision"
-      [nodes]="hierarchy"
-      [selectedId]="selectedSystemId"
-      [editable]="true"
-      [flatReorderUnderRoot]="true"
-      emptyMessage="Add a particle system module"
-      (nodeSelect)="onHierarchySelect($event)"
-      (nodeReorder)="onHierarchyReorder($event)"
-    />
-
-    <div class="panel-actions">
-      <button type="button" class="secondary-btn" (click)="addSystem()">+ Module</button>
-      <button
-        type="button"
-        class="secondary-btn"
-        (click)="removeSelectedSystem()"
-        [disabled]="!selectedSystem || (effect?.systems?.length ?? 0) <= 1"
-      >
-        Remove
-      </button>
-    </div>
-
-    <p class="hint">
-      Orbit: drag · Zoom: wheel · Bloom matches in-game render.json · Drag modules to reorder.
-    </p>
-
-    <app-dev-editor-status [loading]="loading" [errorMessage]="errorMessage" />
-  </div>
-
-  <div devEditorRight>
-    @if (!selectedSystem) {
-      <p class="hint">Select a module in the hierarchy.</p>
-    } @else {
-      <label class="field">
-        <span>Name</span>
-        <input type="text" [(ngModel)]="selectedSystem.name" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-
-      <label class="field">
-        <span>Play mode</span>
-        <select [(ngModel)]="selectedSystem.playMode" (ngModelChange)="onSystemFieldChange()">
-          <option value="loop">Loop (emit rate)</option>
-          <option value="burst">Burst (manual emit)</option>
-        </select>
-      </label>
-
-      <label class="field">
-        <span>Capacity</span>
-        <input type="number" min="1" step="1" [(ngModel)]="selectedSystem.capacity" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-
-      <label class="field">
-        <span>Texture</span>
-        <select [(ngModel)]="selectedSystem.texture" (ngModelChange)="onSystemFieldChange()">
-          <option value="flare">Flare (VFX)</option>
-          <option value="none">None</option>
-        </select>
-      </label>
-
-      <label class="field">
-        <span>Blend mode</span>
-        <select [(ngModel)]="selectedSystem.blendMode" (ngModelChange)="onSystemFieldChange()">
-          <option value="add">Additive (glow)</option>
-          <option value="standard">Standard</option>
-          <option value="multiply">Multiply</option>
-          <option value="oneone">OneOne</option>
-        </select>
-      </label>
-
-      <h3>Emission</h3>
-      <label class="field">
-        <span>Emit rate</span>
-        <input type="number" min="0" step="1" [(ngModel)]="selectedSystem.emitRate" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-      @if (selectedSystem.playMode === 'burst') {
-        <label class="field">
-          <span>Manual emit count</span>
-          <input type="number" min="1" step="1" [(ngModel)]="selectedSystem.manualEmitCount" (ngModelChange)="onSystemFieldChange()" />
-        </label>
-        <label class="field">
-          <span>Target stop duration (s)</span>
-          <input type="number" min="0" step="0.05" [(ngModel)]="selectedSystem.targetStopDuration" (ngModelChange)="onSystemFieldChange()" />
-        </label>
-      }
-
-      <h3>Size &amp; lifetime</h3>
-      <label class="field inline">
-        <span>Min size</span>
-        <input type="number" min="0" step="0.01" [(ngModel)]="selectedSystem.minSize" (ngModelChange)="onSystemFieldChange()" />
-        <span>Max size</span>
-        <input type="number" min="0" step="0.01" [(ngModel)]="selectedSystem.maxSize" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-      <label class="field inline">
-        <span>Min life</span>
-        <input type="number" min="0" step="0.01" [(ngModel)]="selectedSystem.minLifeTime" (ngModelChange)="onSystemFieldChange()" />
-        <span>Max life</span>
-        <input type="number" min="0" step="0.01" [(ngModel)]="selectedSystem.maxLifeTime" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-
-      <h3>Colors (RGBA 0–1)</h3>
-      <label class="field inline">
-        <span>color1</span>
-        <input type="number" min="0" max="1" step="0.01" [(ngModel)]="selectedSystem.color1.r" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" min="0" max="1" step="0.01" [(ngModel)]="selectedSystem.color1.g" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" min="0" max="1" step="0.01" [(ngModel)]="selectedSystem.color1.b" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" min="0" max="1" step="0.01" [(ngModel)]="selectedSystem.color1.a" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-      <label class="field inline">
-        <span>color2</span>
-        <input type="number" min="0" max="1" step="0.01" [(ngModel)]="selectedSystem.color2.r" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" min="0" max="1" step="0.01" [(ngModel)]="selectedSystem.color2.g" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" min="0" max="1" step="0.01" [(ngModel)]="selectedSystem.color2.b" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" min="0" max="1" step="0.01" [(ngModel)]="selectedSystem.color2.a" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-      <label class="field inline">
-        <span>colorDead</span>
-        <input type="number" min="0" max="1" step="0.01" [(ngModel)]="selectedSystem.colorDead.r" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" min="0" max="1" step="0.01" [(ngModel)]="selectedSystem.colorDead.g" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" min="0" max="1" step="0.01" [(ngModel)]="selectedSystem.colorDead.b" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" min="0" max="1" step="0.01" [(ngModel)]="selectedSystem.colorDead.a" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-
-      <h3>Emit box</h3>
-      <label class="field inline">
-        <span>Min box XYZ</span>
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.minEmitBox.x" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.minEmitBox.y" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.minEmitBox.z" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-      <label class="field inline">
-        <span>Max box XYZ</span>
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.maxEmitBox.x" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.maxEmitBox.y" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.maxEmitBox.z" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-
-      <h3>Direction &amp; forces</h3>
-      <label class="field inline">
-        <span>Dir1 XYZ</span>
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.direction1.x" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.direction1.y" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.direction1.z" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-      <label class="field inline">
-        <span>Dir2 XYZ</span>
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.direction2.x" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.direction2.y" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.direction2.z" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-      <label class="field inline">
-        <span>Gravity XYZ</span>
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.gravity.x" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.gravity.y" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.gravity.z" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-
-      <h3>Advanced</h3>
-      <label class="field inline">
-        <span>Angular speed min/max</span>
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.minAngularSpeed" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.maxAngularSpeed" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-      <label class="field inline">
-        <span>Emit power min/max</span>
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.minEmitPower" (ngModelChange)="onSystemFieldChange()" />
-        <input type="number" step="0.01" [(ngModel)]="selectedSystem.maxEmitPower" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-      <label class="field">
-        <span>Update speed</span>
-        <input type="number" min="0" step="0.01" [(ngModel)]="selectedSystem.updateSpeed" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-      <label class="field">
-        <span>Start delay (s)</span>
-        <input type="number" min="0" step="0.01" [(ngModel)]="selectedSystem.startDelay" (ngModelChange)="onSystemFieldChange()" />
-      </label>
-      <label class="field checkbox">
-        <input type="checkbox" [(ngModel)]="selectedSystem.disposeOnStop" (ngModelChange)="onSystemFieldChange()" />
-        <span>Dispose on stop</span>
-      </label>
-
-      <div class="panel-actions">
-        <button type="button" class="primary-btn" (click)="playPreview()" [disabled]="playing">Play all</button>
-        <button type="button" class="secondary-btn" (click)="playSelectedSystem()">Play module</button>
-        <button type="button" class="secondary-btn" (click)="stopPreview()">Stop</button>
-      </div>
-    }
-
-    <app-dev-json-export title="Preset JSON" [json]="exportJson" />
-  </div>
-</app-dev-editor-shell>
+<app-dev-editor-shell
+  title="Particle System Editor"
+  badge="dev"
+  leftTitle="Effect"
+  rightTitle="Particle System"
+  (canvasReady)="onCanvasReady($event)"
+>
+  <div devEditorLeft>
+    <section class="inspector-section">
+      <label class="field">
+        <span>Preset</span>
+        <select
+          [ngModel]="selectedPresetId"
+          (ngModelChange)="onPresetChange($event)"
+          [disabled]="loading"
+        >
+          @for (preset of presets; track preset.id) {
+            <option [value]="preset.id">{{ preset.label }}</option>
+          }
+        </select>
+      </label>
+
+      <div class="panel-actions">
+        <button type="button" class="secondary-btn" (click)="newPreset()">New</button>
+        <button type="button" class="secondary-btn" (click)="duplicatePreset()">Duplicate</button>
+      </div>
+
+      @if (effect) {
+        <label class="field">
+          <span>Effect name</span>
+          <input type="text" [(ngModel)]="effect.name" (ngModelChange)="onEffectNameChange()" />
+        </label>
+      }
+    </section>
+
+    <app-hierarchy-panel
+      title="Modules"
+      [resetKey]="hierarchyRevision"
+      [nodes]="hierarchy"
+      [selectedId]="selectedSystemId"
+      [editable]="true"
+      [flatReorderUnderRoot]="true"
+      emptyMessage="Add a particle system module"
+      (nodeSelect)="onHierarchySelect($event)"
+      (nodeReorder)="onHierarchyReorder($event)"
+    />
+
+    <div class="panel-actions">
+      <button type="button" class="secondary-btn" (click)="addSystem()">+ Module</button>
+      <button
+        type="button"
+        class="secondary-btn"
+        (click)="removeSelectedSystem()"
+        [disabled]="!selectedSystem || (effect?.systems?.length ?? 0) <= 1"
+      >
+        Remove
+      </button>
+    </div>
+
+    <p class="hint">
+      Orbit: drag · Zoom: wheel · Bloom matches in-game render.json · Drag modules to reorder.
+    </p>
+
+    <app-dev-editor-status [loading]="loading" [errorMessage]="errorMessage" />
+  </div>
+
+  <div devEditorRight>
+    @if (!selectedSystem) {
+      <p class="hint">Select a module in the hierarchy.</p>
+    } @else {
+      <app-particle-system-inspector
+        [system]="selectedSystem"
+        [particleTextures]="particleTextures"
+        [playing]="playing"
+        (systemChange)="onSystemFieldChange()"
+        (durationChange)="onDurationChange()"
+        (loopingChange)="onLoopingChange()"
+        (emissionModeChange)="onEmissionModeChange()"
+        (albedoTextureChange)="onAlbedoTextureChange()"
+        (atlasCellSelect)="onSystemFieldChange()"
+        (setAtlasRangeEdge)="onSystemFieldChange()"
+        (playAll)="playPreview()"
+        (playModule)="playSelectedSystem()"
+        (stop)="stopPreview()"
+      />
+    }
+
+    <app-dev-json-copy title="Presets" [data]="savePayload" />
+  </div>
+</app-dev-editor-shell>

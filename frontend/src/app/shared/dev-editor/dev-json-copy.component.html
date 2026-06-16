@@ -1,0 +1,11 @@
+<section class="inspector-section dev-json-copy">
+  <h3>{{ title }}</h3>
+  <div class="panel-actions">
+    <button type="button" class="primary-btn" (click)="copy()" [disabled]="copying || data == null">
+      {{ copying ? 'Copying…' : 'Copy JSON' }}
+    </button>
+  </div>
+  @if (status) {
+    <p class="status" [class.error]="statusError">{{ status }}</p>
+  }
+</section>

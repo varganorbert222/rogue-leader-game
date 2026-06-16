@@ -1,0 +1,49 @@
+<div class="size-over-lifetime">
+  <label class="field">
+    <span>Mode</span>
+    <select [(ngModel)]="sizeOverLifetime.mode" (ngModelChange)="onModeChange()">
+      <option value="range">Range (start → end)</option>
+      <option value="curve">Curve</option>
+    </select>
+  </label>
+
+  <p class="hint">All values multiply the Main spawn size (1 = 100%).</p>
+
+  @if (sizeOverLifetime.mode === 'range') {
+    <div class="field inline">
+      <span>Size multiplier</span>
+      <input
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="Start ×"
+        [(ngModel)]="sizeOverLifetime.rangeStart"
+        (ngModelChange)="onRangeChange()"
+      />
+      <input
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="End ×"
+        [(ngModel)]="sizeOverLifetime.rangeEnd"
+        (ngModelChange)="onRangeChange()"
+      />
+    </div>
+    <p class="hint">Linear multiplier from Start × at birth to End × at death.</p>
+  }
+
+  @if (sizeOverLifetime.mode === 'curve') {
+    <div class="preset-row">
+      @for (preset of presets; track preset.id) {
+        <button type="button" class="secondary-btn" (click)="applyPreset(preset.id)">
+          {{ preset.label }}
+        </button>
+      }
+    </div>
+
+    <app-dev-curve-editor
+      [keyframes]="sizeOverLifetime.keyframes"
+      (keyframesChange)="onCurveChange()"
+    />
+  }
+</div>

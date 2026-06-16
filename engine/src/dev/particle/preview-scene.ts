@@ -4,20 +4,18 @@ import {
   Vector3,
   type ParticleSystem,
 } from '@babylonjs/core';
-import type { BabylonHost } from '../core/babylon-host';
-import { DebugFloor } from '../render/debug-floor';
-import { DevPreviewRendering } from './dev-preview-rendering';
+import type { BabylonHost } from '../../core/babylon-host';
+import { DebugFloor } from '../../render/debug-floor';
+import { DevPreviewRendering } from '../dev-preview-rendering';
+import type { HierarchyNode } from '../hierarchy-types';
 import {
   applyEditableToParticleSystem,
   createParticleSystemFromEditable,
-} from './particle-preset-factory';
-import {
-  buildParticleEffectHierarchy,
-  cloneParticleEffect,
-  type ParticleEffectEditable,
-  type ParticleSystemEditable,
-} from './particle-editor-types';
-import type { HierarchyNode } from './hierarchy-types';
+} from './apply/factory';
+import { buildParticleEffectHierarchy } from './hierarchy';
+import { cloneParticleEffect, normalizeParticleEffect } from './normalize';
+import { startParticlePlayback } from './playback';
+import type { ParticleEffectEditable, ParticleSystemEditable } from './types';
 
 const EMITTER_POSITION = new Vector3(0, 1.2, 0);
 
@@ -27,7 +25,7 @@ export class ParticlePreviewScene {
   private readonly devRendering = new DevPreviewRendering();
   private effect: ParticleEffectEditable | null = null;
   private systems = new Map<string, ParticleSystem>();
-  private burstTimers: number[] = [];
+  private playbackTimers: number[] = [];
 
   constructor(private readonly host: BabylonHost) {
     const scene = host.scene;
@@ -76,7 +74,7 @@ export class ParticlePreviewScene {
   async setEffect(effect: ParticleEffectEditable): Promise<void> {
     this.stopAll();
     this.disposeSystems();
-    this.effect = cloneParticleEffect(effect);
+    this.effect = normalizeParticleEffect(cloneParticleEffect(effect));
 
     for (const config of this.effect.systems) {
       const ps = createParticleSystemFromEditable(this.host.scene, config);
@@ -136,20 +134,7 @@ export class ParticlePreviewScene {
     for (const config of this.effect.systems) {
       const ps = this.systems.get(config.id);
       if (!ps) continue;
-
-      if (config.playMode === 'burst') {
-        ps.manualEmitCount = config.manualEmitCount;
-        ps.start();
-        const releaseMs = Math.max(
-          300,
-          (config.maxLifeTime + (config.targetStopDuration || 0.2)) * 1000,
-        );
-        const timer = window.setTimeout(() => ps.stop(), releaseMs);
-        this.burstTimers.push(timer);
-      } else {
-        ps.manualEmitCount = 0;
-        ps.start();
-      }
+      startParticlePlayback(ps, config, this.playbackTimers);
     }
   }
 
@@ -157,29 +142,16 @@ export class ParticlePreviewScene {
     const config = this.effect?.systems.find((s) => s.id === systemId);
     const ps = this.systems.get(systemId);
     if (!config || !ps) return;
-
-    ps.stop();
-    if (config.playMode === 'burst') {
-      ps.manualEmitCount = config.manualEmitCount;
-      ps.start();
-      const releaseMs = Math.max(
-        300,
-        (config.maxLifeTime + (config.targetStopDuration || 0.2)) * 1000,
-      );
-      const timer = window.setTimeout(() => ps.stop(), releaseMs);
-      this.burstTimers.push(timer);
-    } else {
-      ps.manualEmitCount = 0;
-      ps.start();
-    }
+    startParticlePlayback(ps, config, this.playbackTimers);
   }
 
   stopAll(): void {
-    for (const timer of this.burstTimers) {
+    for (const timer of this.playbackTimers) {
       window.clearTimeout(timer);
     }
-    this.burstTimers = [];
+    this.playbackTimers = [];
     for (const ps of this.systems.values()) {
+      ps.manualEmitCount = -1;
       ps.stop();
     }
   }

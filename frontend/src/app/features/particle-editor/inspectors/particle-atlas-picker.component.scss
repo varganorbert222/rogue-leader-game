@@ -1,0 +1,51 @@
+.atlas-frame {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  border: 1px solid #3a4048;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #0d1014;
+}
+
+.atlas-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.atlas-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  gap: 0;
+}
+
+.atlas-cell {
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(138, 180, 255, 0.18);
+  }
+
+  &.selected {
+    background: rgba(138, 180, 255, 0.22);
+    box-shadow: inset 0 0 0 1px rgba(138, 180, 255, 0.75);
+  }
+
+  &.primary {
+    box-shadow: inset 0 0 0 2px #ffb347;
+  }
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(214, 221, 232, 0.7);
+}

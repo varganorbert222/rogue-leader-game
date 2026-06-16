@@ -129,11 +129,6 @@
       {{ live.inputOffsetZ | number:'1.3-3' }}) m
     </p>
 
-    <app-dev-json-export
-      title="Export"
-      [json]="exportJson"
-      [rows]="10"
-      hint="Paste under the ship entry in data/manifest.json."
-    />
+    <app-dev-json-copy title="Cockpit config" [data]="cockpitSavePayload" />
   </div>
 </app-dev-editor-shell>

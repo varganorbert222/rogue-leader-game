@@ -2,13 +2,17 @@
 
 .threshold-row {
   display: grid;
-  grid-template-columns: 1fr 4.5rem auto;
+  grid-template-columns: minmax(0, 1fr) repeat(auto-fit, minmax(3.75rem, 4.5rem));
   align-items: end;
   gap: 0.35rem;
-}
 
-.live-stats {
-  display: contents;
+  > span:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .snap-btn {
+    justify-self: start;
+  }
 }
 
 .lod-bar {

@@ -1,0 +1,295 @@
+<div class="inspector-toolbar">
+  <label class="field">
+    <span>Name</span>
+    <input type="text" [(ngModel)]="system.name" (ngModelChange)="systemChange.emit()" />
+  </label>
+
+  <div class="panel-actions">
+    <button type="button" class="primary-btn" (click)="playAll.emit()" [disabled]="playing">Play all</button>
+    <button type="button" class="secondary-btn" (click)="playModule.emit()">Play module</button>
+    <button type="button" class="secondary-btn" (click)="stop.emit()">Stop</button>
+  </div>
+</div>
+
+<section class="inspector-section">
+  <h3>Main</h3>
+  <p class="hint">Duration, lifetime, size, speed (m/s), spawn rotation (deg).</p>
+
+  <label class="field">
+    <span>Duration (s)</span>
+    <input
+      type="number"
+      min="0"
+      step="0.1"
+      [(ngModel)]="system.duration"
+      (ngModelChange)="durationChange.emit()"
+    />
+  </label>
+  <p class="hint">
+    @if (system.emissionMode === 'rate') {
+      0 = emit until stopped.
+    } @else {
+      Burst cycle length when looping (0 uses particle lifetime).
+    }
+  </p>
+
+  <label class="field checkbox">
+    <input type="checkbox" [(ngModel)]="system.looping" (ngModelChange)="loopingChange.emit()" />
+    <span>Looping</span>
+  </label>
+  @if (system.looping) {
+    <p class="hint">Repeats emission every Duration cycle.</p>
+  }
+
+  <label class="field">
+    <span>Start delay (s)</span>
+    <input type="number" min="0" step="0.01" [(ngModel)]="system.startDelay" (ngModelChange)="systemChange.emit()" />
+  </label>
+
+  <label class="field">
+    <span>Max particles</span>
+    <input type="number" min="1" step="1" [(ngModel)]="system.capacity" (ngModelChange)="systemChange.emit()" />
+  </label>
+
+  <label class="field">
+    <span>Playback speed</span>
+    <input type="number" min="0.05" max="4" step="0.05" [(ngModel)]="system.playbackSpeed" (ngModelChange)="systemChange.emit()" />
+  </label>
+  <p class="hint">1 = real-time preview. Scales simulation and particle motion together.</p>
+
+  <div class="field inline">
+    <span>Start lifetime (s)</span>
+    <input type="number" min="0" step="0.01" [(ngModel)]="system.minLifeTime" (ngModelChange)="systemChange.emit()" />
+    <input type="number" min="0" step="0.01" [(ngModel)]="system.maxLifeTime" (ngModelChange)="systemChange.emit()" />
+  </div>
+
+  <div class="field inline">
+    <span>Start size</span>
+    <input type="number" min="0" step="0.01" [(ngModel)]="system.minSize" (ngModelChange)="systemChange.emit()" />
+    <input type="number" min="0" step="0.01" [(ngModel)]="system.maxSize" (ngModelChange)="systemChange.emit()" />
+  </div>
+
+  <div class="field inline">
+    <span>Start speed (m/s)</span>
+    <input type="number" min="0" step="0.1" [(ngModel)]="system.minStartSpeedMps" (ngModelChange)="systemChange.emit()" />
+    <input type="number" min="0" step="0.1" [(ngModel)]="system.maxStartSpeedMps" (ngModelChange)="systemChange.emit()" />
+  </div>
+
+  <app-dev-vec3-field
+    label="Start rotation min (deg)"
+    [vector]="system.minStartRotationDeg"
+    (vectorChange)="systemChange.emit()"
+  />
+  <app-dev-vec3-field
+    label="Start rotation max (deg)"
+    [vector]="system.maxStartRotationDeg"
+    (vectorChange)="systemChange.emit()"
+  />
+
+  <app-dev-vec3-field
+    label="Rotation speed min (deg/s)"
+    [vector]="system.minRotationSpeedDeg"
+    (vectorChange)="systemChange.emit()"
+  />
+  <app-dev-vec3-field
+    label="Rotation speed max (deg/s)"
+    [vector]="system.maxRotationSpeedDeg"
+    (vectorChange)="systemChange.emit()"
+  />
+
+  <app-dev-vec3-field
+    label="Gravity (m/s²)"
+    [vector]="system.gravity"
+    (vectorChange)="systemChange.emit()"
+  />
+</section>
+
+<section class="inspector-section">
+  <h3>Size over Lifetime</h3>
+  <app-particle-size-over-lifetime
+    [sizeOverLifetime]="system.sizeOverLifetime"
+    (sizeOverLifetimeChange)="systemChange.emit()"
+  />
+</section>
+
+<section class="inspector-section">
+  <h3>Rotation over Lifetime</h3>
+  <app-particle-rotation-over-lifetime
+    [rotationOverLifetime]="system.rotationOverLifetime"
+    (rotationOverLifetimeChange)="systemChange.emit()"
+  />
+</section>
+
+<section class="inspector-section">
+  <h3>Emission</h3>
+
+  <label class="field">
+    <span>Mode</span>
+    <select [(ngModel)]="system.emissionMode" (ngModelChange)="emissionModeChange.emit()">
+      <option value="rate">Rate over Time</option>
+      <option value="burst">Burst</option>
+    </select>
+  </label>
+
+  @if (system.emissionMode === 'rate') {
+    <label class="field">
+      <span>Rate over time</span>
+      <input type="number" min="0" step="1" [(ngModel)]="system.emitRate" (ngModelChange)="systemChange.emit()" />
+    </label>
+  } @else {
+    <label class="field">
+      <span>Burst count</span>
+      <input type="number" min="1" step="1" [(ngModel)]="system.burstCount" (ngModelChange)="systemChange.emit()" />
+    </label>
+  }
+</section>
+
+<section class="inspector-section">
+  <h3>Shape</h3>
+  <p class="hint">Emitter volume and initial direction spread.</p>
+
+  <app-particle-shape-inspector
+    [shape]="system.shape"
+    (shapeChange)="systemChange.emit()"
+  />
+</section>
+
+<section class="inspector-section">
+  <h3>Color over Lifetime</h3>
+
+  <app-dev-color-field
+    label="Start color"
+    [color]="system.color1"
+    (colorChange)="systemChange.emit()"
+  />
+
+  <app-dev-color-field
+    label="Mid color"
+    [color]="system.color2"
+    (colorChange)="systemChange.emit()"
+  />
+
+  <app-dev-color-field
+    label="End color"
+    [color]="system.colorDead"
+    (colorChange)="systemChange.emit()"
+  />
+</section>
+
+<section class="inspector-section">
+  <h3>Texture Sheet Animation</h3>
+
+  <label class="field">
+    <span>Texture</span>
+    <select
+      [ngModel]="system.albedoTexture.textureId"
+      (ngModelChange)="onAlbedoTextureIdChange($event)"
+    >
+      <option value="">None</option>
+      @for (tex of particleTextures; track tex.id) {
+        <option [value]="tex.id">{{ tex.label }}</option>
+      }
+    </select>
+  </label>
+
+  @if (system.albedoTexture.textureId) {
+    @if (selectedAlbedoTextureEntry) {
+      <label class="field readonly-field">
+        <span>Texture size</span>
+        <input
+          type="text"
+          readonly
+          [value]="selectedAlbedoTextureEntry.width + ' × ' + selectedAlbedoTextureEntry.height"
+        />
+      </label>
+
+      @if (selectedAlbedoTextureEntry.atlas) {
+        <label class="field readonly-field">
+          <span>Tile size</span>
+          <input
+            type="text"
+            readonly
+            [value]="selectedAlbedoTextureEntry.atlas.tileWidth + ' × ' + selectedAlbedoTextureEntry.atlas.tileHeight"
+          />
+        </label>
+        <p class="hint">Sprite sheet atlas — {{ albedoAtlasCellCount }} cells.</p>
+      } @else {
+        <p class="hint">Single texture — no atlas tiling.</p>
+      }
+    }
+
+    @if (system.albedoTexture.isAtlas) {
+      <div class="field inline">
+        <span>Frame start / end</span>
+        <input type="number" min="0" step="1" [(ngModel)]="system.albedoTexture.startCellIndex" (ngModelChange)="systemChange.emit()" />
+        <input type="number" min="0" step="1" [(ngModel)]="system.albedoTexture.endCellIndex" (ngModelChange)="systemChange.emit()" />
+      </div>
+
+      <label class="field">
+        <span>Current frame</span>
+        <input type="number" min="0" step="1" [(ngModel)]="system.albedoTexture.cellIndex" (ngModelChange)="systemChange.emit()" />
+      </label>
+
+      <div class="panel-actions">
+        <button type="button" class="secondary-btn" (click)="onSetAtlasRangeEdge('start')">Set animation start to current frame</button>
+        <button type="button" class="secondary-btn" (click)="onSetAtlasRangeEdge('end')">Set animation end to current frame</button>
+      </div>
+
+      <app-particle-atlas-picker
+        [textureUrl]="resolvedAlbedoUrl"
+        [tileWidth]="system.albedoTexture.tileWidth"
+        [tileHeight]="system.albedoTexture.tileHeight"
+        [selectedIndex]="system.albedoTexture.cellIndex"
+        [startIndex]="system.albedoTexture.startCellIndex"
+        [endIndex]="system.albedoTexture.endCellIndex"
+        [animated]="isAtlasAnimated"
+        (cellSelect)="onAtlasCellSelect($event)"
+      />
+
+      @if (isAtlasAnimated) {
+        <label class="field">
+          <span>Frames / lifetime</span>
+          <input type="number" min="0" step="0.1" [(ngModel)]="system.albedoTexture.animationSpeed" (ngModelChange)="systemChange.emit()" />
+        </label>
+
+        <label class="field checkbox">
+          <input type="checkbox" [(ngModel)]="system.albedoTexture.animationLoop" (ngModelChange)="systemChange.emit()" />
+          <span>Loop sheet animation</span>
+        </label>
+      }
+    }
+  }
+</section>
+
+<section class="inspector-section">
+  <h3>Renderer</h3>
+
+  <label class="field">
+    <span>Blend mode</span>
+    <select [(ngModel)]="system.blendMode" (ngModelChange)="systemChange.emit()">
+      <option value="add">Additive (glow)</option>
+      <option value="alpha">Alpha blend</option>
+      <option value="multiply">Multiply</option>
+      <option value="oneone">OneOne</option>
+    </select>
+  </label>
+
+  <label class="field">
+    <span>Emission map</span>
+    <select
+      [ngModel]="system.emission.textureId"
+      (ngModelChange)="system.emission.textureId = $event; systemChange.emit()"
+    >
+      <option value="">None</option>
+      @for (tex of particleTextures; track tex.id) {
+        <option [value]="tex.id">{{ tex.label }}</option>
+      }
+    </select>
+  </label>
+
+  <app-dev-hdr-color-field
+    label="Emission HDR"
+    [color]="system.emission.color"
+    (colorChange)="systemChange.emit()"
+  />
+</section>

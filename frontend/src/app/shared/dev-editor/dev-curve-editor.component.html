@@ -1,0 +1,88 @@
+<div class="dev-curve-editor">
+  <svg
+    class="curve-plot"
+    [attr.viewBox]="'0 0 ' + viewW + ' ' + viewH"
+    (pointerdown)="onPlotPointerDown($event)"
+  >
+    <rect
+      class="plot-bg"
+      [attr.x]="timeToX(0) - 1"
+      [attr.y]="valueToY(valueMax)"
+      [attr.width]="plotW + 2"
+      [attr.height]="plotH + 2"
+    />
+
+    @for (tick of [0, 0.25, 0.5, 0.75, 1]; track tick) {
+      <line
+        class="grid-line"
+        [attr.x1]="timeToX(tick)"
+        [attr.x2]="timeToX(tick)"
+        [attr.y1]="valueToY(valueMin)"
+        [attr.y2]="valueToY(valueMax)"
+      />
+      <text class="axis-label" [attr.x]="timeToX(tick)" [attr.y]="viewH - 4">{{ tick | number: '1.0-2' }}</text>
+    }
+
+    @for (tick of [0, 0.5, 1, 1.5]; track tick) {
+      @if (tick <= valueMax) {
+        <line
+          class="grid-line"
+          [attr.x1]="timeToX(0)"
+          [attr.x2]="timeToX(1)"
+          [attr.y1]="valueToY(tick)"
+          [attr.y2]="valueToY(tick)"
+        />
+        <text class="axis-label y" [attr.x]="4" [attr.y]="valueToY(tick) + 3">{{ tick }}</text>
+      }
+    }
+
+    <polyline class="curve-line" [attr.points]="polylinePoints" />
+    @for (kf of sortedKeyframes; track $index; let i = $index) {
+      <circle
+        class="curve-point"
+        [class.selected]="i === selectedIndex"
+        [attr.cx]="timeToX(kf.time)"
+        [attr.cy]="valueToY(kf.value)"
+        r="5"
+        (pointerdown)="onPointPointerDown(i, $event)"
+        (pointermove)="onPointPointerMove($event)"
+        (pointerup)="onPointPointerUp($event)"
+      />
+    }
+
+    <text class="axis-title" [attr.x]="timeToX(0.5)" [attr.y]="viewH - 4">{{ timeLabel }}</text>
+    <text class="axis-title y" [attr.x]="6" [attr.y]="valueToY(valueMax) - 4">{{ valueLabel }}</text>
+  </svg>
+
+  <div class="curve-point-editor">
+    <span class="hint">Click plot to add a point. Drag handles to edit.</span>
+    <div class="field inline">
+      <span>Selected point</span>
+      <input
+        type="number"
+        min="0"
+        max="1"
+        step="0.01"
+        [ngModel]="sortedKeyframes[selectedIndex]?.time ?? 0"
+        (ngModelChange)="onSelectedTimeChange($event)"
+        [disabled]="selectedIndex === 0 || selectedIndex === sortedKeyframes.length - 1"
+      />
+      <input
+        type="number"
+        [min]="valueMin"
+        [max]="valueMax"
+        step="0.01"
+        [ngModel]="sortedKeyframes[selectedIndex]?.value ?? 0"
+        (ngModelChange)="onSelectedValueChange($event)"
+      />
+      <button
+        type="button"
+        class="secondary-btn"
+        (click)="removeSelectedPoint()"
+        [disabled]="sortedKeyframes.length <= 2"
+      >
+        Remove
+      </button>
+    </div>
+  </div>
+</div>

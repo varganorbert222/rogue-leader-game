@@ -7,7 +7,7 @@
     "game"
   ],
   "scripts": {
-    "start": "npm run start --workspace=frontend",
+    "start": "node scripts/dev-serve.mjs",
     "build": "npm run build --workspace=frontend",
     "audio:registry": "node scripts/generate-audio-registry.mjs",
     "assets:fetch": "node scripts/fetch-assets.mjs"

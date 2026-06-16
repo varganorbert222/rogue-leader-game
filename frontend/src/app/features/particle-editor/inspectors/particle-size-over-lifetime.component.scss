@@ -1,0 +1,15 @@
+.size-over-lifetime {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.preset-row .secondary-btn {
+  margin-top: 0;
+}

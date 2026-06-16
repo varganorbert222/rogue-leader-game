@@ -1,28 +1,52 @@
-<div class="dev-editor">
-  <canvas #previewCanvas class="preview-canvas"></canvas>
-  <app-dev-viewport-axes />
+<div class="dev-editor dev-editor-docked">
+  <div class="dock-side dock-left" [style.width.px]="leftWidth">
+    <aside class="panel panel-left">
+      @if (leftTitle) {
+        <h2>{{ leftTitle }}</h2>
+      }
+      <ng-content select="[devEditorLeft]" />
+    </aside>
+  </div>
 
-  <header class="top-bar">
-    <a routerLink="/" class="back-link">← Main menu</a>
-    <h1>{{ title }}</h1>
-    @if (badge === 'dev') {
-      <span class="dev-badge">Developer tool</span>
-    } @else if (badge === 'view') {
-      <span class="view-badge">View only</span>
-    }
-  </header>
+  <div
+    class="dock-splitter"
+    role="separator"
+    aria-orientation="vertical"
+    aria-label="Resize left panel"
+    (mousedown)="startResize('left', $event)"
+  ></div>
 
-  <aside class="panel panel-left">
-    @if (leftTitle) {
-      <h2>{{ leftTitle }}</h2>
-    }
-    <ng-content select="[devEditorLeft]" />
-  </aside>
+  <div class="dock-center">
+    <header class="top-bar">
+      <a routerLink="/" class="back-link">← Main menu</a>
+      <h1>{{ title }}</h1>
+      @if (badge === 'dev') {
+        <span class="dev-badge">Developer tool</span>
+      } @else if (badge === 'view') {
+        <span class="view-badge">View only</span>
+      }
+    </header>
 
-  <aside class="panel panel-right">
-    @if (rightTitle) {
-      <h2>{{ rightTitle }}</h2>
-    }
-    <ng-content select="[devEditorRight]" />
-  </aside>
+    <div class="viewport">
+      <canvas #previewCanvas class="preview-canvas"></canvas>
+      <app-dev-viewport-axes />
+    </div>
+  </div>
+
+  <div
+    class="dock-splitter"
+    role="separator"
+    aria-orientation="vertical"
+    aria-label="Resize right panel"
+    (mousedown)="startResize('right', $event)"
+  ></div>
+
+  <div class="dock-side dock-right" [style.width.px]="rightWidth">
+    <aside class="panel panel-right">
+      @if (rightTitle) {
+        <h2>{{ rightTitle }}</h2>
+      }
+      <ng-content select="[devEditorRight]" />
+    </aside>
+  </div>
 </div>

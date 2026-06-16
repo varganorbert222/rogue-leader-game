@@ -25,6 +25,24 @@
     font: inherit;
   }
 
+  input[type='number'] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      opacity: 0;
+      transition: opacity 0.12s ease;
+    }
+
+    &:hover::-webkit-inner-spin-button,
+    &:hover::-webkit-outer-spin-button,
+    &:focus::-webkit-inner-spin-button,
+    &:focus::-webkit-outer-spin-button {
+      opacity: 1;
+    }
+  }
+
   select {
     cursor: pointer;
   }
@@ -50,10 +68,40 @@
   }
 }
 
+.field.readonly-field input[readonly] {
+  color: #aeb7c4;
+  background: #12151b;
+  cursor: default;
+}
+
 .field.inline {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(3.75rem, 1fr));
   gap: 0.35rem;
+  align-items: center;
+
+  > span {
+    grid-column: 1 / -1;
+    margin-bottom: 0.05rem;
+  }
+
+  > input,
+  > select {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+
+  > .field {
+    flex: 1 1 9rem;
+    min-width: 0;
+  }
 }
 
 .primary-btn,

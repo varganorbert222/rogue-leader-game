@@ -1,0 +1,64 @@
+@use '../styles/dev-editor-forms.scss';
+
+.color-field-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.color-field input[type='color'] {
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2rem;
+  padding: 0.15rem;
+  border: 1px solid #3a4048;
+  border-radius: 4px;
+  background: #0f1115;
+  cursor: pointer;
+
+  &::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+
+  &::-webkit-color-swatch {
+    border: none;
+    border-radius: 2px;
+  }
+}
+
+.alpha-control {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1 1 7rem;
+  min-width: 0;
+  margin: 0;
+
+  > span:first-child {
+    flex: 0 0 auto;
+    font-size: 0.72rem;
+    color: #9aa3b2;
+  }
+
+  input[type='range'] {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    accent-color: #6ea8ff;
+    cursor: pointer;
+  }
+
+  .alpha-value {
+    flex: 0 0 2.25rem;
+    font-size: 0.72rem;
+    color: #c5cdd9;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+}

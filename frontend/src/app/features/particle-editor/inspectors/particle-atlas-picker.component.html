@@ -1,0 +1,29 @@
+@if (!textureUrl) {
+  <p class="hint">Select a texture to preview atlas tiles.</p>
+} @else if (loadFailed) {
+  <p class="hint">Could not load texture preview.</p>
+} @else if (!cells.length) {
+  <p class="hint">Loading texture…</p>
+} @else {
+  <div
+    class="atlas-frame"
+    [style.aspect-ratio]="imageWidth + ' / ' + imageHeight"
+  >
+    <img class="atlas-image" [src]="textureUrl" alt="Atlas preview" />
+    <div
+      class="atlas-grid"
+      [style.grid-template-columns]="'repeat(' + gridColumns + ', 1fr)'"
+    >
+      @for (cell of cells; track cell.index) {
+        <button
+          type="button"
+          class="atlas-cell"
+          [class.selected]="isSelected(cell)"
+          [class.primary]="isPrimary(cell)"
+          [title]="'Cell ' + cell.index"
+          (click)="onCellClick(cell)"
+        ></button>
+      }
+    </div>
+  </div>
+}

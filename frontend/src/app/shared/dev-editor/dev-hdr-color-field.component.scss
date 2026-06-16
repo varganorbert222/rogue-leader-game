@@ -1,0 +1,39 @@
+@use '../styles/dev-editor-forms.scss';
+@use './dev-color-field.component.scss';
+
+.intensity-control {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1 1 8rem;
+  min-width: 0;
+  margin: 0;
+
+  > span:first-child {
+    flex: 0 0 auto;
+    font-size: 0.72rem;
+    color: #9aa3b2;
+  }
+
+  input[type='range'] {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    accent-color: #6ea8ff;
+    cursor: pointer;
+  }
+
+  .intensity-input {
+    flex: 0 0 3.25rem;
+    width: 3.25rem;
+    min-width: 0;
+    padding: 0.25rem 0.35rem;
+    font-size: 0.72rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}

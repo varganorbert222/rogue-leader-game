@@ -1,0 +1,35 @@
+<div class="field vec3-field">
+  <span>{{ label }}</span>
+  <div class="vec3-row">
+    <label>
+      <span class="axis">X</span>
+      <input
+        type="number"
+        [min]="min ?? null"
+        [step]="step"
+        [(ngModel)]="vector.x"
+        (ngModelChange)="onChange()"
+      />
+    </label>
+    <label>
+      <span class="axis">Y</span>
+      <input
+        type="number"
+        [min]="min ?? null"
+        [step]="step"
+        [(ngModel)]="vector.y"
+        (ngModelChange)="onChange()"
+      />
+    </label>
+    <label>
+      <span class="axis">Z</span>
+      <input
+        type="number"
+        [min]="min ?? null"
+        [step]="step"
+        [(ngModel)]="vector.z"
+        (ngModelChange)="onChange()"
+      />
+    </label>
+  </div>
+</div>

@@ -104,7 +104,7 @@
     }
 
     @if (snapshot && snapshot.levelCount > 1 && !isDistanceMetric()) {
-      <div class="thresholds">
+      <section class="inspector-section thresholds">
         <h3>Transition thresholds (% screen height)</h3>
         @for (threshold of snapshot.screenThresholds; track $index) {
           <label class="field threshold-row">
@@ -120,11 +120,11 @@
             <button type="button" class="snap-btn" (click)="snapToThreshold($index)">Preview</button>
           </label>
         }
-      </div>
+      </section>
     }
 
     @if (snapshot && snapshot.levelCount > 1 && isDistanceMetric()) {
-      <div class="thresholds">
+      <section class="inspector-section thresholds">
         <h3>Transition thresholds (meters from camera)</h3>
         @for (threshold of snapshot.distanceThresholds; track $index) {
           <label class="field threshold-row">
@@ -140,14 +140,14 @@
             <button type="button" class="snap-btn" (click)="snapToThreshold($index)">Preview</button>
           </label>
         }
-      </div>
+      </section>
     }
 
     <button type="button" class="primary-btn" (click)="applyReloadNow()" [disabled]="loading">
       Reload preview
     </button>
 
-    <section class="live-stats">
+    <section class="inspector-section live-stats">
       <h3>Live</h3>
       <dl class="stats-dl">
         <div><dt>Metric</dt><dd>{{ live.metric === 'distance' ? 'Distance (m)' : 'Screen %' }}</dd></div>
@@ -159,7 +159,7 @@
     </section>
 
     @if (snapshot) {
-      <section class="lod-bar-section">
+      <section class="inspector-section lod-bar-section">
         <h3>LOD coverage map</h3>
         <div class="lod-bar">
           @for (segment of lodBarSegments(); track segment.label) {
@@ -179,7 +179,7 @@
         </div>
       </section>
 
-      <section class="preview-scrub">
+      <section class="inspector-section preview-scrub">
         <h3>Preview transition (camera)</h3>
         <input
           type="range"
@@ -203,6 +203,6 @@
       </section>
     }
 
-    <app-dev-json-export title="Manifest snippet" [json]="exportJson" />
+    <app-dev-json-copy title="LOD config" [data]="lodSavePayload" />
   </div>
 </app-dev-editor-shell>

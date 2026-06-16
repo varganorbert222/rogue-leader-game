@@ -1,0 +1,20 @@
+<div class="dev-vec3-curve-editor">
+  <div class="axis-tabs">
+    @for (axis of axes; track axis) {
+      <button
+        type="button"
+        class="secondary-btn"
+        [class.active]="selectedAxis === axis"
+        (click)="onAxisChange(axis)"
+      >
+        {{ axis | uppercase }}
+      </button>
+    }
+  </div>
+
+  <app-dev-curve-editor
+    [keyframes]="axisKeyframes"
+    [valueLabel]="valueLabel + ' ' + (selectedAxis | uppercase)"
+    (keyframesChange)="onAxisCurveChange()"
+  />
+</div>

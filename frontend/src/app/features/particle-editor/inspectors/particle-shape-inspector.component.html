@@ -1,0 +1,111 @@
+<div class="shape-inspector">
+  <div class="shape-header">
+    <label class="field shape-type-field">
+      <span>Emitter shape</span>
+      <select [ngModel]="shape.type" (ngModelChange)="onTypeChange($event)">
+        @for (type of shapeTypes; track type) {
+          <option [value]="type">{{ shapeLabel(type) }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="shape-preview" [attr.data-shape]="shape.type" [attr.title]="shapeLabel(shape.type)">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+      @switch (shape.type) {
+        @case ('point') {
+          <circle cx="50" cy="50" r="3.5" class="shape-fill" />
+          <circle cx="50" cy="50" r="16" class="shape-ring" />
+        }
+        @case ('line') {
+          <line x1="50" y1="14" x2="50" y2="86" class="shape-line" />
+          <circle cx="50" cy="14" r="3.5" class="shape-fill" />
+          <circle cx="50" cy="86" r="3.5" class="shape-fill" />
+        }
+        @case ('box') {
+          <rect
+            [attr.x]="50 - iconBoxW / 2"
+            [attr.y]="50 - iconBoxH / 2"
+            [attr.width]="iconBoxW"
+            [attr.height]="iconBoxH"
+            class="shape-box"
+          />
+        }
+        @case ('sphere') {
+          <circle cx="50" cy="50" [attr.r]="iconR" class="shape-ring" />
+          <ellipse cx="50" cy="50" [attr.rx]="iconR" [attr.ry]="iconR * 0.34" class="shape-orbit" />
+        }
+        @case ('hemisphere') {
+          <path [attr.d]="hemispherePath()" class="shape-fill-soft" />
+          <line x1="22" y1="50" x2="78" y2="50" class="shape-ground" />
+        }
+        @case ('capsule') {
+          <rect
+            x="41"
+            [attr.y]="50 - iconLen / 2"
+            width="18"
+            [attr.height]="iconLen"
+            rx="9"
+            class="shape-box"
+          />
+        }
+        @case ('donut') {
+          <circle cx="50" cy="50" [attr.r]="iconDonutOuter" class="shape-ring" />
+          <circle cx="50" cy="50" [attr.r]="iconDonutInner" class="shape-hole" />
+        }
+      }
+    </svg>
+    </div>
+  </div>
+
+  @if (shape.type === 'box') {
+    <div class="field inline shape-dims">
+      <span>Half extents (m)</span>
+      <input type="number" min="0" step="0.01" placeholder="W" [(ngModel)]="shape.boxMax.x" (ngModelChange)="onFieldChange()" />
+      <input type="number" min="0" step="0.01" placeholder="H" [(ngModel)]="shape.boxMax.y" (ngModelChange)="onFieldChange()" />
+      <input type="number" min="0" step="0.01" placeholder="D" [(ngModel)]="shape.boxMax.z" (ngModelChange)="onFieldChange()" />
+    </div>
+    <p class="hint">Particles spawn at random positions inside the box volume.</p>
+  }
+
+  @if (shape.type === 'line' || shape.type === 'capsule') {
+    <label class="field">
+      <span>Length (m)</span>
+      <input type="number" min="0" step="0.01" [(ngModel)]="shape.length" (ngModelChange)="onFieldChange()" />
+    </label>
+  }
+
+  @if (shape.type === 'sphere' || shape.type === 'hemisphere' || shape.type === 'capsule' || shape.type === 'donut') {
+    <label class="field">
+      <span>Radius (m)</span>
+      <input type="number" min="0" step="0.01" [(ngModel)]="shape.radius" (ngModelChange)="onFieldChange()" />
+    </label>
+  }
+
+  @if (shape.type === 'sphere' || shape.type === 'hemisphere' || shape.type === 'capsule') {
+    <p class="hint">Particles spawn at random positions inside the volume.</p>
+  }
+
+  @if (shape.type === 'donut') {
+    <label class="field">
+      <span>Tube radius (m)</span>
+      <input type="number" min="0" step="0.01" [(ngModel)]="shape.tubeRadius" (ngModelChange)="onFieldChange()" />
+    </label>
+    <p class="hint">Particles spawn at random positions on the torus volume.</p>
+  }
+
+  @if (shape.type !== 'point') {
+    <details class="shape-advanced">
+      <summary>Direction spread</summary>
+      <app-dev-vec3-field
+        label="Dir min"
+        [vector]="shape.direction1"
+        (vectorChange)="onFieldChange()"
+      />
+      <app-dev-vec3-field
+        label="Dir max"
+        [vector]="shape.direction2"
+        (vectorChange)="onFieldChange()"
+      />
+    </details>
+  }
+</div>

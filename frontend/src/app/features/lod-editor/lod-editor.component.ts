@@ -13,6 +13,7 @@ import {
   editableConfigToManifestValue,
   listLodEditorModels,
   loadAssetManifest,
+  loadLodEditorOverride,
   RuntimePaths,
   LodPreviewScene,
   lodManifestToEditableConfig,
@@ -27,8 +28,8 @@ import {
   type LodPreviewSnapshot,
 } from '@rogue-leader/engine';
 import { DevEditorShellComponent } from '../../shared/dev-editor/dev-editor-shell.component';
+import { DevJsonCopyComponent } from '../../shared/dev-editor/dev-json-copy.component';
 import { DevEditorStatusComponent } from '../../shared/dev-editor/dev-editor-status.component';
-import { DevJsonExportComponent } from '../../shared/dev-editor/dev-json-export.component';
 import { DevModelPickerComponent } from '../../shared/dev-editor/dev-model-picker.component';
 import { DevSceneHierarchyComponent } from '../../shared/dev-editor/dev-scene-hierarchy.component';
 import {
@@ -58,7 +59,7 @@ import {
     DevEditorStatusComponent,
     DevModelPickerComponent,
     DevSceneHierarchyComponent,
-    DevJsonExportComponent,
+    DevJsonCopyComponent,
   ],
   templateUrl: './lod-editor.component.html',
   styleUrl: './lod-editor.component.scss',
@@ -86,7 +87,6 @@ export class LodEditorComponent implements OnInit, OnDestroy {
   };
 
   previewCoverageSlider = 60;
-  exportJson = '';
   hierarchy: HierarchyNode[] = [];
   hierarchyRevision = 0;
   selectedNodeId = '';
@@ -199,6 +199,10 @@ export class LodEditorComponent implements OnInit, OnDestroy {
     if (!entry || !this.preview) return;
 
     this.config = lodManifestToEditableConfig(entry.lod);
+    const override = await loadLodEditorOverride(modelId);
+    if (override) {
+      this.config = lodManifestToEditableConfig(override);
+    }
     this.selectedVariantId = firstVariantId(this.models, modelId);
     this.applySelectedVariantToConfig();
     this.syncPathsFromConfig();
@@ -296,8 +300,12 @@ export class LodEditorComponent implements OnInit, OnDestroy {
   exportManifestSnippet(): void {
     this.syncConfigFromPaths();
     this.syncConfigFromAutoQualities();
-    const value = editableConfigToManifestValue(this.config);
-    this.exportJson = JSON.stringify(value, null, 2);
+  }
+
+  get lodSavePayload(): ReturnType<typeof editableConfigToManifestValue> {
+    this.syncConfigFromPaths();
+    this.syncConfigFromAutoQualities();
+    return editableConfigToManifestValue(this.config);
   }
 
   activeLodLabel(): string {

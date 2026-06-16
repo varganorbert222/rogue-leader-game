@@ -1,0 +1,41 @@
+<div class="size-over-lifetime">
+  <label class="field">
+    <span>Mode</span>
+    <select [(ngModel)]="rotationOverLifetime.mode" (ngModelChange)="onModeChange()">
+      <option value="range">Range (start → end)</option>
+      <option value="curve">Curve</option>
+    </select>
+  </label>
+
+  <p class="hint">All values multiply the Main rotation speed (1 = 100%). Preview uses Z axis.</p>
+
+  @if (rotationOverLifetime.mode === 'range') {
+    <app-dev-vec3-field
+      label="Start multiplier ×"
+      [vector]="rotationOverLifetime.rangeStart"
+      (vectorChange)="onRangeChange()"
+    />
+    <app-dev-vec3-field
+      label="End multiplier ×"
+      [vector]="rotationOverLifetime.rangeEnd"
+      (vectorChange)="onRangeChange()"
+    />
+    <p class="hint">Linear multiplier from Start × at birth to End × at death.</p>
+  }
+
+  @if (rotationOverLifetime.mode === 'curve') {
+    <div class="preset-row">
+      @for (preset of presets; track preset.id) {
+        <button type="button" class="secondary-btn" (click)="applyPreset(preset.id)">
+          {{ preset.label }}
+        </button>
+      }
+    </div>
+
+    <app-dev-vec3-curve-editor
+      [keyframes]="rotationOverLifetime.keyframes"
+      valueLabel="Rotation ×"
+      (keyframesChange)="onCurveChange()"
+    />
+  }
+</div>

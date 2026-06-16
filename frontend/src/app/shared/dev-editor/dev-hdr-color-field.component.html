@@ -1,0 +1,33 @@
+<div class="field color-field hdr-color-field">
+  <span>{{ label }}</span>
+  <div class="color-field-row">
+    <input
+      type="color"
+      [value]="hex"
+      [attr.aria-label]="label"
+      (input)="onHexChange($any($event.target).value)"
+    />
+    <label class="intensity-control">
+      <span>Intensity</span>
+      <input
+        type="range"
+        min="0"
+        max="20"
+        step="0.1"
+        [ngModel]="intensity"
+        (ngModelChange)="onIntensityChange($event)"
+        [attr.aria-label]="label + ' intensity'"
+      />
+      <input
+        class="intensity-input"
+        type="number"
+        min="0"
+        max="100"
+        step="0.1"
+        [ngModel]="intensity"
+        (ngModelChange)="onIntensityChange($event)"
+        [attr.aria-label]="label + ' intensity value'"
+      />
+    </label>
+  </div>
+</div>
