@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Vec3Editable } from '@rogue-leader/engine';
-import { hdrVec3ToPicker, pickerToHdrVec3 } from './dev-editor.utils';
+import { hdrVec3ToPicker, pickerToHdrVec3 } from '../utils/dev-editor.utils';
 
 @Component({
   selector: 'app-dev-hdr-color-field',

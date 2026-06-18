@@ -19,18 +19,18 @@ import {
   type DevNodeTransform,
   type LodEditorModelEntry,
 } from '@rogue-leader/engine';
-import { DevEditorShellComponent } from '../../shared/dev-editor/dev-editor-shell.component';
-import { DevEditorStatusComponent } from '../../shared/dev-editor/dev-editor-status.component';
-import { DevModelPickerComponent } from '../../shared/dev-editor/dev-model-picker.component';
-import { DevSceneHierarchyComponent } from '../../shared/dev-editor/dev-scene-hierarchy.component';
-import { DevInspectorSectionComponent } from '../../shared/dev-editor/inspectors/dev-inspector-section.component';
-import { DevTransformInspectorComponent } from '../../shared/dev-editor/inspectors/dev-transform-inspector.component';
-import { DevAnimationsInspectorComponent } from '../../shared/dev-editor/inspectors/dev-animations-inspector.component';
+import { DevEditorShellComponent } from '../../../shared/dev-editor/dev-editor-shell/dev-editor-shell.component';
+import { DevEditorStatusComponent } from '../../../shared/dev-editor/dev-editor-status/dev-editor-status.component';
+import { DevModelPickerComponent } from '../../../shared/dev-editor/dev-model-picker/dev-model-picker.component';
+import { DevSceneHierarchyComponent } from '../../../shared/dev-editor/dev-scene-hierarchy/dev-scene-hierarchy.component';
+import { DevInspectorSectionComponent } from '../../../shared/dev-editor/inspectors/dev-inspector-section/dev-inspector-section.component';
+import { DevTransformInspectorComponent } from '../../../shared/dev-editor/inspectors/dev-transform-inspector/dev-transform-inspector.component';
+import { DevAnimationsInspectorComponent } from '../../../shared/dev-editor/inspectors/dev-animations-inspector/dev-animations-inspector.component';
 import {
   onSceneHierarchySelect,
   wireSceneTransformPreview,
   type DevSceneTransformView,
-} from '../../shared/dev-editor/dev-scene-transform.utils';
+} from '../../../shared/dev-editor/utils/dev-scene-transform.utils';
 import {
   beginSceneHierarchyLoad,
   commitSceneHierarchyLoad,
@@ -49,7 +49,7 @@ import {
   toErrorMessage,
   variantLabel,
   type DevEditorCanvases,
-} from '../../shared/dev-editor/dev-editor.utils';
+} from '../../../shared/dev-editor/utils/dev-editor.utils';
 
 @Component({
   selector: 'app-encyclopedia',

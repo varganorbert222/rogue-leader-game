@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { ParticlePresetEntry } from '@rogue-leader/engine';
-import { DevModalComponent } from '../../shared/components/dev-modal/dev-modal.component';
+import { DevModalComponent } from '../../../../shared/components/dev-modal/dev-modal.component';
 
 export type ParticleCatalogInsertMode =
   | 'reference-readonly'

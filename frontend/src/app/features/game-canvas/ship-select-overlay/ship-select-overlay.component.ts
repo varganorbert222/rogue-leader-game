@@ -13,7 +13,7 @@ import type { SelectableShipInfo } from '@rogue-leader/game';
 import {
   PageBackNavComponent,
   type PageBackNavItem,
-} from '../../shared/components/page-back-nav/page-back-nav.component';
+} from '../../../shared/components/page-back-nav/page-back-nav.component';
 
 @Component({
   selector: 'app-ship-select-overlay',

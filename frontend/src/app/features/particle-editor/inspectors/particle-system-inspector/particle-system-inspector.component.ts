@@ -9,13 +9,13 @@ import {
   type ParticleSystemEditable,
   type ParticleTextureEntry,
 } from '@rogue-leader/engine';
-import { DevColorFieldComponent } from '../../../shared/dev-editor/dev-color-field.component';
-import { DevHdrColorFieldComponent } from '../../../shared/dev-editor/dev-hdr-color-field.component';
-import { DevVec3FieldComponent } from '../../../shared/dev-editor/dev-vec3-field.component';
-import { ParticleAtlasPickerComponent } from './particle-atlas-picker.component';
-import { ParticleRotationOverLifetimeComponent } from './particle-rotation-over-lifetime.component';
-import { ParticleShapeInspectorComponent } from './particle-shape-inspector.component';
-import { ParticleSizeOverLifetimeComponent } from './particle-size-over-lifetime.component';
+import { DevColorFieldComponent } from '../../../../shared/dev-editor/dev-color-field/dev-color-field.component';
+import { DevHdrColorFieldComponent } from '../../../../shared/dev-editor/dev-hdr-color-field/dev-hdr-color-field.component';
+import { DevVec3FieldComponent } from '../../../../shared/dev-editor/dev-vec3-field/dev-vec3-field.component';
+import { ParticleAtlasPickerComponent } from '../particle-atlas-picker/particle-atlas-picker.component';
+import { ParticleRotationOverLifetimeComponent } from '../particle-rotation-over-lifetime/particle-rotation-over-lifetime.component';
+import { ParticleShapeInspectorComponent } from '../particle-shape-inspector/particle-shape-inspector.component';
+import { ParticleSizeOverLifetimeComponent } from '../particle-size-over-lifetime/particle-size-over-lifetime.component';
 
 @Component({
   selector: 'app-particle-system-inspector',

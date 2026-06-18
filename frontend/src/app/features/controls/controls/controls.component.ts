@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import type { ControlBindingsConfig } from '@rogue-leader/game';
-import { ControlsPanelComponent } from '../../shared/components/controls-panel/controls-panel.component';
-import { AudioBootstrapService } from '../../core/services/audio-bootstrap.service';
-import { FlightSettingsService } from '../../core/services/flight-settings.service';
+import { ControlsPanelComponent } from '../../../shared/components/controls-panel/controls-panel.component';
+import { AudioBootstrapService } from '../../../core/services/audio-bootstrap.service';
+import { FlightSettingsService } from '../../../core/services/flight-settings.service';
 import {
   PageBackNavComponent,
   type PageBackNavItem,
-} from '../../shared/components/page-back-nav/page-back-nav.component';
+} from '../../../shared/components/page-back-nav/page-back-nav.component';
 
 @Component({
   selector: 'app-controls',

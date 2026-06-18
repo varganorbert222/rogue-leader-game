@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { ParticleShapeEditable, ParticleShapeType } from '@rogue-leader/engine';
-import { DevVec3FieldComponent } from '../../../shared/dev-editor/dev-vec3-field.component';
+import { DevVec3FieldComponent } from '../../../../shared/dev-editor/dev-vec3-field/dev-vec3-field.component';
 const SHAPE_LABELS: Record<ParticleShapeType, string> = {
   point: 'Point',
   line: 'Line',

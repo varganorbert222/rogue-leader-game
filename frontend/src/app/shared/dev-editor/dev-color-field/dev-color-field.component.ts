@@ -2,7 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Color4Editable } from '@rogue-leader/engine';
-import { clamp01, color4ToHex, hexToRgb } from './dev-editor.utils';
+import { clamp01, color4ToHex, hexToRgb } from '../utils/dev-editor.utils';
 
 @Component({
   selector: 'app-dev-color-field',

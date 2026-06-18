@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { AudioBootstrapService } from '../../core/services/audio-bootstrap.service';
+import { AudioBootstrapService } from '../../../core/services/audio-bootstrap.service';
 
 @Component({
   selector: 'app-main-menu',

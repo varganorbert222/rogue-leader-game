@@ -5,7 +5,7 @@ import {
   cloneCurveKeyframes,
   type SizeOverLifetimeEditable,
 } from '@rogue-leader/engine';
-import { DevCurveEditorComponent } from '../../../shared/dev-editor/dev-curve-editor.component';
+import { DevCurveEditorComponent } from '../../../../shared/dev-editor/dev-curve-editor/dev-curve-editor.component';
 
 @Component({
   selector: 'app-particle-size-over-lifetime',

@@ -5,8 +5,8 @@ import {
   cloneVec3CurveKeyframes,
   type RotationOverLifetimeEditable,
 } from '@rogue-leader/engine';
-import { DevVec3CurveEditorComponent } from '../../../shared/dev-editor/dev-vec3-curve-editor.component';
-import { DevVec3FieldComponent } from '../../../shared/dev-editor/dev-vec3-field.component';
+import { DevVec3CurveEditorComponent } from '../../../../shared/dev-editor/dev-vec3-curve-editor/dev-vec3-curve-editor.component';
+import { DevVec3FieldComponent } from '../../../../shared/dev-editor/dev-vec3-field/dev-vec3-field.component';
 
 @Component({
   selector: 'app-particle-rotation-over-lifetime',

@@ -28,15 +28,15 @@ import {
   type DevNodeTransform,
   type Vec3Editable,
 } from '@rogue-leader/engine';
-import { DevEditorShellComponent } from '../../shared/dev-editor/dev-editor-shell.component';
-import { DevJsonCopyComponent } from '../../shared/dev-editor/dev-json-copy.component';
-import { DevEditorStatusComponent } from '../../shared/dev-editor/dev-editor-status.component';
-import { DevModelPickerComponent } from '../../shared/dev-editor/dev-model-picker.component';
-import { DevSceneHierarchyComponent } from '../../shared/dev-editor/dev-scene-hierarchy.component';
-import { DevInspectorSectionComponent } from '../../shared/dev-editor/inspectors/dev-inspector-section.component';
-import { DevTransformInspectorComponent } from '../../shared/dev-editor/inspectors/dev-transform-inspector.component';
-import { DevAnimationsInspectorComponent } from '../../shared/dev-editor/inspectors/dev-animations-inspector.component';
-import { DevVec3FieldComponent } from '../../shared/dev-editor/dev-vec3-field.component';
+import { DevEditorShellComponent } from '../../../shared/dev-editor/dev-editor-shell/dev-editor-shell.component';
+import { DevJsonCopyComponent } from '../../../shared/dev-editor/dev-json-copy/dev-json-copy.component';
+import { DevEditorStatusComponent } from '../../../shared/dev-editor/dev-editor-status/dev-editor-status.component';
+import { DevModelPickerComponent } from '../../../shared/dev-editor/dev-model-picker/dev-model-picker.component';
+import { DevSceneHierarchyComponent } from '../../../shared/dev-editor/dev-scene-hierarchy/dev-scene-hierarchy.component';
+import { DevInspectorSectionComponent } from '../../../shared/dev-editor/inspectors/dev-inspector-section/dev-inspector-section.component';
+import { DevTransformInspectorComponent } from '../../../shared/dev-editor/inspectors/dev-transform-inspector/dev-transform-inspector.component';
+import { DevAnimationsInspectorComponent } from '../../../shared/dev-editor/inspectors/dev-animations-inspector/dev-animations-inspector.component';
+import { DevVec3FieldComponent } from '../../../shared/dev-editor/dev-vec3-field/dev-vec3-field.component';
 import {
   onSceneHierarchySelect,
   onSceneSelectionTransformChange,
@@ -44,7 +44,7 @@ import {
   syncSceneSelectionTransform,
   wireSceneTransformPreview,
   type DevSceneTransformView,
-} from '../../shared/dev-editor/dev-scene-transform.utils';
+} from '../../../shared/dev-editor/utils/dev-scene-transform.utils';
 import {
   beginSceneHierarchyLoad,
   commitSceneHierarchyLoad,
@@ -55,7 +55,7 @@ import {
   startDevPreviewRenderLoop,
   toErrorMessage,
   type DevEditorCanvases,
-} from '../../shared/dev-editor/dev-editor.utils';
+} from '../../../shared/dev-editor/utils/dev-editor.utils';
 
 @Component({
   selector: 'app-cockpit-editor',

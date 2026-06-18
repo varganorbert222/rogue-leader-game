@@ -1,5 +1,5 @@
-@use '../styles/dev-editor-forms.scss';
-@use './dev-color-field.component.scss';
+@use '../../styles/dev-editor-forms.scss';
+@use '../dev-color-field/dev-color-field.component.scss';
 
 .intensity-control {
   display: flex;

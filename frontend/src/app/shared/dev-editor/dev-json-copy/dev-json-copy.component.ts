@@ -1,5 +1,5 @@
 import { Component, Input, ViewEncapsulation } from '@angular/core';
-import { copyJsonToClipboard } from './dev-editor.utils';
+import { copyJsonToClipboard } from '../utils/dev-editor.utils';
 
 @Component({
   selector: 'app-dev-json-copy',

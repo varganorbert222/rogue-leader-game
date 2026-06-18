@@ -48,27 +48,27 @@ import {
   type ParticleTextureEntry,
   type DevTransformGizmoMode,
 } from '@rogue-leader/engine';
-import { DevConfirmModalComponent } from '../../shared/components/dev-confirm-modal/dev-confirm-modal.component';
-import { HierarchyPanelComponent } from '../../shared/components/hierarchy-panel/hierarchy-panel.component';
-import type { HierarchyContextAction } from '../../shared/components/hierarchy-panel/hierarchy-panel.component';
-import { DevEditorShellComponent } from '../../shared/dev-editor/dev-editor-shell.component';
-import { DevJsonCopyComponent } from '../../shared/dev-editor/dev-json-copy.component';
-import { DevEditorStatusComponent } from '../../shared/dev-editor/dev-editor-status.component';
-import { DevTransformInspectorComponent } from '../../shared/dev-editor/inspectors/dev-transform-inspector.component';
-import { DevInspectorSectionComponent } from '../../shared/dev-editor/inspectors/dev-inspector-section.component';
+import { DevConfirmModalComponent } from '../../../shared/components/dev-confirm-modal/dev-confirm-modal.component';
+import { HierarchyPanelComponent } from '../../../shared/components/hierarchy-panel/hierarchy-panel.component';
+import type { HierarchyContextAction } from '../../../shared/components/hierarchy-panel/hierarchy-panel.component';
+import { DevEditorShellComponent } from '../../../shared/dev-editor/dev-editor-shell/dev-editor-shell.component';
+import { DevJsonCopyComponent } from '../../../shared/dev-editor/dev-json-copy/dev-json-copy.component';
+import { DevEditorStatusComponent } from '../../../shared/dev-editor/dev-editor-status/dev-editor-status.component';
+import { DevTransformInspectorComponent } from '../../../shared/dev-editor/inspectors/dev-transform-inspector/dev-transform-inspector.component';
+import { DevInspectorSectionComponent } from '../../../shared/dev-editor/inspectors/dev-inspector-section/dev-inspector-section.component';
 import {
   createDevBabylonHost,
   disposeDevBabylonHost,
   startDevPreviewRenderLoop,
   toErrorMessage,
   type DevEditorCanvases,
-} from '../../shared/dev-editor/dev-editor.utils';
+} from '../../../shared/dev-editor/utils/dev-editor.utils';
 import {
   ParticleCatalogModalComponent,
   type ParticleCatalogInsertMode,
   type ParticleCatalogInsertResult,
-} from './particle-catalog-modal.component';
-import { ParticleSystemInspectorComponent } from './inspectors/particle-system-inspector.component';
+} from '../modals/particle-catalog-modal/particle-catalog-modal.component';
+import { ParticleSystemInspectorComponent } from '../inspectors/particle-system-inspector/particle-system-inspector.component';
 
 @Component({
   selector: 'app-particle-editor',

@@ -3,12 +3,12 @@ import { RouterLink } from '@angular/router';
 import {
   SettingsPanelComponent,
   type AudioSettingsSnapshot,
-} from '../../shared/components/settings-panel/settings-panel.component';
-import { AudioBootstrapService } from '../../core/services/audio-bootstrap.service';
+} from '../../../shared/components/settings-panel/settings-panel.component';
+import { AudioBootstrapService } from '../../../core/services/audio-bootstrap.service';
 import {
   PageBackNavComponent,
   type PageBackNavItem,
-} from '../../shared/components/page-back-nav/page-back-nav.component';
+} from '../../../shared/components/page-back-nav/page-back-nav.component';
 
 @Component({
   selector: 'app-settings',

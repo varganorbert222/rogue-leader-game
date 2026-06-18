@@ -10,8 +10,8 @@ import {
   ViewEncapsulation,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import type { DevEditorCanvases } from './dev-editor.utils';
-import { DevViewportAxesComponent } from './dev-viewport-axes.component';
+import type { DevEditorCanvases } from '../utils/dev-editor.utils';
+import { DevViewportAxesComponent } from '../dev-viewport-axes/dev-viewport-axes.component';
 
 export type DevEditorBadge = 'dev' | 'view' | null;
 

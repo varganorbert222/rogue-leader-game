@@ -21,21 +21,21 @@ import {
   type MissionSessionPhase,
   type SelectableShipInfo,
 } from '@rogue-leader/game';
-import { ShipSelectOverlayComponent } from './ship-select-overlay.component';
+import { ShipSelectOverlayComponent } from '../ship-select-overlay/ship-select-overlay.component';
 import {
   PageBackNavComponent,
   type PageBackNavItem,
-} from '../../shared/components/page-back-nav/page-back-nav.component';
-import { ControlsPanelComponent } from '../../shared/components/controls-panel/controls-panel.component';
-import { AudioBootstrapService } from '../../core/services/audio-bootstrap.service';
-import { AudioSettingsService } from '../../core/services/audio-settings.service';
-import { DebugSettingsService } from '../../core/services/debug-settings.service';
-import { FlightSettingsService } from '../../core/services/flight-settings.service';
-import { DebugPanelComponent } from '../../shared/components/debug-panel/debug-panel.component';
+} from '../../../shared/components/page-back-nav/page-back-nav.component';
+import { ControlsPanelComponent } from '../../../shared/components/controls-panel/controls-panel.component';
+import { AudioBootstrapService } from '../../../core/services/audio-bootstrap.service';
+import { AudioSettingsService } from '../../../core/services/audio-settings.service';
+import { DebugSettingsService } from '../../../core/services/debug-settings.service';
+import { FlightSettingsService } from '../../../core/services/flight-settings.service';
+import { DebugPanelComponent } from '../../../shared/components/debug-panel/debug-panel.component';
 import {
   SettingsPanelComponent,
   type AudioSettingsSnapshot,
-} from '../../shared/components/settings-panel/settings-panel.component';
+} from '../../../shared/components/settings-panel/settings-panel.component';
 
 @Component({
   selector: 'app-game-canvas',

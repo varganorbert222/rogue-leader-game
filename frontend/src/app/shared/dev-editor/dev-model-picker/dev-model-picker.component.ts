@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { LodEditorModelEntry } from '@rogue-leader/engine';
-import { listVariantsForModel, shouldShowVariantPicker } from './dev-editor.utils';
+import { listVariantsForModel, shouldShowVariantPicker } from '../utils/dev-editor.utils';
 
 @Component({
   selector: 'app-dev-model-picker',
