@@ -1,0 +1,11 @@
+<app-dev-inspector-section title="Animations">
+  <div class="anim-list">
+    @for (anim of animations; track anim.index) {
+      <div class="anim-row" [class.playing]="playingAnimationIndex === anim.index">
+        <span>{{ anim.name }}</span>
+        <button type="button" class="secondary-btn" (click)="playAnimation.emit(anim.index)">Play</button>
+      </div>
+    }
+  </div>
+  <button type="button" class="secondary-btn" (click)="stopAnimations.emit()">Stop all</button>
+</app-dev-inspector-section>

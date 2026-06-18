@@ -21,6 +21,8 @@ import {
   type HierarchyNode,
   type HierarchyNodeTransformInfo,
   type HierarchyOutlinerState,
+  type DevTransformGizmoMode,
+  type DevNodeTransform,
   type LodConfig,
   type LodEditorModelEntry,
   type LodMetric,
@@ -32,6 +34,16 @@ import { DevJsonCopyComponent } from '../../shared/dev-editor/dev-json-copy.comp
 import { DevEditorStatusComponent } from '../../shared/dev-editor/dev-editor-status.component';
 import { DevModelPickerComponent } from '../../shared/dev-editor/dev-model-picker.component';
 import { DevSceneHierarchyComponent } from '../../shared/dev-editor/dev-scene-hierarchy.component';
+import { DevInspectorSectionComponent } from '../../shared/dev-editor/inspectors/dev-inspector-section.component';
+import { DevTransformInspectorComponent } from '../../shared/dev-editor/inspectors/dev-transform-inspector.component';
+import { DevAnimationsInspectorComponent } from '../../shared/dev-editor/inspectors/dev-animations-inspector.component';
+import {
+  onSceneHierarchySelect,
+  onSceneSelectionTransformChange,
+  setSceneTransformGizmoMode,
+  wireSceneTransformPreview,
+  type DevSceneTransformView,
+} from '../../shared/dev-editor/dev-scene-transform.utils';
 import {
   beginSceneHierarchyLoad,
   commitSceneHierarchyLoad,
@@ -59,6 +71,9 @@ import {
     DevEditorStatusComponent,
     DevModelPickerComponent,
     DevSceneHierarchyComponent,
+    DevInspectorSectionComponent,
+    DevTransformInspectorComponent,
+    DevAnimationsInspectorComponent,
     DevJsonCopyComponent,
   ],
   templateUrl: './lod-editor.component.html',
@@ -93,7 +108,11 @@ export class LodEditorComponent implements OnInit, OnDestroy {
   animations: DevPreviewAnimationInfo[] = [];
   playingAnimationIndex: number | null = null;
   nodeTransform: HierarchyNodeTransformInfo | null = null;
+  selectionTransform: DevNodeTransform | null = null;
+  transformGizmoMode: DevTransformGizmoMode = 'none';
+  readonly transformReadonly = false;
 
+  private readonly sceneTransformView: DevSceneTransformView = this;
   private host: BabylonHost | null = null;
   private preview: LodPreviewScene | null = null;
   private reloadTimer: number | null = null;
@@ -137,6 +156,9 @@ export class LodEditorComponent implements OnInit, OnDestroy {
       });
 
       this.previewReady = true;
+      if (this.preview) {
+        wireSceneTransformPreview(this.preview, this.sceneTransformView);
+      }
       if (this.selectedModelId) {
         await this.selectModel(this.selectedModelId);
       } else {
@@ -381,8 +403,18 @@ export class LodEditorComponent implements OnInit, OnDestroy {
   onHierarchySelect(node: HierarchyNode): void {
     this.selectedNodeId = node.id;
     if (!this.preview) return;
-    this.nodeTransform = this.preview.highlightNode(hierarchySceneName(node));
+    onSceneHierarchySelect(this.preview, this.sceneTransformView, hierarchySceneName(node));
     refreshScenePreviewUi(this.preview, this);
+  }
+
+  onSelectionTransformChange(): void {
+    if (!this.preview) return;
+    onSceneSelectionTransformChange(this.preview, this.sceneTransformView);
+  }
+
+  setTransformGizmoMode(mode: DevTransformGizmoMode): void {
+    if (!this.preview) return;
+    setSceneTransformGizmoMode(this.preview, this.sceneTransformView, mode);
   }
 
   onHierarchyViewportChange(state: HierarchyOutlinerState): void {

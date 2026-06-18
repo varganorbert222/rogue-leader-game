@@ -44,6 +44,8 @@ import {
   type LodPreviewSnapshot,
 } from './lod-editor-types';
 import { DevScenePreviewExtras, type HierarchyNodeTransformInfo } from './dev-scene-preview-extras';
+import type { DevTransformGizmoMode } from './dev-transform-gizmo';
+import type { DevNodeTransform } from './shared/dev-node-transform';
 
 function countVertices(meshes: readonly AbstractMesh[]): number {
   let total = 0;
@@ -84,7 +86,7 @@ export class LodPreviewScene {
   private readonly devRendering = new DevPreviewRendering();
   private readonly viewportSync = new HierarchyViewportSync(null);
   private defaultViewportState: HierarchyOutlinerState = createHierarchyOutlinerState();
-  private readonly previewExtras = new DevScenePreviewExtras();
+  private readonly previewExtras: DevScenePreviewExtras;
   private loadSeq = 0;
 
   constructor(
@@ -116,6 +118,7 @@ export class LodPreviewScene {
       step: 2,
       y: 0,
     });
+    this.previewExtras = new DevScenePreviewExtras(scene);
   }
 
   async initRendering(): Promise<void> {
@@ -443,6 +446,22 @@ export class LodPreviewScene {
 
   stopAnimations(): void {
     this.previewExtras.stopAnimations();
+  }
+
+  setTransformEditable(editable: boolean): void {
+    this.previewExtras.setTransformEditable(editable);
+  }
+
+  onTransformGizmoChange(handler: (info: HierarchyNodeTransformInfo) => void): void {
+    this.previewExtras.onTransformGizmoChange(handler);
+  }
+
+  setTransformGizmoMode(mode: DevTransformGizmoMode): void {
+    this.previewExtras.setTransformGizmoMode(mode);
+  }
+
+  updateSelectedNodeTransform(transform: DevNodeTransform): HierarchyNodeTransformInfo | null {
+    return this.previewExtras.updateSelectedNodeTransform(transform);
   }
 
   buildSnapshot(): LodPreviewSnapshot {

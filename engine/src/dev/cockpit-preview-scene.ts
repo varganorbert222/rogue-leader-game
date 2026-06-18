@@ -39,6 +39,8 @@ import { DEFAULT_COCKPIT_FOV_DEG, DEFAULT_COCKPIT_INPUT_RESPONSE } from '../load
 import { BABYLON_MIN_CAMERA_NEAR_Z } from '../render/camera-near-plane';
 import { smoothDampedScalar, radToDeg } from '../math';
 import { DevScenePreviewExtras, type HierarchyNodeTransformInfo } from './dev-scene-preview-extras';
+import type { DevTransformGizmoMode } from './dev-transform-gizmo';
+import type { DevNodeTransform } from './shared/dev-node-transform';
 
 const PREVIEW_MOTION_SMOOTH_TIME = 0.14;
 
@@ -95,7 +97,7 @@ export class CockpitPreviewScene {
   private readonly devRendering = new DevPreviewRendering();
   private readonly viewportSync = new HierarchyViewportSync(null);
   private defaultViewportState: HierarchyOutlinerState = createHierarchyOutlinerState();
-  private readonly previewExtras = new DevScenePreviewExtras();
+  private readonly previewExtras: DevScenePreviewExtras;
 
   constructor(private readonly host: BabylonHost) {
     const scene = host.scene;
@@ -107,6 +109,7 @@ export class CockpitPreviewScene {
     const lodLoader = new LodShipLoader(scene, RuntimePaths.assetsBase);
     this.shipLoader = new GltfShipLoader(scene, RuntimePaths.assetsBase, lodLoader);
     this.floor = new DebugFloor(scene, { center: Vector3.Zero(), extent: 40, step: 5, y: -2 });
+    this.previewExtras = new DevScenePreviewExtras(scene);
   }
 
   async initRendering(): Promise<void> {
@@ -196,6 +199,22 @@ export class CockpitPreviewScene {
 
   stopAnimations(): void {
     this.previewExtras.stopAnimations();
+  }
+
+  setTransformEditable(editable: boolean): void {
+    this.previewExtras.setTransformEditable(editable);
+  }
+
+  onTransformGizmoChange(handler: (info: HierarchyNodeTransformInfo) => void): void {
+    this.previewExtras.onTransformGizmoChange(handler);
+  }
+
+  setTransformGizmoMode(mode: DevTransformGizmoMode): void {
+    this.previewExtras.setTransformGizmoMode(mode);
+  }
+
+  updateSelectedNodeTransform(transform: DevNodeTransform): HierarchyNodeTransformInfo | null {
+    return this.previewExtras.updateSelectedNodeTransform(transform);
   }
 
   setEditableConfig(editable: CockpitEditableConfig): void {

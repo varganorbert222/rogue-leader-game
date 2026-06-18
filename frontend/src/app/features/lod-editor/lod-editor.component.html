@@ -2,110 +2,130 @@
   title="LOD Group Editor"
   badge="dev"
   leftTitle="Models"
-  rightTitle="LOD Group"
+  rightTitle="Inspector"
   (canvasReady)="onCanvasReady($event)"
 >
   <div devEditorLeft>
-    <app-dev-model-picker
-      [models]="models"
-      [modelId]="selectedModelId"
-      [variantId]="selectedVariantId"
-      [disabled]="loading"
-      (modelChange)="onModelChange($event)"
-      (variantChange)="onVariantChange($event)"
-    />
+    <app-dev-inspector-section title="Model">
+      <app-dev-model-picker
+        [models]="models"
+        [modelId]="selectedModelId"
+        [variantId]="selectedVariantId"
+        [disabled]="loading"
+        (modelChange)="onModelChange($event)"
+        (variantChange)="onVariantChange($event)"
+      />
+      <p class="hint">Orbit: drag · Zoom: wheel · Preview scene only (not shipped in production).</p>
+    </app-dev-inspector-section>
 
-    <p class="hint">Orbit: drag · Zoom: wheel · Preview scene only (not shipped in production).</p>
-
-    <app-dev-scene-hierarchy
-      [resetKey]="hierarchyRevision"
-      [nodes]="hierarchy"
-      [selectedId]="selectedNodeId"
-      [animations]="animations"
-      [playingAnimationIndex]="playingAnimationIndex"
-      [nodeTransform]="nodeTransform"
-      (nodeSelect)="onHierarchySelect($event)"
-      (viewportVisibilityChange)="onHierarchyViewportChange($event)"
-      (playAnimation)="onPlayAnimation($event)"
-      (stopAnimations)="onStopAnimations()"
-    />
-  </div>
-
-  <div devEditorRight>
     <app-dev-editor-status
       [loading]="loading"
       [loadingMessage]="loadingMessage"
       [errorMessage]="errorMessage"
     />
 
-    <label class="field">
-      <span>LOD metric</span>
-      <select [(ngModel)]="config.metric" (ngModelChange)="onMetricChange()">
-        <option value="screen">Screen coverage (% height)</option>
-        <option value="distance">Camera distance (meters)</option>
-      </select>
-    </label>
+    <app-dev-scene-hierarchy
+      [resetKey]="hierarchyRevision"
+      [nodes]="hierarchy"
+      [selectedId]="selectedNodeId"
+      emptyMessage="Load a model to inspect its hierarchy"
+      (nodeSelect)="onHierarchySelect($event)"
+      (viewportVisibilityChange)="onHierarchyViewportChange($event)"
+    />
+  </div>
 
-    <label class="field">
-      <span>Mode</span>
-      <select [(ngModel)]="config.mode" (ngModelChange)="onConfigFieldChange()">
-        <option value="manual">Manual (_LODX files)</option>
-        <option value="auto">Auto simplify</option>
-        <option value="mixed">Mixed</option>
-        <option value="none">None (single mesh)</option>
-      </select>
-    </label>
-
-    <label class="field checkbox">
-      <input type="checkbox" [(ngModel)]="config.discoverSiblingLods" (ngModelChange)="onConfigFieldChange()" />
-      <span>Discover sibling _LOD1, _LOD2… when only LOD0 is listed</span>
-    </label>
-
-    <label class="field checkbox">
-      <input type="checkbox" [(ngModel)]="config.enableAutoSimplify" (ngModelChange)="onConfigFieldChange()" />
-      <span>Enable auto simplify (opt-in for LOD0-only models)</span>
-    </label>
-
-    <label class="field">
-      <span>Manual GLB paths (one per line)</span>
-      <textarea rows="4" [(ngModel)]="pathsText" (ngModelChange)="onConfigFieldChange()"></textarea>
-    </label>
-
-    @if (config.mode === 'auto' || config.enableAutoSimplify) {
-      <label class="field">
-        <span>Auto simplify qualities (0–1)</span>
-        <input type="text" [(ngModel)]="autoQualitiesText" (ngModelChange)="onConfigFieldChange()" />
-      </label>
+  <div devEditorRight>
+    @if (selectionTransform) {
+      <app-dev-transform-inspector
+        [transform]="selectionTransform"
+        [gizmoMode]="transformGizmoMode"
+        (transformChange)="onSelectionTransformChange()"
+        (gizmoModeChange)="setTransformGizmoMode($event)"
+      />
     }
 
-    @if (!isDistanceMetric()) {
-      <label class="field">
-        <span>Cull below screen %</span>
-        <input
-          type="number"
-          min="0"
-          max="100"
-          step="0.1"
-          [(ngModel)]="config.cullScreenPercent"
-          (ngModelChange)="onConfigFieldChange()"
-        />
-      </label>
-    } @else {
-      <label class="field">
-        <span>Cull beyond distance (m)</span>
-        <input
-          type="number"
-          min="0"
-          step="1"
-          [(ngModel)]="config.cullDistance"
-          (ngModelChange)="onConfigFieldChange()"
-        />
-      </label>
+    @if (animations.length > 0) {
+      <app-dev-animations-inspector
+        [animations]="animations"
+        [playingAnimationIndex]="playingAnimationIndex"
+        (playAnimation)="onPlayAnimation($event)"
+        (stopAnimations)="onStopAnimations()"
+      />
     }
+
+    <app-dev-inspector-section title="LOD group">
+      <label class="field">
+        <span>LOD metric</span>
+        <select [(ngModel)]="config.metric" (ngModelChange)="onMetricChange()">
+          <option value="screen">Screen coverage (% height)</option>
+          <option value="distance">Camera distance (meters)</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Mode</span>
+        <select [(ngModel)]="config.mode" (ngModelChange)="onConfigFieldChange()">
+          <option value="manual">Manual (_LODX files)</option>
+          <option value="auto">Auto simplify</option>
+          <option value="mixed">Mixed</option>
+          <option value="none">None (single mesh)</option>
+        </select>
+      </label>
+
+      <label class="field checkbox">
+        <input type="checkbox" [(ngModel)]="config.discoverSiblingLods" (ngModelChange)="onConfigFieldChange()" />
+        <span>Discover sibling _LOD1, _LOD2… when only LOD0 is listed</span>
+      </label>
+
+      <label class="field checkbox">
+        <input type="checkbox" [(ngModel)]="config.enableAutoSimplify" (ngModelChange)="onConfigFieldChange()" />
+        <span>Enable auto simplify (opt-in for LOD0-only models)</span>
+      </label>
+
+      <label class="field">
+        <span>Manual GLB paths (one per line)</span>
+        <textarea rows="4" [(ngModel)]="pathsText" (ngModelChange)="onConfigFieldChange()"></textarea>
+      </label>
+
+      @if (config.mode === 'auto' || config.enableAutoSimplify) {
+        <label class="field">
+          <span>Auto simplify qualities (0–1)</span>
+          <input type="text" [(ngModel)]="autoQualitiesText" (ngModelChange)="onConfigFieldChange()" />
+        </label>
+      }
+
+      @if (!isDistanceMetric()) {
+        <label class="field">
+          <span>Cull below screen %</span>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            step="0.1"
+            [(ngModel)]="config.cullScreenPercent"
+            (ngModelChange)="onConfigFieldChange()"
+          />
+        </label>
+      } @else {
+        <label class="field">
+          <span>Cull beyond distance (m)</span>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            [(ngModel)]="config.cullDistance"
+            (ngModelChange)="onConfigFieldChange()"
+          />
+        </label>
+      }
+
+      <button type="button" class="primary-btn" (click)="applyReloadNow()" [disabled]="loading">
+        Reload preview
+      </button>
+    </app-dev-inspector-section>
 
     @if (snapshot && snapshot.levelCount > 1 && !isDistanceMetric()) {
-      <section class="inspector-section thresholds">
-        <h3>Transition thresholds (% screen height)</h3>
+      <app-dev-inspector-section title="Transition thresholds (% screen height)">
         @for (threshold of snapshot.screenThresholds; track $index) {
           <label class="field threshold-row">
             <span>LOD {{ $index }} → {{ $index + 1 }}</span>
@@ -120,12 +140,11 @@
             <button type="button" class="snap-btn" (click)="snapToThreshold($index)">Preview</button>
           </label>
         }
-      </section>
+      </app-dev-inspector-section>
     }
 
     @if (snapshot && snapshot.levelCount > 1 && isDistanceMetric()) {
-      <section class="inspector-section thresholds">
-        <h3>Transition thresholds (meters from camera)</h3>
+      <app-dev-inspector-section title="Transition thresholds (meters from camera)">
         @for (threshold of snapshot.distanceThresholds; track $index) {
           <label class="field threshold-row">
             <span>LOD {{ $index }} → {{ $index + 1 }} after</span>
@@ -140,15 +159,10 @@
             <button type="button" class="snap-btn" (click)="snapToThreshold($index)">Preview</button>
           </label>
         }
-      </section>
+      </app-dev-inspector-section>
     }
 
-    <button type="button" class="primary-btn" (click)="applyReloadNow()" [disabled]="loading">
-      Reload preview
-    </button>
-
-    <section class="inspector-section live-stats">
-      <h3>Live</h3>
+    <app-dev-inspector-section title="Live">
       <dl class="stats-dl">
         <div><dt>Metric</dt><dd>{{ live.metric === 'distance' ? 'Distance (m)' : 'Screen %' }}</dd></div>
         <div><dt>Screen coverage</dt><dd>{{ live.coveragePercent | number:'1.1-1' }}%</dd></div>
@@ -156,11 +170,10 @@
         <div><dt>Active LOD</dt><dd>{{ activeLodLabel() }}</dd></div>
         <div><dt>Camera radius</dt><dd>{{ live.cameraRadius | number:'1.1-1' }}</dd></div>
       </dl>
-    </section>
+    </app-dev-inspector-section>
 
     @if (snapshot) {
-      <section class="inspector-section lod-bar-section">
-        <h3>LOD coverage map</h3>
+      <app-dev-inspector-section title="LOD coverage map">
         <div class="lod-bar">
           @for (segment of lodBarSegments(); track segment.label) {
             <div class="lod-bar-segment" [class]="segment.tone" [style.flex]="segment.widthPct">
@@ -177,10 +190,9 @@
             </div>
           }
         </div>
-      </section>
+      </app-dev-inspector-section>
 
-      <section class="inspector-section preview-scrub">
-        <h3>Preview transition (camera)</h3>
+      <app-dev-inspector-section title="Preview transition (camera)">
         <input
           type="range"
           min="0"
@@ -200,7 +212,7 @@
           <button type="button" (click)="resetCamera()">Reset view</button>
           <button type="button" (click)="snapToCull()">Preview cull</button>
         </div>
-      </section>
+      </app-dev-inspector-section>
     }
 
     <app-dev-json-copy title="LOD config" [data]="lodSavePayload" />

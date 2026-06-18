@@ -2,21 +2,22 @@
   title="Model Encyclopedia"
   badge="view"
   leftTitle="Catalog"
-  rightTitle="Details"
+  rightTitle="Inspector"
   (canvasReady)="onCanvasReady($event)"
 >
   <div devEditorLeft>
-    <app-dev-model-picker
-      assetLabel="Model"
-      [models]="models"
-      [modelId]="selectedModelId"
-      [variantId]="selectedVariantId"
-      [disabled]="loading"
-      (modelChange)="onModelChange($event)"
-      (variantChange)="onVariantChange($event)"
-    />
-
-    <p class="hint">Orbit: drag · Zoom: wheel · Same bloom/emissive tuning as in-game.</p>
+    <app-dev-inspector-section title="Catalog">
+      <app-dev-model-picker
+        assetLabel="Model"
+        [models]="models"
+        [modelId]="selectedModelId"
+        [variantId]="selectedVariantId"
+        [disabled]="loading"
+        (modelChange)="onModelChange($event)"
+        (variantChange)="onVariantChange($event)"
+      />
+      <p class="hint">Orbit: drag · Zoom: wheel · Same bloom/emissive tuning as in-game.</p>
+    </app-dev-inspector-section>
 
     <app-dev-editor-status
       [loading]="loading"
@@ -28,24 +29,40 @@
       [resetKey]="hierarchyRevision"
       [nodes]="hierarchy"
       [selectedId]="selectedNodeId"
-      [animations]="animations"
-      [playingAnimationIndex]="playingAnimationIndex"
-      [nodeTransform]="nodeTransform"
+      emptyMessage="Load a model to inspect its hierarchy"
       (nodeSelect)="onHierarchySelect($event)"
       (viewportVisibilityChange)="onHierarchyViewportChange($event)"
-      (playAnimation)="onPlayAnimation($event)"
-      (stopAnimations)="onStopAnimations()"
     />
   </div>
 
   <div devEditorRight>
-    <dl class="details">
-      <div><dt>Asset</dt><dd>{{ selectedModelLabel() }}</dd></div>
-      @if (showVariantSelector()) {
-        <div><dt>Variant</dt><dd>{{ selectedVariantLabel() }}</dd></div>
-      }
-      <div><dt>Kind</dt><dd>{{ selectedModelKind() }}</dd></div>
-    </dl>
-    <p class="hint">Read-only viewer for ships and props from manifest.json.</p>
+    @if (selectionTransform) {
+      <app-dev-transform-inspector
+        [transform]="selectionTransform"
+        [readonly]="transformReadonly"
+        [showGizmo]="false"
+        [gizmoMode]="transformGizmoMode"
+      />
+    }
+
+    @if (animations.length > 0) {
+      <app-dev-animations-inspector
+        [animations]="animations"
+        [playingAnimationIndex]="playingAnimationIndex"
+        (playAnimation)="onPlayAnimation($event)"
+        (stopAnimations)="onStopAnimations()"
+      />
+    }
+
+    <app-dev-inspector-section title="Asset">
+      <dl class="stats-dl">
+        <div><dt>Asset</dt><dd>{{ selectedModelLabel() }}</dd></div>
+        @if (showVariantSelector()) {
+          <div><dt>Variant</dt><dd>{{ selectedVariantLabel() }}</dd></div>
+        }
+        <div><dt>Kind</dt><dd>{{ selectedModelKind() }}</dd></div>
+      </dl>
+      <p class="hint">Read-only viewer for ships and props from manifest.json.</p>
+    </app-dev-inspector-section>
   </div>
 </app-dev-editor-shell>

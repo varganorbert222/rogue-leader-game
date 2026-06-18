@@ -15,9 +15,11 @@ export class DevVec3FieldComponent {
   @Input({ required: true }) vector!: Vec3Editable;
   @Input() min: number | null = null;
   @Input() step = 0.1;
+  @Input() readonly = false;
   @Output() vectorChange = new EventEmitter<void>();
 
   onChange(axis: 'x' | 'y' | 'z', value: number | string | null): void {
+    if (this.readonly) return;
     if (value === '' || value === null) {
       return;
     }

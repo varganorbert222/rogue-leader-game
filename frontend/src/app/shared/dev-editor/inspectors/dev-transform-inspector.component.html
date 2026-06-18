@@ -1,0 +1,60 @@
+<app-dev-inspector-section [title]="title">
+  @if (hint) {
+    <p class="hint">{{ hint }}</p>
+  }
+
+  @if (showGizmo && !readonly) {
+    <div class="transform-tool-row panel-actions">
+      <button
+        type="button"
+        class="secondary-btn"
+        [class.active]="gizmoMode === 'position'"
+        (click)="setGizmoMode('position')"
+      >
+        Move
+      </button>
+      <button
+        type="button"
+        class="secondary-btn"
+        [class.active]="gizmoMode === 'rotation'"
+        (click)="setGizmoMode('rotation')"
+      >
+        Rotate
+      </button>
+      <button
+        type="button"
+        class="secondary-btn"
+        [class.active]="gizmoMode === 'scale'"
+        (click)="setGizmoMode('scale')"
+      >
+        Scale
+      </button>
+    </div>
+  }
+
+  <app-dev-vec3-field
+    label="Position"
+    [vector]="transform.position"
+    [readonly]="readonly"
+    (vectorChange)="transformChange.emit()"
+    [step]="positionStep"
+  />
+
+  <app-dev-vec3-field
+    label="Rotation (deg)"
+    [vector]="transform.rotationDeg"
+    [readonly]="readonly"
+    (vectorChange)="transformChange.emit()"
+    [step]="rotationStep"
+  />
+
+  @if (showScale) {
+    <app-dev-vec3-field
+      label="Scale"
+      [vector]="transform.scale"
+      [readonly]="readonly"
+      (vectorChange)="transformChange.emit()"
+      [step]="scaleStep"
+    />
+  }
+</app-dev-inspector-section>

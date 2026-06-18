@@ -166,6 +166,12 @@ export interface DevSceneHierarchyPreview {
   stopAnimations?(): void;
   highlightNode?(sceneName: string | undefined): import('@rogue-leader/engine').HierarchyNodeTransformInfo | null;
   clearHighlight?(): void;
+  setTransformEditable?(editable: boolean): void;
+  onTransformGizmoChange?(handler: (info: import('@rogue-leader/engine').HierarchyNodeTransformInfo) => void): void;
+  setTransformGizmoMode?(mode: import('@rogue-leader/engine').DevTransformGizmoMode): void;
+  updateSelectedNodeTransform?(
+    transform: import('@rogue-leader/engine').DevNodeTransform,
+  ): import('@rogue-leader/engine').HierarchyNodeTransformInfo | null;
 }
 
 export interface DevSceneHierarchyView {
@@ -175,7 +181,11 @@ export interface DevSceneHierarchyView {
 }
 
 export function beginSceneHierarchyLoad(
-  view: DevSceneHierarchyView & { nodeTransform?: HierarchyNodeTransformInfo | null },
+  view: DevSceneHierarchyView & {
+    nodeTransform?: HierarchyNodeTransformInfo | null;
+    selectionTransform?: import('@rogue-leader/engine').DevNodeTransform | null;
+    transformGizmoMode?: import('@rogue-leader/engine').DevTransformGizmoMode;
+  },
   preview?: DevSceneHierarchyPreview,
 ): void {
   view.selectedNodeId = '';
@@ -183,6 +193,13 @@ export function beginSceneHierarchyLoad(
   view.hierarchyRevision += 1;
   if ('nodeTransform' in view) {
     view.nodeTransform = null;
+  }
+  if ('selectionTransform' in view) {
+    view.selectionTransform = null;
+  }
+  if ('transformGizmoMode' in view) {
+    view.transformGizmoMode = 'none';
+    preview?.setTransformGizmoMode?.('none');
   }
   preview?.clearHighlight?.();
 }

@@ -15,12 +15,22 @@ import {
   type HierarchyNode,
   type HierarchyNodeTransformInfo,
   type HierarchyOutlinerState,
+  type DevTransformGizmoMode,
+  type DevNodeTransform,
   type LodEditorModelEntry,
 } from '@rogue-leader/engine';
 import { DevEditorShellComponent } from '../../shared/dev-editor/dev-editor-shell.component';
 import { DevEditorStatusComponent } from '../../shared/dev-editor/dev-editor-status.component';
 import { DevModelPickerComponent } from '../../shared/dev-editor/dev-model-picker.component';
 import { DevSceneHierarchyComponent } from '../../shared/dev-editor/dev-scene-hierarchy.component';
+import { DevInspectorSectionComponent } from '../../shared/dev-editor/inspectors/dev-inspector-section.component';
+import { DevTransformInspectorComponent } from '../../shared/dev-editor/inspectors/dev-transform-inspector.component';
+import { DevAnimationsInspectorComponent } from '../../shared/dev-editor/inspectors/dev-animations-inspector.component';
+import {
+  onSceneHierarchySelect,
+  wireSceneTransformPreview,
+  type DevSceneTransformView,
+} from '../../shared/dev-editor/dev-scene-transform.utils';
 import {
   beginSceneHierarchyLoad,
   commitSceneHierarchyLoad,
@@ -49,6 +59,9 @@ import {
     DevEditorStatusComponent,
     DevModelPickerComponent,
     DevSceneHierarchyComponent,
+    DevInspectorSectionComponent,
+    DevTransformInspectorComponent,
+    DevAnimationsInspectorComponent,
   ],
   templateUrl: './encyclopedia.component.html',
   styleUrl: './encyclopedia.component.scss',
@@ -64,10 +77,15 @@ export class EncyclopediaComponent implements OnInit, OnDestroy {
   animations: DevPreviewAnimationInfo[] = [];
   playingAnimationIndex: number | null = null;
   nodeTransform: HierarchyNodeTransformInfo | null = null;
+  selectionTransform: DevNodeTransform | null = null;
+  transformGizmoMode: DevTransformGizmoMode = 'none';
+  readonly transformReadonly = true;
+
   loading = true;
   loadingMessage = 'Loading manifest…';
   errorMessage = '';
 
+  private readonly sceneTransformView: DevSceneTransformView = this;
   private host: BabylonHost | null = null;
   private preview: EncyclopediaPreviewScene | null = null;
   private readonly modelLoads = new LoadSequenceGuard();
@@ -111,6 +129,9 @@ export class EncyclopediaComponent implements OnInit, OnDestroy {
         getCamera: () => this.preview?.getCamera() ?? null,
       });
       this.previewReady = true;
+      if (this.preview) {
+        wireSceneTransformPreview(this.preview, this.sceneTransformView);
+      }
 
       if (this.models.length > 0 && this.selectedModelId) {
         await this.selectModel(this.selectedModelId);
@@ -146,7 +167,7 @@ export class EncyclopediaComponent implements OnInit, OnDestroy {
   onHierarchySelect(node: HierarchyNode): void {
     this.selectedNodeId = node.id;
     if (!this.preview) return;
-    this.nodeTransform = this.preview.highlightNode(hierarchySceneName(node));
+    onSceneHierarchySelect(this.preview, this.sceneTransformView, hierarchySceneName(node));
     refreshScenePreviewUi(this.preview, this);
     markViewForCheck(this.cdr);
   }

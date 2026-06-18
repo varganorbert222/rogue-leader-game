@@ -6,15 +6,38 @@ import {
 } from '@babylonjs/core';
 import { DebugAxes } from '../render/debug-axes';
 import { findSceneNodeByName } from './scene-hierarchy-builder';
+import { DevTransformGizmo, type DevTransformGizmoMode } from './dev-transform-gizmo';
+import {
+  applyDevNodeTransform,
+  readDevNodeTransform,
+  type DevNodeTransform,
+} from './shared/dev-node-transform';
 
 export interface HierarchyNodeTransformInfo {
   name: string;
   localPosition: { x: number; y: number; z: number };
   localRotationDeg: { x: number; y: number; z: number };
+  localScale: { x: number; y: number; z: number };
 }
 
-function radToDeg(value: number): number {
-  return (value * 180) / Math.PI;
+export function hierarchyTransformToDevNode(info: HierarchyNodeTransformInfo): DevNodeTransform {
+  return {
+    position: { ...info.localPosition },
+    rotationDeg: { ...info.localRotationDeg },
+    scale: { ...info.localScale },
+  };
+}
+
+export function devNodeToHierarchyTransform(
+  name: string,
+  transform: DevNodeTransform,
+): HierarchyNodeTransformInfo {
+  return {
+    name,
+    localPosition: { ...transform.position },
+    localRotationDeg: { ...transform.rotationDeg },
+    localScale: { ...transform.scale },
+  };
 }
 
 function resolveAxisLength(node: TransformNode | AbstractMesh): number {
@@ -26,7 +49,15 @@ function resolveAxisLength(node: TransformNode | AbstractMesh): number {
   return 0.35;
 }
 
-/** Local RGB axis gizmo for a selected hierarchy node. */
+function readHierarchyNodeTransformInfo(
+  node: TransformNode,
+  sceneName: string,
+): HierarchyNodeTransformInfo {
+  const dev = readDevNodeTransform(node);
+  return devNodeToHierarchyTransform(node.name || sceneName, dev);
+}
+
+/** Local RGB axis gizmo + optional interactive transform gizmo for a selected hierarchy node. */
 export class HierarchySelectionGizmo {
   private axes: DebugAxes | null = null;
 
@@ -34,7 +65,7 @@ export class HierarchySelectionGizmo {
     scene: Scene,
     root: TransformNode,
     sceneName: string | undefined,
-  ): HierarchyNodeTransformInfo | null {
+  ): { node: TransformNode; info: HierarchyNodeTransformInfo } | null {
     this.clear();
     if (!sceneName) return null;
 
@@ -42,28 +73,116 @@ export class HierarchySelectionGizmo {
     if (!node || !(node instanceof TransformNode)) return null;
 
     this.axes = DebugAxes.local(scene, node, resolveAxisLength(node));
-
-    const rotation = node.rotationQuaternion
-      ? node.rotationQuaternion.toEulerAngles()
-      : node.rotation;
-
-    return {
-      name: node.name || sceneName,
-      localPosition: {
-        x: node.position.x,
-        y: node.position.y,
-        z: node.position.z,
-      },
-      localRotationDeg: {
-        x: radToDeg(rotation.x),
-        y: radToDeg(rotation.y),
-        z: radToDeg(rotation.z),
-      },
-    };
+    return { node, info: readHierarchyNodeTransformInfo(node, sceneName) };
   }
 
   clear(): void {
     this.axes?.dispose();
     this.axes = null;
+  }
+}
+
+export class DevSceneNodeTransformController {
+  private readonly transformGizmo: DevTransformGizmo;
+  private hierarchyRoot: TransformNode | null = null;
+  private selectedNode: TransformNode | null = null;
+  private selectedName = '';
+  private transformEditable = true;
+  private transformChangeHandler: ((info: HierarchyNodeTransformInfo) => void) | null = null;
+  private readonly selectionGizmo = new HierarchySelectionGizmo();
+
+  constructor(scene: Scene) {
+    this.transformGizmo = new DevTransformGizmo(scene);
+  }
+
+  setTransformEditable(editable: boolean): void {
+    this.transformEditable = editable;
+    if (!editable) {
+      this.transformGizmo.setMode('none');
+    }
+    this.refreshTransformGizmoAttachment();
+  }
+
+  onTransformGizmoChange(handler: (info: HierarchyNodeTransformInfo) => void): void {
+    this.transformChangeHandler = handler;
+  }
+
+  setTransformGizmoMode(mode: DevTransformGizmoMode): void {
+    if (!this.transformEditable) return;
+    this.transformGizmo.setMode(mode);
+    this.refreshTransformGizmoAttachment();
+  }
+
+  getTransformGizmoMode(): DevTransformGizmoMode {
+    return this.transformGizmo.getMode();
+  }
+
+  highlightNode(
+    scene: Scene,
+    root: TransformNode | null,
+    sceneName: string | undefined,
+  ): HierarchyNodeTransformInfo | null {
+    if (!root) {
+      this.clearSelection();
+      return null;
+    }
+
+    this.hierarchyRoot = root;
+    const result = this.selectionGizmo.highlight(scene, root, sceneName);
+    if (!result) {
+      this.clearSelection();
+      return null;
+    }
+
+    this.selectedNode = result.node;
+    this.selectedName = result.info.name;
+    this.refreshTransformGizmoAttachment();
+    return result.info;
+  }
+
+  updateSelectedNodeTransform(transform: DevNodeTransform): HierarchyNodeTransformInfo | null {
+    if (!this.selectedNode || !this.transformEditable) return null;
+    applyDevNodeTransform(this.selectedNode, transform);
+    const scene = this.selectedNode.getScene();
+    if (!scene || !this.hierarchyRoot) {
+      return devNodeToHierarchyTransform(this.selectedName, readDevNodeTransform(this.selectedNode));
+    }
+    const result = this.selectionGizmo.highlight(scene, this.hierarchyRoot, this.selectedNode.name);
+    if (result) {
+      this.selectedNode = result.node;
+      this.selectedName = result.info.name;
+    }
+    this.transformGizmo.syncToAttachedNode(transform);
+    return result?.info ?? devNodeToHierarchyTransform(this.selectedName, transform);
+  }
+
+  clearSelection(): void {
+    this.hierarchyRoot = null;
+    this.selectedNode = null;
+    this.selectedName = '';
+    this.selectionGizmo.clear();
+    this.transformGizmo.detach();
+  }
+
+  dispose(): void {
+    this.clearSelection();
+    this.transformGizmo.dispose();
+  }
+
+  private refreshTransformGizmoAttachment(): void {
+    if (!this.selectedNode || !this.transformEditable || !this.transformChangeHandler) {
+      this.transformGizmo.detach();
+      return;
+    }
+
+    this.transformGizmo.attach(this.selectedNode, (transform) => {
+      if (!this.selectedNode) return;
+      const info = devNodeToHierarchyTransform(this.selectedName, transform);
+      this.transformChangeHandler?.(info);
+      const scene = this.selectedNode.getScene();
+      if (scene && this.hierarchyRoot) {
+        this.selectionGizmo.highlight(scene, this.hierarchyRoot, this.selectedNode.name);
+      }
+    });
   }
 }

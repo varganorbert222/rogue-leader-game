@@ -54,7 +54,8 @@ import type { HierarchyContextAction } from '../../shared/components/hierarchy-p
 import { DevEditorShellComponent } from '../../shared/dev-editor/dev-editor-shell.component';
 import { DevJsonCopyComponent } from '../../shared/dev-editor/dev-json-copy.component';
 import { DevEditorStatusComponent } from '../../shared/dev-editor/dev-editor-status.component';
-import { DevVec3FieldComponent } from '../../shared/dev-editor/dev-vec3-field.component';
+import { DevTransformInspectorComponent } from '../../shared/dev-editor/inspectors/dev-transform-inspector.component';
+import { DevInspectorSectionComponent } from '../../shared/dev-editor/inspectors/dev-inspector-section.component';
 import {
   createDevBabylonHost,
   disposeDevBabylonHost,
@@ -78,7 +79,8 @@ import { ParticleSystemInspectorComponent } from './inspectors/particle-system-i
     DevEditorShellComponent,
     DevJsonCopyComponent,
     DevEditorStatusComponent,
-    DevVec3FieldComponent,
+    DevTransformInspectorComponent,
+    DevInspectorSectionComponent,
     ParticleSystemInspectorComponent,
     ParticleCatalogModalComponent,
     DevConfirmModalComponent,

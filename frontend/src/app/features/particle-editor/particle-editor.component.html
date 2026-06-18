@@ -2,11 +2,11 @@
   title="Particle System Editor"
   badge="dev"
   leftTitle="Effect"
-  rightTitle="Particle System"
+  rightTitle="Inspector"
   (canvasReady)="onCanvasReady($event)"
 >
   <div devEditorLeft>
-    <section class="inspector-section">
+    <app-dev-inspector-section title="Effect">
       <label class="field">
         <span>Preset</span>
         <select
@@ -40,7 +40,7 @@
           <input type="text" [(ngModel)]="effect.name" (ngModelChange)="onEffectNameChange()" />
         </label>
       }
-    </section>
+    </app-dev-inspector-section>
 
     <app-hierarchy-panel
       title="Modules"
@@ -75,54 +75,12 @@
 
   <div devEditorRight>
     @if (selectedTreeNode) {
-      <section class="inspector-section">
-        <h3>Transform</h3>
-        <p class="hint">Local position, rotation (deg), and scale relative to parent.</p>
-        <div class="transform-tool-row panel-actions">
-          <button
-            type="button"
-            class="secondary-btn"
-            [class.active]="transformGizmoMode === 'position'"
-            (click)="setTransformGizmoMode('position')"
-          >
-            Move
-          </button>
-          <button
-            type="button"
-            class="secondary-btn"
-            [class.active]="transformGizmoMode === 'rotation'"
-            (click)="setTransformGizmoMode('rotation')"
-          >
-            Rotate
-          </button>
-          <button
-            type="button"
-            class="secondary-btn"
-            [class.active]="transformGizmoMode === 'scale'"
-            (click)="setTransformGizmoMode('scale')"
-          >
-            Scale
-          </button>
-        </div>
-        <app-dev-vec3-field
-          label="Position"
-          [vector]="selectedTreeNode.transform.position"
-          (vectorChange)="onTransformChange()"
-          [step]="0.1"
-        />
-        <app-dev-vec3-field
-          label="Rotation (deg)"
-          [vector]="selectedTreeNode.transform.rotationDeg"
-          (vectorChange)="onTransformChange()"
-          [step]="1"
-        />
-        <app-dev-vec3-field
-          label="Scale"
-          [vector]="selectedTreeNode.transform.scale"
-          (vectorChange)="onTransformChange()"
-          [step]="0.05"
-        />
-      </section>
+      <app-dev-transform-inspector
+        [transform]="selectedTreeNode.transform"
+        [gizmoMode]="transformGizmoMode"
+        (transformChange)="onTransformChange()"
+        (gizmoModeChange)="setTransformGizmoMode($event)"
+      />
     }
 
     @if (selectedGroupNode) {

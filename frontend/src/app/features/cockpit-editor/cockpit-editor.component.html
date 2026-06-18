@@ -2,21 +2,22 @@
   title="Cockpit View Editor"
   badge="dev"
   leftTitle="Ship"
-  rightTitle="Camera"
+  rightTitle="Inspector"
   (canvasReady)="onCanvasReady($event)"
 >
   <div devEditorLeft>
-    <app-dev-model-picker
-      [models]="ships"
-      [modelId]="selectedShipId"
-      variantId=""
-      [disabled]="loading"
-      (modelChange)="onShipChange($event)"
-    />
-
-    <p class="hint">
-      WASD + Shift/Ctrl — fly preview · Arrows — look around · Exterior hidden, cockpit GLB shown.
-    </p>
+    <app-dev-inspector-section title="Ship">
+      <app-dev-model-picker
+        [models]="ships"
+        [modelId]="selectedShipId"
+        variantId=""
+        [disabled]="loading"
+        (modelChange)="onShipChange($event)"
+      />
+      <p class="hint">
+        WASD + Shift/Ctrl — fly preview · Arrows — look around · Exterior hidden, cockpit GLB shown.
+      </p>
+    </app-dev-inspector-section>
 
     <app-dev-editor-status
       [loading]="loading"
@@ -29,105 +30,105 @@
       [nodes]="hierarchy"
       [selectedId]="selectedNodeId"
       emptyMessage="Load a ship to inspect its hierarchy"
-      [animations]="animations"
-      [playingAnimationIndex]="playingAnimationIndex"
-      [nodeTransform]="nodeTransform"
       (nodeSelect)="onHierarchySelect($event)"
       (viewportVisibilityChange)="onHierarchyViewportChange($event)"
-      (playAnimation)="onPlayAnimation($event)"
-      (stopAnimations)="onStopAnimations()"
     />
   </div>
 
   <div devEditorRight>
-    <label class="field">
-      <span>Model path</span>
-      <input type="text" [(ngModel)]="config.modelPath" (ngModelChange)="onConfigChange()" />
-    </label>
+    @if (selectionTransform) {
+      <app-dev-transform-inspector
+        [transform]="selectionTransform"
+        [gizmoMode]="transformGizmoMode"
+        (transformChange)="onSelectionTransformChange()"
+        (gizmoModeChange)="setTransformGizmoMode($event)"
+      />
+    }
 
-    <div class="row-3">
-      <label class="field">
-        <span>Offset right (m)</span>
-        <input type="number" step="0.01" [(ngModel)]="config.localOffset[0]" (ngModelChange)="onConfigChange()" />
-      </label>
-      <label class="field">
-        <span>Offset up (m)</span>
-        <input type="number" step="0.01" [(ngModel)]="config.localOffset[1]" (ngModelChange)="onConfigChange()" />
-      </label>
-      <label class="field">
-        <span>Offset forward (m)</span>
-        <input type="number" step="0.01" [(ngModel)]="config.localOffset[2]" (ngModelChange)="onConfigChange()" />
-      </label>
-    </div>
+    @if (animations.length > 0) {
+      <app-dev-animations-inspector
+        [animations]="animations"
+        [playingAnimationIndex]="playingAnimationIndex"
+        (playAnimation)="onPlayAnimation($event)"
+        (stopAnimations)="onStopAnimations()"
+      />
+    }
 
-    <div class="row-3">
+    <app-dev-inspector-section title="Camera">
       <label class="field">
-        <span>Pitch °</span>
-        <input type="number" step="0.5" [(ngModel)]="config.localRotationDeg[0]" (ngModelChange)="onConfigChange()" />
+        <span>Model path</span>
+        <input type="text" [(ngModel)]="config.modelPath" (ngModelChange)="onConfigChange()" />
       </label>
-      <label class="field">
-        <span>Yaw °</span>
-        <input type="number" step="0.5" [(ngModel)]="config.localRotationDeg[1]" (ngModelChange)="onConfigChange()" />
-      </label>
-      <label class="field">
-        <span>Roll °</span>
-        <input type="number" step="0.5" [(ngModel)]="config.localRotationDeg[2]" (ngModelChange)="onConfigChange()" />
-      </label>
-    </div>
 
-    <label class="field">
-      <span>FOV (°) — vertical, full angle</span>
-      <input type="number" step="1" min="20" max="120" [(ngModel)]="config.fovDeg" (ngModelChange)="onConfigChange()" />
-    </label>
+      <app-dev-vec3-field
+        label="Offset (m)"
+        [vector]="cameraOffset"
+        (vectorChange)="onCameraOffsetChange()"
+        [step]="0.01"
+      />
+      <app-dev-vec3-field
+        label="Rotation (deg)"
+        [vector]="cameraRotationDeg"
+        (vectorChange)="onCameraRotationChange()"
+        [step]="0.5"
+      />
 
-    <div class="row-2">
       <label class="field">
-        <span>Look yaw limit (°)</span>
-        <input type="number" step="1" min="0" [(ngModel)]="config.lookYawLimitDeg" (ngModelChange)="onConfigChange()" />
+        <span>FOV (°) — vertical, full angle</span>
+        <input type="number" step="1" min="20" max="120" [(ngModel)]="config.fovDeg" (ngModelChange)="onConfigChange()" />
       </label>
-      <label class="field">
-        <span>Look pitch limit (°)</span>
-        <input type="number" step="1" min="0" [(ngModel)]="config.lookPitchLimitDeg" (ngModelChange)="onConfigChange()" />
-      </label>
-    </div>
 
-    <h2>Input response</h2>
-    <p class="hint">
-      WASD + Shift/Ctrl stick drives camera shift. Smooth time controls spring-damped stick lag.
-    </p>
-    <div class="row-3">
-      <label class="field">
-        <span>Yaw → right (m)</span>
-        <input type="number" step="0.01" [(ngModel)]="config.inputResponse.maxInputOffsetRight" (ngModelChange)="onConfigChange()" />
-      </label>
-      <label class="field">
-        <span>Pitch → up (m)</span>
-        <input type="number" step="0.01" [(ngModel)]="config.inputResponse.maxInputOffsetUp" (ngModelChange)="onConfigChange()" />
-      </label>
-      <label class="field">
-        <span>Throttle → back (m)</span>
-        <input type="number" step="0.01" [(ngModel)]="config.inputResponse.maxInputOffsetBack" (ngModelChange)="onConfigChange()" />
-      </label>
-    </div>
-    <label class="field">
-      <span>Smooth time (s)</span>
-      <input type="number" step="0.01" min="0.01" [(ngModel)]="config.inputResponse.smoothTime" (ngModelChange)="onConfigChange()" />
-    </label>
+      <div class="row-2">
+        <label class="field">
+          <span>Look yaw limit (°)</span>
+          <input type="number" step="1" min="0" [(ngModel)]="config.lookYawLimitDeg" (ngModelChange)="onConfigChange()" />
+        </label>
+        <label class="field">
+          <span>Look pitch limit (°)</span>
+          <input type="number" step="1" min="0" [(ngModel)]="config.lookPitchLimitDeg" (ngModelChange)="onConfigChange()" />
+        </label>
+      </div>
+    </app-dev-inspector-section>
 
-    <h2>Live</h2>
-    <p class="mono">
-      speed {{ live.speed | number:'1.0-1' }} · pitch {{ live.shipPitchDeg | number:'1.0-1' }}° · yaw
-      {{ live.shipYawDeg | number:'1.0-1' }}°
-    </p>
-    <p class="mono">
-      stick pitch {{ live.stickPitch | number:'1.2-2' }} · yaw {{ live.stickYaw | number:'1.2-2' }} · throttle
-      {{ live.stickThrottle | number:'1.2-2' }}
-    </p>
-    <p class="mono">
-      input offset ({{ live.inputOffsetX | number:'1.3-3' }},
-      {{ live.inputOffsetY | number:'1.3-3' }},
-      {{ live.inputOffsetZ | number:'1.3-3' }}) m
-    </p>
+    <app-dev-inspector-section title="Input response">
+      <p class="hint">
+        WASD + Shift/Ctrl stick drives camera shift. Smooth time controls spring-damped stick lag.
+      </p>
+      <div class="row-3">
+        <label class="field">
+          <span>Yaw → right (m)</span>
+          <input type="number" step="0.01" [(ngModel)]="config.inputResponse.maxInputOffsetRight" (ngModelChange)="onConfigChange()" />
+        </label>
+        <label class="field">
+          <span>Pitch → up (m)</span>
+          <input type="number" step="0.01" [(ngModel)]="config.inputResponse.maxInputOffsetUp" (ngModelChange)="onConfigChange()" />
+        </label>
+        <label class="field">
+          <span>Throttle → back (m)</span>
+          <input type="number" step="0.01" [(ngModel)]="config.inputResponse.maxInputOffsetBack" (ngModelChange)="onConfigChange()" />
+        </label>
+      </div>
+      <label class="field">
+        <span>Smooth time (s)</span>
+        <input type="number" step="0.01" min="0.01" [(ngModel)]="config.inputResponse.smoothTime" (ngModelChange)="onConfigChange()" />
+      </label>
+    </app-dev-inspector-section>
+
+    <app-dev-inspector-section title="Live">
+      <p class="mono">
+        speed {{ live.speed | number:'1.0-1' }} · pitch {{ live.shipPitchDeg | number:'1.0-1' }}° · yaw
+        {{ live.shipYawDeg | number:'1.0-1' }}°
+      </p>
+      <p class="mono">
+        stick pitch {{ live.stickPitch | number:'1.2-2' }} · yaw {{ live.stickYaw | number:'1.2-2' }} · throttle
+        {{ live.stickThrottle | number:'1.2-2' }}
+      </p>
+      <p class="mono">
+        input offset ({{ live.inputOffsetX | number:'1.3-3' }},
+        {{ live.inputOffsetY | number:'1.3-3' }},
+        {{ live.inputOffsetZ | number:'1.3-3' }}) m
+      </p>
+    </app-dev-inspector-section>
 
     <app-dev-json-copy title="Cockpit config" [data]="cockpitSavePayload" />
   </div>

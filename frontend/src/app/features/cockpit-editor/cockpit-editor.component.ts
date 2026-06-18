@@ -24,12 +24,27 @@ import {
   type HierarchyNodeTransformInfo,
   type HierarchyOutlinerState,
   type LodEditorModelEntry,
+  type DevTransformGizmoMode,
+  type DevNodeTransform,
+  type Vec3Editable,
 } from '@rogue-leader/engine';
 import { DevEditorShellComponent } from '../../shared/dev-editor/dev-editor-shell.component';
 import { DevJsonCopyComponent } from '../../shared/dev-editor/dev-json-copy.component';
 import { DevEditorStatusComponent } from '../../shared/dev-editor/dev-editor-status.component';
 import { DevModelPickerComponent } from '../../shared/dev-editor/dev-model-picker.component';
 import { DevSceneHierarchyComponent } from '../../shared/dev-editor/dev-scene-hierarchy.component';
+import { DevInspectorSectionComponent } from '../../shared/dev-editor/inspectors/dev-inspector-section.component';
+import { DevTransformInspectorComponent } from '../../shared/dev-editor/inspectors/dev-transform-inspector.component';
+import { DevAnimationsInspectorComponent } from '../../shared/dev-editor/inspectors/dev-animations-inspector.component';
+import { DevVec3FieldComponent } from '../../shared/dev-editor/dev-vec3-field.component';
+import {
+  onSceneHierarchySelect,
+  onSceneSelectionTransformChange,
+  setSceneTransformGizmoMode,
+  syncSceneSelectionTransform,
+  wireSceneTransformPreview,
+  type DevSceneTransformView,
+} from '../../shared/dev-editor/dev-scene-transform.utils';
 import {
   beginSceneHierarchyLoad,
   commitSceneHierarchyLoad,
@@ -52,6 +67,10 @@ import {
     DevEditorStatusComponent,
     DevModelPickerComponent,
     DevSceneHierarchyComponent,
+    DevInspectorSectionComponent,
+    DevTransformInspectorComponent,
+    DevAnimationsInspectorComponent,
+    DevVec3FieldComponent,
     DevJsonCopyComponent,
   ],
   templateUrl: './cockpit-editor.component.html',
@@ -90,7 +109,13 @@ export class CockpitEditorComponent implements OnInit, OnDestroy {
   animations: DevPreviewAnimationInfo[] = [];
   playingAnimationIndex: number | null = null;
   nodeTransform: HierarchyNodeTransformInfo | null = null;
+  selectionTransform: DevNodeTransform | null = null;
+  transformGizmoMode: DevTransformGizmoMode = 'none';
+  readonly transformReadonly = false;
+  readonly cameraOffset: Vec3Editable = { x: 0, y: 0, z: 0 };
+  readonly cameraRotationDeg: Vec3Editable = { x: 0, y: 0, z: 0 };
 
+  private readonly sceneTransformView: DevSceneTransformView = this;
   private host: BabylonHost | null = null;
   private preview: CockpitPreviewScene | null = null;
   private manifestShips: AssetManifest['ships'] = {};
@@ -137,6 +162,9 @@ export class CockpitEditorComponent implements OnInit, OnDestroy {
       });
 
       this.previewReady = true;
+      if (this.preview) {
+        wireSceneTransformPreview(this.preview, this.sceneTransformView);
+      }
       if (this.selectedShipId) {
         await this.selectShip(this.selectedShipId);
       } else {
@@ -181,8 +209,41 @@ export class CockpitEditorComponent implements OnInit, OnDestroy {
   onHierarchySelect(node: HierarchyNode): void {
     this.selectedNodeId = node.id;
     if (!this.preview) return;
-    this.nodeTransform = this.preview.highlightNode(hierarchySceneName(node));
+    onSceneHierarchySelect(this.preview, this.sceneTransformView, hierarchySceneName(node));
     refreshScenePreviewUi(this.preview, this);
+  }
+
+  onSelectionTransformChange(): void {
+    if (!this.preview) return;
+    onSceneSelectionTransformChange(this.preview, this.sceneTransformView);
+  }
+
+  setTransformGizmoMode(mode: DevTransformGizmoMode): void {
+    if (!this.preview) return;
+    setSceneTransformGizmoMode(this.preview, this.sceneTransformView, mode);
+  }
+
+  onCameraOffsetChange(): void {
+    this.config.localOffset = [this.cameraOffset.x, this.cameraOffset.y, this.cameraOffset.z];
+    this.onConfigChange();
+  }
+
+  onCameraRotationChange(): void {
+    this.config.localRotationDeg = [
+      this.cameraRotationDeg.x,
+      this.cameraRotationDeg.y,
+      this.cameraRotationDeg.z,
+    ];
+    this.onConfigChange();
+  }
+
+  private syncCameraVec3FromConfig(): void {
+    this.cameraOffset.x = this.config.localOffset[0];
+    this.cameraOffset.y = this.config.localOffset[1];
+    this.cameraOffset.z = this.config.localOffset[2];
+    this.cameraRotationDeg.x = this.config.localRotationDeg[0];
+    this.cameraRotationDeg.y = this.config.localRotationDeg[1];
+    this.cameraRotationDeg.z = this.config.localRotationDeg[2];
   }
 
   onHierarchyViewportChange(state: HierarchyOutlinerState): void {
@@ -211,6 +272,7 @@ export class CockpitEditorComponent implements OnInit, OnDestroy {
     if (override) {
       this.config = { ...this.config, ...override };
     }
+    this.syncCameraVec3FromConfig();
     try {
       await this.preview.loadShip(shipId, entry);
       this.preview.setEditableConfig(this.config);

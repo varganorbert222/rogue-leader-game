@@ -231,7 +231,16 @@ export {
   DevScenePreviewExtras,
   type DevPreviewAnimationInfo,
   type HierarchyNodeTransformInfo,
+  hierarchyTransformToDevNode,
+  devNodeToHierarchyTransform,
 } from './dev/dev-scene-preview-extras';
+export {
+  type DevNodeTransform,
+  defaultDevNodeTransform,
+  readDevNodeTransform,
+  applyDevNodeTransform,
+  copyDevNodeTransform,
+} from './dev/shared/dev-node-transform';
 export {
   type HierarchyNode,
   type HierarchyNodeKind,

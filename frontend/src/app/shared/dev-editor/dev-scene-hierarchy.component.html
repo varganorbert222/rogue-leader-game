@@ -9,34 +9,3 @@
   (nodeSelect)="nodeSelect.emit($event)"
   (viewportVisibilityChange)="viewportVisibilityChange.emit($event)"
 />
-
-@if (nodeTransform) {
-  <section class="inspector-section">
-    <h3>Selection</h3>
-    <dl class="details">
-      <div><dt>Node</dt><dd>{{ nodeTransform.name }}</dd></div>
-      <div><dt>Local X</dt><dd>{{ formatCoord(nodeTransform.localPosition.x) }}</dd></div>
-      <div><dt>Local Y</dt><dd>{{ formatCoord(nodeTransform.localPosition.y) }}</dd></div>
-      <div><dt>Local Z</dt><dd>{{ formatCoord(nodeTransform.localPosition.z) }}</dd></div>
-      <div><dt>Rot X°</dt><dd>{{ formatCoord(nodeTransform.localRotationDeg.x) }}</dd></div>
-      <div><dt>Rot Y°</dt><dd>{{ formatCoord(nodeTransform.localRotationDeg.y) }}</dd></div>
-      <div><dt>Rot Z°</dt><dd>{{ formatCoord(nodeTransform.localRotationDeg.z) }}</dd></div>
-    </dl>
-    <p class="hint">RGB gizmo = local XYZ axes on the selected node.</p>
-  </section>
-}
-
-@if (animations.length > 0) {
-  <section class="inspector-section">
-    <h3>Animations</h3>
-    <div class="anim-list">
-      @for (anim of animations; track anim.index) {
-        <div class="anim-row" [class.playing]="playingAnimationIndex === anim.index">
-          <span>{{ anim.name }}</span>
-          <button type="button" class="secondary-btn" (click)="playAnimation.emit(anim.index)">Play</button>
-        </div>
-      }
-    </div>
-    <button type="button" class="secondary-btn" (click)="stopAnimations.emit()">Stop all</button>
-  </section>
-}
