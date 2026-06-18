@@ -1,6 +1,8 @@
 import { Effect, type ParticleSystem } from '@babylonjs/core';
 import type { Vec3Editable } from '../../shared/editable-primitives';
-import { resolveUrlParticleTexture } from '../textures/resolver';
+import { resolveParticleTextureUrlById } from '../textures/catalog';
+import type { ParticleSystemEditable } from '../types';
+import { getWhiteParticleTexture, resolveUrlParticleTexture } from '../textures/resolver';
 
 const SHADER_NAME = 'rogueParticleEmission';
 const FRAGMENT_KEY = `${SHADER_NAME}PixelShader`;
@@ -20,6 +22,8 @@ varying vec4 vColor;
 uniform vec4 textureMask;
 uniform vec3 emissionTint;
 uniform float useEmissionMap;
+uniform float useAlphaCutoff;
+uniform float alphaCutoff;
 uniform sampler2D diffuseSampler;
 uniform sampler2D emissionSampler;
 #include<clipPlaneFragmentDeclaration>
@@ -34,10 +38,14 @@ void main(void) {
   vec4 emissionSample = texture2D(emissionSampler, vUV) * vec4(emissionTint, 1.0);
   vec4 textureColor = albedoSample + emissionSample * useEmissionMap;
   vec4 baseColor = (textureColor * textureMask + (vec4(1., 1., 1., 1.) - textureMask)) * vColor;
+  baseColor.a = albedoSample.a * textureMask.a * vColor.a;
 #ifdef BLENDMULTIPLYMODE
-  float sourceAlpha = vColor.a * textureColor.a;
+  float sourceAlpha = vColor.a * albedoSample.a;
   baseColor.rgb = baseColor.rgb * sourceAlpha + vec3(1.0) * (1.0 - sourceAlpha);
 #endif
+  if (useAlphaCutoff > 0.5 && baseColor.a < alphaCutoff) {
+    discard;
+  }
 #include<logDepthFragment>
 #include<fogFragment>(color, baseColor)
 #ifdef IMAGEPROCESSINGPOSTPROCESS
@@ -51,6 +59,7 @@ void main(void) {
 export interface ParticleEmissionEffectBinding {
   emissionTint: Vec3Editable;
   emissionTextureUrl: string | null;
+  alphaCutoff: number | null;
 }
 
 export function applyParticleEmissionEffect(
@@ -72,7 +81,7 @@ export function applyParticleEmissionEffect(
 
   const effect = scene.getEngine().createEffectForParticles(
     SHADER_NAME,
-    ['emissionTint', 'useEmissionMap'],
+    ['emissionTint', 'useEmissionMap', 'useAlphaCutoff', 'alphaCutoff'],
     ['emissionSampler'],
     defines.join('\n'),
     undefined,
@@ -83,10 +92,13 @@ export function applyParticleEmissionEffect(
 
   const emissionTexture = resolveUrlParticleTexture(scene, binding.emissionTextureUrl);
   const tint = binding.emissionTint;
+  const cutoff = binding.alphaCutoff;
 
   effect.onBind = (effectInstance) => {
     effectInstance.setFloat3('emissionTint', tint.x, tint.y, tint.z);
     effectInstance.setFloat('useEmissionMap', emissionTexture ? 1 : 0);
+    effectInstance.setFloat('useAlphaCutoff', cutoff !== null ? 1 : 0);
+    effectInstance.setFloat('alphaCutoff', cutoff ?? 0);
     if (emissionTexture) {
       effectInstance.setTexture('emissionSampler', emissionTexture);
     }
@@ -106,4 +118,31 @@ export function applyParticleEmissionTint(
     return;
   }
   ps.textureMask.set(color.x, color.y, color.z, 1);
+}
+
+export function applyParticleEmission(
+  ps: ParticleSystem,
+  config: ParticleSystemEditable,
+  scene: import('@babylonjs/core').Scene,
+  alphaCutoff: number | null,
+): void {
+  const emissionUrl = config.emission.textureId
+    ? resolveParticleTextureUrlById(config.emission.textureId)
+    : null;
+
+  if (emissionUrl) {
+    if (!ps.particleTexture) {
+      ps.particleTexture = getWhiteParticleTexture(scene);
+    }
+    applyParticleEmissionEffect(ps, {
+      emissionTint: config.emission.color,
+      emissionTextureUrl: emissionUrl,
+      alphaCutoff: config.blendMode === 'alpha' ? alphaCutoff : null,
+    });
+    applyParticleEmissionTint(ps, config.emission.color, false);
+    return;
+  }
+
+  ps.setCustomEffect(null, ps.blendMode);
+  applyParticleEmissionTint(ps, config.emission.color, true);
 }

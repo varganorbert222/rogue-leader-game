@@ -3,15 +3,17 @@ import {
   defaultRotationOverLifetime,
   defaultSizeOverLifetime,
 } from './curves';
+import { createModuleTreeNode, syncEffectSystemsFromTree } from './tree';
+import { normalizeParticleSystemSlot } from './refs';
 import type {
   ParticleAlbedoTextureEditable,
   ParticleEffectEditable,
   ParticleEmissionEditable,
+  ParticleMeshSettings,
   ParticleShapeEditable,
   ParticleShapeType,
   ParticleSystemEditable,
 } from './types';
-
 export function defaultParticleShape(type: ParticleShapeType = 'box'): ParticleShapeEditable {
   return {
     type,
@@ -53,10 +55,21 @@ export function nextParticleSystemId(): string {
   return `ps_${particleIdCounter}`;
 }
 
+export function defaultMeshSettings(): ParticleMeshSettings {
+  return {
+    glbUrl: '',
+    uniformScale: 1,
+    randomRotation: true,
+  };
+}
+
 export function defaultParticleSystem(name = 'Particle System'): ParticleSystemEditable {
   return {
     id: nextParticleSystemId(),
     name,
+    renderMode: 'billboard',
+    mesh: defaultMeshSettings(),
+    subEmitters: [],
     duration: 5,
     looping: true,
     startDelay: 0,
@@ -85,13 +98,23 @@ export function defaultParticleSystem(name = 'Particle System'): ParticleSystemE
     albedoTexture: defaultAlbedoTexture(),
     emission: defaultEmission(),
     blendMode: 'add',
+    alphaCutoff: null,
   };
 }
 
 export function defaultParticleEffect(name = 'New Effect'): ParticleEffectEditable {
-  return {
+  const system = defaultParticleSystem('Main');
+  const slot = normalizeParticleSystemSlot({
+    id: system.id,
+    name: system.name,
+    config: system,
+  });
+  const effect: ParticleEffectEditable = {
     id: `effect_${Date.now()}`,
     name,
-    systems: [defaultParticleSystem('Main')],
+    tree: [createModuleTreeNode(slot)],
+    systems: [],
   };
+  syncEffectSystemsFromTree(effect);
+  return effect;
 }

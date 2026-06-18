@@ -2,6 +2,10 @@
 export type {
   ParticleBlendMode,
   ParticleEmissionMode,
+  ParticleRenderMode,
+  ParticleSubEmitterTrigger,
+  ParticleSubEmitterLink,
+  ParticleMeshSettings,
   ParticleShapeType,
   ParticleShapeEditable,
   ParticleAlbedoTextureEditable,
@@ -9,6 +13,9 @@ export type {
   ParticleSystemEditable,
   ParticleEffectEditable,
   ParticlePresetEntry,
+  ParticleEffectTreeNode,
+  ParticleEffectTreeNodeKind,
+  ParticleNodeTransform,
 } from './types';
 
 // Shared primitives (re-exported for editor consumers)
@@ -45,12 +52,15 @@ export {
   defaultParticleShape,
   defaultAlbedoTexture,
   defaultEmission,
+  defaultMeshSettings,
   defaultParticleSystem,
   defaultParticleEffect,
   nextParticleSystemId,
 } from './defaults';
 export {
   normalizeParticleSystem,
+} from './system-normalize';
+export {
   normalizeParticleEffect,
   cloneParticleEffect,
 } from './normalize';
@@ -62,6 +72,69 @@ export {
   syncStaticAtlasCell,
 } from './albedo-atlas';
 
+// Preset references (Unity-style prefab reuse)
+export type {
+  ParticlePresetRefMode,
+  ParticlePresetRef,
+  ParticleSystemSlot,
+} from './types';
+export {
+  isParticlePresetRef,
+  isParticleSystemSlot,
+  normalizeParticleSystemSlot,
+  serializeParticleSystemSlot,
+  serializeParticleEffect,
+  serializeParticlePreset,
+  resolveParticleSystemSlot,
+  resolveParticleEffect,
+  findSlotById,
+  isSlotReadonlyRef,
+  isSlotEditRef,
+  createInlineSlot,
+  createPresetRefSlot,
+  cloneSlotAsInstance,
+  listCatalogSystemOptions,
+  writeEditRefToCatalog,
+  setSlotRefMode,
+  type CatalogSystemOption,
+} from './refs';
+
+// Effect tree (hierarchy authoring)
+export {
+  createGroupNode,
+  createModuleTreeNode,
+  systemsToTree,
+  flattenEffectSlots,
+  countParticleModules,
+  walkTree,
+  findTreeNode,
+  findSlotInEffect,
+  findModuleTreeNode,
+  insertNodeAsLastChild,
+  insertNodeUnderAnchor,
+  removeTreeNode,
+  isTreeDescendant,
+  moveTreeNode,
+  normalizeTreeNode,
+  normalizeEffectTree,
+  syncEffectSystemsFromTree,
+  cloneEffectTree,
+  cloneTreeNodeSubtree,
+  buildReferencedPresetTree,
+  buildClonedPresetTree,
+  serializeEffectTree,
+  remapTreeIds,
+  type TreeLocateResult,
+} from './tree';
+
+export {
+  defaultNodeTransform,
+  normalizeNodeTransform,
+  ensureTreeNodeTransform,
+  copyNodeTransform,
+  applyTransformToBabylonNode,
+} from './transform';
+
 // Hierarchy
 export { buildParticleEffectHierarchy } from './hierarchy';
 
@@ -71,6 +144,10 @@ export {
   createParticleSystemFromEditable,
 } from './apply/factory';
 export { applyParticleShape } from './apply/shape';
+export {
+  applySubEmittersToParticleSystem,
+  collectSubEmitterTargetIds,
+} from './apply/sub-emitters';
 export { applySizeOverLifetime } from './apply/size-lifetime';
 export { applyRotationOverLifetime } from './apply/rotation-lifetime';
 

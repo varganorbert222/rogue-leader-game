@@ -1,0 +1,72 @@
+@use '../../styles/dev-editor-tokens';
+@use '../../styles/dev-editor-forms';
+
+.dev-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(6, 8, 12, 0.72);
+  font-family: var(--dev-font-ui);
+  font-size: var(--dev-font-size-md);
+  line-height: var(--dev-line-height);
+  color: var(--dev-text-primary);
+}
+
+.dev-modal-card {
+  width: min(24rem, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #4a5568;
+  background: #161b24;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+
+  h3 {
+    margin: 0;
+    font-family: var(--dev-font-ui);
+    font-size: var(--dev-font-size-lg);
+    font-weight: 600;
+    color: var(--dev-text-primary);
+  }
+
+  .hint {
+    font-size: var(--dev-font-size-xs);
+    color: var(--dev-text-muted);
+  }
+
+  .hint.warn {
+    color: var(--dev-text-warning);
+  }
+}
+
+.dev-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.dev-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.25rem;
+  margin-top: 0.35rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #343b48;
+
+  &:empty {
+    display: none;
+  }
+
+  .primary-btn,
+  .secondary-btn,
+  .danger-btn {
+    margin-top: 0;
+    min-width: 4.5rem;
+  }
+}

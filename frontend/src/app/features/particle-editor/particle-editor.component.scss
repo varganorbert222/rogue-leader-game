@@ -1,1 +1,68 @@
 @use '../../shared/styles/dev-editor-layout.scss';
+
+.ref-banner {
+  padding: 0.55rem 0.65rem;
+  margin-bottom: 0.65rem;
+  border-radius: 6px;
+  border: 1px solid #4a5568;
+  background: rgba(30, 35, 45, 0.9);
+
+  p {
+    margin: 0 0 0.45rem;
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  &.readonly {
+    border-color: #6b7a94;
+  }
+
+  &.edit {
+    border-color: #6ea8ff88;
+    background: rgba(24, 36, 58, 0.85);
+  }
+}
+
+.transform-tool-row .secondary-btn.active {
+  background: #3d5a8c;
+  border-color: #5a7ab8;
+}
+
+.danger-btn {
+  background: #3a1c1c;
+  border: 1px solid #a44;
+  color: #ffb8b8;
+  border-radius: 4px;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  margin-top: 0.15rem;
+
+  &:hover:not(:disabled) {
+    background: #4d2424;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.particle-inspector-body {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.sub-emitter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #2f3642;
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+}

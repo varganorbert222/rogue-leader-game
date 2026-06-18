@@ -7,8 +7,9 @@
         type="number"
         [min]="min ?? null"
         [step]="step"
-        [(ngModel)]="vector.x"
-        (ngModelChange)="onChange()"
+        [ngModel]="vector.x"
+        (ngModelChange)="onChange('x', $event)"
+        (blur)="onBlur('x')"
       />
     </label>
     <label>
@@ -17,8 +18,9 @@
         type="number"
         [min]="min ?? null"
         [step]="step"
-        [(ngModel)]="vector.y"
-        (ngModelChange)="onChange()"
+        [ngModel]="vector.y"
+        (ngModelChange)="onChange('y', $event)"
+        (blur)="onBlur('y')"
       />
     </label>
     <label>
@@ -27,8 +29,9 @@
         type="number"
         [min]="min ?? null"
         [step]="step"
-        [(ngModel)]="vector.z"
-        (ngModelChange)="onChange()"
+        [ngModel]="vector.z"
+        (ngModelChange)="onChange('z', $event)"
+        (blur)="onBlur('z')"
       />
     </label>
   </div>

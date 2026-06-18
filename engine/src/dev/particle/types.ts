@@ -1,8 +1,30 @@
 import type { Color4Editable, Vec3Editable } from '../shared/editable-primitives';
+import type { ParticleNodeTransform } from './transform';
 import type { RotationOverLifetimeEditable, SizeOverLifetimeEditable } from './curves';
+
+export type { ParticleNodeTransform };
 
 export type ParticleBlendMode = 'add' | 'alpha' | 'multiply' | 'oneone';
 export type ParticleEmissionMode = 'rate' | 'burst';
+export type ParticleRenderMode = 'billboard' | 'mesh';
+
+/** When parent particles spawn or die, trigger another module in the same effect. */
+export type ParticleSubEmitterTrigger = 'death' | 'birth';
+
+export interface ParticleSubEmitterLink {
+  targetSystemId: string;
+  trigger: ParticleSubEmitterTrigger;
+  /** 0–1 chance per event (1 = always). */
+  probability: number;
+  inheritVelocity: boolean;
+}
+
+export interface ParticleMeshSettings {
+  /** URL or path to a GLB used as instanced particle geometry. */
+  glbUrl: string;
+  uniformScale: number;
+  randomRotation: boolean;
+}
 
 export type ParticleShapeType =
   | 'point'
@@ -44,6 +66,9 @@ export interface ParticleEmissionEditable {
 export interface ParticleSystemEditable {
   id: string;
   name: string;
+  renderMode: ParticleRenderMode;
+  mesh: ParticleMeshSettings;
+  subEmitters: ParticleSubEmitterLink[];
   duration: number;
   looping: boolean;
   startDelay: number;
@@ -72,12 +97,48 @@ export interface ParticleSystemEditable {
   albedoTexture: ParticleAlbedoTextureEditable;
   emission: ParticleEmissionEditable;
   blendMode: ParticleBlendMode;
+  /** Alpha test threshold (0–1) for blendMode `alpha`; null = disabled. */
+  alphaCutoff: number | null;
+}
+
+export type ParticlePresetRefMode = 'readonly' | 'edit';
+
+/** Catalog reference stored in presets.json (no inline config). */
+export interface ParticlePresetRef {
+  presetId: string;
+  systemId: string;
+  mode: ParticlePresetRefMode;
+}
+
+/**
+ * One module in an effect — either inline config (clone) or a catalog reference.
+ * Clones store full `config`; references store only `presetRef` + local id/name.
+ */
+export interface ParticleSystemSlot {
+  id: string;
+  name: string;
+  config?: ParticleSystemEditable;
+  presetRef?: ParticlePresetRef;
+}
+
+export type ParticleEffectTreeNodeKind = 'group' | 'particleSystem';
+
+export interface ParticleEffectTreeNode {
+  id: string;
+  name: string;
+  kind: ParticleEffectTreeNodeKind;
+  children: ParticleEffectTreeNode[];
+  transform: ParticleNodeTransform;
+  /** Present when kind is `particleSystem`. */
+  slot?: ParticleSystemSlot;
 }
 
 export interface ParticleEffectEditable {
   id: string;
   name: string;
-  systems: ParticleSystemEditable[];
+  /** Normalized flat mirror of module slots in `tree` (runtime). */
+  systems: ParticleSystemSlot[];
+  tree: ParticleEffectTreeNode[];
 }
 
 export interface ParticlePresetEntry {

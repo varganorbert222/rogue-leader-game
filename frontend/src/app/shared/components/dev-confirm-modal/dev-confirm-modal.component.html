@@ -1,0 +1,16 @@
+<app-dev-modal
+  [open]="open"
+  [title]="title"
+  titleId="dev-confirm-modal-title"
+  (dismiss)="onCancel()"
+>
+  <p class="dev-confirm-message">{{ message }}</p>
+  @if (detail) {
+    <p class="hint warn">{{ detail }}</p>
+  }
+
+  <div devModalActions>
+    <button type="button" class="secondary-btn" (click)="onCancel()">{{ cancelLabel }}</button>
+    <button type="button" [class]="confirmButtonClass" (click)="onConfirm()">{{ confirmLabel }}</button>
+  </div>
+</app-dev-modal>

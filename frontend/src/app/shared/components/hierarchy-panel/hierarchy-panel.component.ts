@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
 import {
   cloneHierarchyOutlinerState,
   createHierarchyOutlinerState,
@@ -10,6 +18,14 @@ import {
   type HierarchyOutlinerState,
   type HierarchyReorderEvent,
 } from '@rogue-leader/engine';
+
+export type HierarchyContextAction =
+  | 'addCatalog'
+  | 'addBlank'
+  | 'copy'
+  | 'cut'
+  | 'paste'
+  | 'delete';
 
 @Component({
   selector: 'app-hierarchy-panel',
@@ -23,18 +39,36 @@ export class HierarchyPanelComponent implements OnChanges {
   @Input() selectedId = '';
   @Input() editable = false;
   @Input() flatReorderUnderRoot = false;
+  @Input() treeReorder = false;
+  @Input() showRowActions = false;
   @Input() emptyMessage = 'No nodes';
-  /** Bumps when the viewed model changes — forces a full panel reset. */
   @Input() resetKey: string | number = 0;
-  /** Sync viewport visibility to the 3D preview (scene graph editors). */
   @Input() syncViewport = false;
+  @Input() canRemoveNode: (node: HierarchyNode) => boolean = () => false;
+  @Input() showClipboardActions = false;
+  @Input() clipboardReady = false;
+  @Input() canCopyNode: (node: HierarchyNode) => boolean = () => false;
+  @Input() canCutNode: (node: HierarchyNode) => boolean = () => false;
+  @Input() canPasteIntoNode: (node: HierarchyNode) => boolean = () => false;
+  @Input() showGeneratedBadge = true;
 
   @Output() nodeSelect = new EventEmitter<HierarchyNode>();
   @Output() nodeReorder = new EventEmitter<HierarchyReorderEvent>();
-  @Output() viewportVisibilityChange = new EventEmitter<HierarchyOutlinerState>();
+  @Output() viewportVisibilityChange =
+    new EventEmitter<HierarchyOutlinerState>();
+  @Output() addBelow = new EventEmitter<HierarchyNode>();
+  @Output() removeNode = new EventEmitter<HierarchyNode>();
+  @Output() contextAction = new EventEmitter<{
+    action: HierarchyContextAction;
+    node: HierarchyNode;
+  }>();
 
   rows: HierarchyOutlinerRow[] = [];
   outlinerState: HierarchyOutlinerState = createHierarchyOutlinerState();
+
+  contextMenu: { x: number; y: number; node: HierarchyNode } | null = null;
+  dropHintId = '';
+  dropHintPosition: HierarchyReorderEvent['position'] | '' = '';
 
   private dragSourceId = '';
 
@@ -42,6 +76,16 @@ export class HierarchyPanelComponent implements OnChanges {
     if (changes['nodes'] || changes['resetKey']) {
       this.resetOutliner();
     }
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.contextMenu = null;
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.contextMenu = null;
   }
 
   private resetOutliner(): void {
@@ -67,7 +111,16 @@ export class HierarchyPanelComponent implements OnChanges {
   }
 
   onNodeClick(node: HierarchyNode): void {
+    this.contextMenu = null;
     this.nodeSelect.emit(node);
+  }
+
+  onRowContextMenu(row: HierarchyOutlinerRow, event: MouseEvent): void {
+    if (!this.showRowActions) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.nodeSelect.emit(row.node);
+    this.contextMenu = { x: event.clientX, y: event.clientY, node: row.node };
   }
 
   onVisibilityClick(row: HierarchyOutlinerRow, event: MouseEvent): void {
@@ -77,12 +130,44 @@ export class HierarchyPanelComponent implements OnChanges {
     this.emitViewportState();
   }
 
+  onAddClick(node: HierarchyNode, event: MouseEvent): void {
+    event.stopPropagation();
+    this.contextMenu = null;
+    this.addBelow.emit(node);
+  }
+
+  onRemoveClick(node: HierarchyNode, event: MouseEvent): void {
+    event.stopPropagation();
+    if (!this.canRemoveNode(node)) return;
+    this.contextMenu = null;
+    this.removeNode.emit(node);
+  }
+
+  onContextPick(action: HierarchyContextAction): void {
+    if (!this.contextMenu) return;
+    const node = this.contextMenu.node;
+    this.contextMenu = null;
+    this.contextAction.emit({ action, node });
+  }
+
   canDrag(row: HierarchyOutlinerRow): boolean {
     if (!this.editable) return false;
+    if (this.treeReorder) {
+      return row.node.kind !== 'effectRoot';
+    }
     if (this.flatReorderUnderRoot) {
       return row.depth === 1 && row.node.kind === 'particleSystem';
     }
     return false;
+  }
+
+  canDropInside(row: HierarchyOutlinerRow): boolean {
+    return (
+      this.treeReorder &&
+      (row.node.kind === 'effectRoot' ||
+        row.node.kind === 'effectGroup' ||
+        row.hasChildren)
+    );
   }
 
   onDragStart(row: HierarchyOutlinerRow, event: DragEvent): void {
@@ -96,23 +181,72 @@ export class HierarchyPanelComponent implements OnChanges {
   }
 
   onDragOver(row: HierarchyOutlinerRow, event: DragEvent): void {
-    if (!this.editable || !this.dragSourceId || this.dragSourceId === row.node.id) return;
-    if (!this.canDrag(row)) return;
+    if (
+      !this.editable ||
+      !this.dragSourceId ||
+      this.dragSourceId === row.node.id
+    )
+      return;
+    if (!this.canDrag(row) && !this.treeReorder) return;
+    if (
+      this.treeReorder &&
+      row.node.kind === 'effectRoot' &&
+      this.dragSourceId === row.node.id
+    ) {
+      return;
+    }
+
     event.preventDefault();
     event.dataTransfer!.dropEffect = 'move';
+
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const y = event.clientY - rect.top;
+    const h = rect.height;
+    let position: HierarchyReorderEvent['position'];
+    if (this.treeReorder && this.canDropInside(row)) {
+      if (y < h * 0.25) position = 'before';
+      else if (y > h * 0.75) position = 'after';
+      else position = 'inside';
+    } else {
+      position = y < h * 0.5 ? 'before' : 'after';
+    }
+    this.dropHintId = row.node.id;
+    this.dropHintPosition = position;
+  }
+
+  onDragLeave(): void {
+    this.dropHintId = '';
+    this.dropHintPosition = '';
   }
 
   onDrop(row: HierarchyOutlinerRow, event: DragEvent): void {
     event.preventDefault();
-    const sourceId = this.dragSourceId || event.dataTransfer?.getData('text/plain');
-    if (!sourceId || sourceId === row.node.id || !this.canDrag(row)) {
+    const sourceId =
+      this.dragSourceId || event.dataTransfer?.getData('text/plain');
+    this.dropHintId = '';
+    this.dropHintPosition = '';
+
+    if (!sourceId || sourceId === row.node.id) {
+      this.dragSourceId = '';
+      return;
+    }
+
+    if (!this.treeReorder && !this.canDrag(row)) {
       this.dragSourceId = '';
       return;
     }
 
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    const position: 'before' | 'after' =
-      event.clientY < rect.top + rect.height * 0.5 ? 'before' : 'after';
+    const y = event.clientY - rect.top;
+    const h = rect.height;
+    let position: HierarchyReorderEvent['position'];
+    if (this.treeReorder && this.canDropInside(row)) {
+      if (y < h * 0.25) position = 'before';
+      else if (y > h * 0.75) position = 'after';
+      else position = 'inside';
+    } else {
+      position = y < h * 0.5 ? 'before' : 'after';
+    }
 
     this.nodeReorder.emit({ sourceId, targetId: row.node.id, position });
     this.dragSourceId = '';
@@ -120,6 +254,8 @@ export class HierarchyPanelComponent implements OnChanges {
 
   onDragEnd(): void {
     this.dragSourceId = '';
+    this.dropHintId = '';
+    this.dropHintPosition = '';
   }
 
   kindIcon(kind: string): string {
@@ -136,9 +272,21 @@ export class HierarchyPanelComponent implements OnChanges {
         return '✦';
       case 'effectRoot':
         return '◎';
+      case 'effectGroup':
+        return '▣';
       default:
         return '•';
     }
+  }
+
+  presetRefBadgeLabel(mode: 'readonly' | 'edit'): string {
+    return mode === 'readonly' ? 'ref' : 'linked';
+  }
+
+  presetRefBadgeTitle(mode: 'readonly' | 'edit'): string {
+    return mode === 'readonly'
+      ? 'Catalog reference (read-only)'
+      : 'Catalog reference (linked edit)';
   }
 
   private rebuildRows(): void {
@@ -147,6 +295,8 @@ export class HierarchyPanelComponent implements OnChanges {
 
   private emitViewportState(): void {
     if (!this.syncViewport) return;
-    this.viewportVisibilityChange.emit(cloneHierarchyOutlinerState(this.outlinerState));
+    this.viewportVisibilityChange.emit(
+      cloneHierarchyOutlinerState(this.outlinerState),
+    );
   }
 }

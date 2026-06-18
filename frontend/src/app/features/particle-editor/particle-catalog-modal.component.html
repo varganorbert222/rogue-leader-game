@@ -1,0 +1,47 @@
+<app-dev-modal
+  [open]="open"
+  title="Add module"
+  titleId="particle-catalog-modal-title"
+  (dismiss)="cancel.emit()"
+>
+  @if (anchorLabel) {
+    <p class="hint">Child of: <strong>{{ anchorLabel }}</strong></p>
+  }
+
+  <label class="field">
+    <span>Creation mode</span>
+    <select [ngModel]="insertMode" (ngModelChange)="onInsertModeChange($event)">
+      @if (allowBlank) {
+        <option value="blank">Blank (new empty module)</option>
+      }
+      <option value="reference-readonly">Reference (read-only link)</option>
+      <option value="reference-edit">Reference (linked edit)</option>
+      <option value="clone">Clone (detached copy)</option>
+    </select>
+  </label>
+
+  @if (showPresetFields) {
+    <label class="field">
+      <span>Preset</span>
+      <select
+        [ngModel]="presetId"
+        (ngModelChange)="onPresetChange($event)"
+      >
+        @for (preset of presets; track preset.id) {
+          <option [value]="preset.id">{{ preset.label }}</option>
+        }
+      </select>
+    </label>
+
+    @if (!selectedPresetHasTree) {
+      <p class="hint warn">Selected preset has no modules — pick another preset.</p>
+    } @else if (insertMode !== 'blank') {
+      <p class="hint">Inserts the full preset tree from its root.</p>
+    }
+  }
+
+  <div devModalActions>
+    <button type="button" class="secondary-btn" (click)="cancel.emit()">Cancel</button>
+    <button type="button" class="primary-btn" (click)="submit()" [disabled]="!canSubmit">OK</button>
+  </div>
+</app-dev-modal>

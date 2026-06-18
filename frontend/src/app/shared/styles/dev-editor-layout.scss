@@ -1,12 +1,16 @@
-@forward 'dev-editor-forms';
-@use 'dev-editor-forms';
+@forward "dev-editor-tokens";
+@forward "dev-editor-forms";
+@use "dev-editor-tokens";
+@use "dev-editor-forms";
 
 .dev-editor {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  color: #d6dde8;
+  font-family: var(--dev-font-ui);
+  font-size: var(--dev-font-size-md);
+  line-height: var(--dev-line-height);
+  color: var(--dev-text-primary);
 }
 
 .dev-editor-docked {
@@ -82,23 +86,25 @@
 
   h1 {
     margin: 0;
-    font-size: 0.95rem;
+    font-family: var(--dev-font-ui);
+    font-size: var(--dev-font-size-title);
     font-weight: 600;
     letter-spacing: 0.02em;
   }
 }
 
 .back-link {
-  color: #8ab4ff;
+  color: var(--dev-text-accent);
   text-decoration: none;
-  font-size: 0.85rem;
+  font-size: var(--dev-font-size-md);
 }
 
 .dev-badge {
+  font-family: var(--dev-font-ui);
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #ffb347;
+  color: var(--dev-text-warning);
   border: 1px solid #ffb34755;
   padding: 0.15rem 0.45rem;
   border-radius: 4px;
@@ -262,14 +268,17 @@ code {
   border: 1px solid #2f3642;
   border-radius: 6px;
   min-width: 0;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 
   > h3 {
     margin: 0;
     padding-bottom: 0.45rem;
     border-bottom: 1px solid #343b48;
-    font-size: 0.78rem;
+    font-family: var(--dev-font-ui);
+    font-size: var(--dev-font-size-md);
     font-weight: 600;
-    color: #d8e0ec;
+    color: var(--dev-text-primary);
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }

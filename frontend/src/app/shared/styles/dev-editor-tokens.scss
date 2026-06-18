@@ -1,0 +1,23 @@
+// Shared dev-tool typography and color tokens (WCAG-friendly contrast on dark UI).
+:root {
+  --dev-font-ui: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --dev-font-mono: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+
+  --dev-text-primary: #e8edf5;
+  --dev-text-secondary: #9aa3b2;
+  --dev-text-muted: #8b95a5;
+  --dev-text-heading: #aeb7c4;
+  --dev-text-accent: #8ab4ff;
+  --dev-text-warning: #ffb347;
+  --dev-text-danger: #ffb8b8;
+  --dev-text-success: #7dcea0;
+
+  --dev-font-size-xs: 0.72rem;
+  --dev-font-size-sm: 0.75rem;
+  --dev-font-size-md: 0.78rem;
+  --dev-font-size-lg: 0.9rem;
+  --dev-font-size-title: 0.95rem;
+
+  --dev-line-height: 1.45;
+  --dev-line-height-tight: 1.35;
+}

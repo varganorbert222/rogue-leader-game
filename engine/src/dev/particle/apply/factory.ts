@@ -1,35 +1,20 @@
 import { Color4, ParticleSystem, Vector3, type Scene } from '@babylonjs/core';
 import type { Color4Editable } from '../../shared/editable-primitives';
 import { isAnimatedParticleAtlas, syncStaticAtlasCell } from '../albedo-atlas';
-import type { ParticleBlendMode, ParticleSystemEditable } from '../types';
+import type { ParticleSystemEditable } from '../types';
 import { applyEmissionDuration } from '../playback';
 import {
   babylonUpdateSpeed,
   mpsToEmitPower,
 } from '../units';
-import { resolveParticleTextureUrlById } from '../textures/catalog';
 import { getWhiteParticleTexture, resolveAlbedoParticleTexture } from '../textures/resolver';
-import { applyParticleEmissionEffect, applyParticleEmissionTint } from './emission';
+import { applyParticleBlendSettings } from './blend-mode';
 import { applyParticleShape } from './shape';
 import { applyRotationOverLifetime } from './rotation-lifetime';
 import { applySizeOverLifetime } from './size-lifetime';
 
 function toColor4(c: Color4Editable): Color4 {
   return new Color4(c.r, c.g, c.b, c.a);
-}
-
-function resolveBlendMode(mode: ParticleBlendMode): number {
-  switch (mode) {
-    case 'alpha':
-      return ParticleSystem.BLENDMODE_STANDARD;
-    case 'multiply':
-      return ParticleSystem.BLENDMODE_MULTIPLY;
-    case 'oneone':
-      return ParticleSystem.BLENDMODE_ONEONE;
-    case 'add':
-    default:
-      return ParticleSystem.BLENDMODE_ADD;
-  }
 }
 
 function applyAlbedoTexture(ps: ParticleSystem, config: ParticleSystemEditable, scene: Scene): void {
@@ -63,27 +48,6 @@ function applyAlbedoTexture(ps: ParticleSystem, config: ParticleSystemEditable, 
   ps.spriteRandomStartCell = false;
 }
 
-function applyEmission(ps: ParticleSystem, config: ParticleSystemEditable, scene: Scene): void {
-  const emissionUrl = config.emission.textureId
-    ? resolveParticleTextureUrlById(config.emission.textureId)
-    : null;
-
-  if (emissionUrl) {
-    if (!ps.particleTexture) {
-      ps.particleTexture = getWhiteParticleTexture(scene);
-    }
-    applyParticleEmissionEffect(ps, {
-      emissionTint: config.emission.color,
-      emissionTextureUrl: emissionUrl,
-    });
-    applyParticleEmissionTint(ps, config.emission.color, false);
-    return;
-  }
-
-  ps.setCustomEffect(null, ps.blendMode);
-  applyParticleEmissionTint(ps, config.emission.color, true);
-}
-
 export function applyEditableToParticleSystem(
   ps: ParticleSystem,
   config: ParticleSystemEditable,
@@ -93,7 +57,7 @@ export function applyEditableToParticleSystem(
   ps.preventAutoStart = true;
 
   applyAlbedoTexture(ps, config, scene);
-  applyEmission(ps, config, scene);
+  applyParticleBlendSettings(ps, config, scene);
   applyParticleShape(ps, config.shape);
 
   ps.color1 = toColor4(config.color1);
@@ -106,7 +70,6 @@ export function applyEditableToParticleSystem(
   ps.maxLifeTime = config.maxLifeTime;
   ps.emitRate = config.emitRate;
   applyEmissionDuration(ps, config);
-  ps.blendMode = resolveBlendMode(config.blendMode);
   ps.gravity = new Vector3(config.gravity.x, config.gravity.y, config.gravity.z);
   applyRotationOverLifetime(ps, config);
   ps.minEmitPower = mpsToEmitPower(config.minStartSpeedMps, config.playbackSpeed);

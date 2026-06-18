@@ -1,5 +1,6 @@
 import type { ParticleSystem } from '@babylonjs/core';
 import type { ParticleEffectEditable, ParticleSystemEditable } from './types';
+import { resolveParticleEffect } from './refs';
 
 const LOOP_POLL_MS = 50;
 
@@ -110,7 +111,17 @@ export function estimateSystemPreviewDurationMs(config: ParticleSystemEditable):
   return lifeMs;
 }
 
-export function estimateEffectPreviewDurationMs(effect: ParticleEffectEditable): number {
-  if (!effect.systems.length) return 2000;
-  return Math.max(2000, ...effect.systems.map(estimateSystemPreviewDurationMs));
+export function estimateEffectPreviewDurationMs(
+  effect: ParticleEffectEditable,
+  catalog: readonly import('./types').ParticlePresetEntry[] = [],
+): number {
+  const resolved = catalog.length ? resolveParticleEffect(effect, catalog) : [];
+  const configs = resolved.length
+    ? resolved
+    : effect.systems
+        .map((slot) => slot.config)
+        .filter((config): config is ParticleSystemEditable => !!config);
+
+  if (!configs.length) return 2000;
+  return Math.max(2000, ...configs.map(estimateSystemPreviewDurationMs));
 }

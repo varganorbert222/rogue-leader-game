@@ -1,8 +1,26 @@
 import { DevConfigPaths } from '../dev-config-paths';
 import { color4, vec3 } from '../shared/editable-primitives';
 import { defaultParticleEffect, defaultParticleShape } from './defaults';
-import { normalizeParticleEffect, normalizeParticleSystem } from './normalize';
+import { normalizeParticleEffect } from './normalize';
+import { normalizeParticleSystem } from './system-normalize';
 import type { ParticleEffectEditable, ParticlePresetEntry, ParticleSystemEditable } from './types';
+
+function builtinEffect(
+  id: string,
+  name: string,
+  systems: ParticleSystemEditable[],
+): ParticleEffectEditable {
+  return normalizeParticleEffect({
+    id,
+    name,
+    tree: [],
+    systems: systems.map((system) => ({
+      id: system.id,
+      name: system.name,
+      config: system,
+    })),
+  });
+}
 
 function presetSystem(
   id: string,
@@ -67,107 +85,86 @@ const BUILTIN_PRESETS: ParticlePresetEntry[] = [
   {
     id: 'explosion',
     label: 'Explosion burst',
-    effect: {
-      id: 'preset_explosion',
-      name: 'Explosion',
-      systems: [EXPLOSION_SYSTEM],
-    },
+    effect: builtinEffect('preset_explosion', 'Explosion', [EXPLOSION_SYSTEM]),
   },
   {
     id: 'hit_spark',
     label: 'Hit spark',
-    effect: {
-      id: 'preset_hit_spark',
-      name: 'Hit Spark',
-      systems: [
-        presetSystem('ps_hit_spark', 'Spark', {
-          capacity: 30,
-          emissionMode: 'burst',
-          burstCount: 30,
-          duration: 0,
-          looping: false,
-          minStartSpeedMps: 4,
-          maxStartSpeedMps: 10,
-          minSize: 0.1,
-          maxSize: 0.4,
-          minLifeTime: 0.05,
-          maxLifeTime: 0.2,
-          emitRate: 200,
-          blendMode: 'add',
-          shape: defaultParticleShape('point'),
-          color1: color4(0.5, 0.8, 1, 1),
-          color2: color4(1, 1, 1, 0),
-          colorDead: color4(0, 0, 0, 0),
-        }),
-      ],
-    },
+    effect: builtinEffect('preset_hit_spark', 'Hit Spark', [
+      presetSystem('ps_hit_spark', 'Spark', {
+        capacity: 30,
+        emissionMode: 'burst',
+        burstCount: 30,
+        duration: 0,
+        looping: false,
+        minStartSpeedMps: 4,
+        maxStartSpeedMps: 10,
+        minSize: 0.1,
+        maxSize: 0.4,
+        minLifeTime: 0.05,
+        maxLifeTime: 0.2,
+        emitRate: 200,
+        blendMode: 'add',
+        shape: defaultParticleShape('point'),
+        color1: color4(0.5, 0.8, 1, 1),
+        color2: color4(1, 1, 1, 0),
+        colorDead: color4(0, 0, 0, 0),
+      }),
+    ]),
   },
   {
     id: 'debris_smoke',
     label: 'Debris smoke',
-    effect: {
-      id: 'preset_debris_smoke',
-      name: 'Debris Smoke',
-      systems: [DEBRIS_SMOKE_SYSTEM],
-    },
+    effect: builtinEffect('preset_debris_smoke', 'Debris Smoke', [DEBRIS_SMOKE_SYSTEM]),
   },
   {
     id: 'debris_fire',
     label: 'Debris fire',
-    effect: {
-      id: 'preset_debris_fire',
-      name: 'Debris Fire',
-      systems: [
-        presetSystem('ps_debris_fire', 'Fire', {
-          capacity: 80,
-          emissionMode: 'rate',
-          duration: 0,
-          looping: true,
-          minStartSpeedMps: 0.8,
-          maxStartSpeedMps: 2.5,
-          minSize: 0.15,
-          maxSize: 0.75,
-          minLifeTime: 0.15,
-          maxLifeTime: 0.55,
-          emitRate: 90,
-          burstCount: 0,
-          blendMode: 'add',
-          shape: {
-            ...defaultParticleShape('box'),
-            boxMin: vec3(-0.1, -0.1, -0.1),
-            boxMax: vec3(0.1, 0.1, 0.1),
-            direction1: vec3(-0.35, -0.15, -0.35),
-            direction2: vec3(0.35, 0.45, 0.35),
-          },
-          color1: color4(1, 0.75, 0.15, 0.95),
-          color2: color4(0.9, 0.15, 0, 0),
-          colorDead: color4(0, 0, 0, 0),
-          gravity: vec3(0, 0.15, 0),
-        }),
-      ],
-    },
+    effect: builtinEffect('preset_debris_fire', 'Debris Fire', [
+      presetSystem('ps_debris_fire', 'Fire', {
+        capacity: 80,
+        emissionMode: 'rate',
+        duration: 0,
+        looping: true,
+        minStartSpeedMps: 0.8,
+        maxStartSpeedMps: 2.5,
+        minSize: 0.15,
+        maxSize: 0.75,
+        minLifeTime: 0.15,
+        maxLifeTime: 0.55,
+        emitRate: 90,
+        burstCount: 0,
+        blendMode: 'add',
+        shape: {
+          ...defaultParticleShape('box'),
+          boxMin: vec3(-0.1, -0.1, -0.1),
+          boxMax: vec3(0.1, 0.1, 0.1),
+          direction1: vec3(-0.35, -0.15, -0.35),
+          direction2: vec3(0.35, 0.45, 0.35),
+        },
+        color1: color4(1, 0.75, 0.15, 0.95),
+        color2: color4(0.9, 0.15, 0, 0),
+        colorDead: color4(0, 0, 0, 0),
+        gravity: vec3(0, 0.15, 0),
+      }),
+    ]),
   },
   {
     id: 'explosion_combo',
     label: 'Explosion + smoke (multi-system)',
-    effect: {
-      id: 'preset_explosion_combo',
-      name: 'Explosion Combo',
-      systems: [
-        presetSystem('ps_combo_burst', 'Burst', { ...EXPLOSION_SYSTEM, id: 'ps_combo_burst', name: 'Burst' }),
-        presetSystem('ps_combo_smoke', 'Smoke trail', {
-          ...DEBRIS_SMOKE_SYSTEM,
-          id: 'ps_combo_smoke',
-          name: 'Smoke trail',
-          emissionMode: 'burst',
-          burstCount: 40,
-          looping: false,
-        }),
-      ],
-    },
+    effect: builtinEffect('preset_explosion_combo', 'Explosion Combo', [
+      presetSystem('ps_combo_burst', 'Burst', { ...EXPLOSION_SYSTEM, id: 'ps_combo_burst', name: 'Burst' }),
+      presetSystem('ps_combo_smoke', 'Smoke trail', {
+        ...DEBRIS_SMOKE_SYSTEM,
+        id: 'ps_combo_smoke',
+        name: 'Smoke trail',
+        emissionMode: 'burst',
+        burstCount: 40,
+        looping: false,
+      }),
+    ]),
   },
 ];
-
 export async function loadParticlePresets(): Promise<ParticlePresetEntry[]> {
   try {
     const res = await fetch(DevConfigPaths.particleEditor.presets);

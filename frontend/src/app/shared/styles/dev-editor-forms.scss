@@ -2,11 +2,12 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  font-size: 0.78rem;
+  font-size: var(--dev-font-size-md);
+  line-height: var(--dev-line-height-tight);
   min-width: 0;
 
   span {
-    color: #9aa3b2;
+    color: var(--dev-text-secondary);
     overflow-wrap: anywhere;
   }
 
@@ -20,9 +21,11 @@
     background: #0f1115;
     border: 1px solid #3a4048;
     border-radius: 4px;
-    color: #e8edf5;
+    color: var(--dev-text-primary);
     padding: 0.35rem 0.45rem;
     font: inherit;
+    font-family: var(--dev-font-ui);
+    font-size: var(--dev-font-size-md);
   }
 
   input[type='number'] {
@@ -50,8 +53,8 @@
   textarea {
     resize: vertical;
     min-height: 4rem;
-    font-family: ui-monospace, monospace;
-    font-size: 0.72rem;
+    font-family: var(--dev-font-mono);
+    font-size: var(--dev-font-size-xs);
   }
 }
 
@@ -111,10 +114,12 @@
 .export button {
   background: #2a3140;
   border: 1px solid #4a5568;
-  color: #e8edf5;
+  color: var(--dev-text-primary);
   border-radius: 4px;
   padding: 0.35rem 0.55rem;
-  font-size: 0.75rem;
+  font-family: var(--dev-font-ui);
+  font-size: var(--dev-font-size-sm);
+  line-height: var(--dev-line-height-tight);
   cursor: pointer;
 
   &:hover {
@@ -139,13 +144,14 @@
 
 .hint,
 .status {
-  font-size: 0.72rem;
-  color: #8b95a5;
+  font-size: var(--dev-font-size-xs);
+  line-height: var(--dev-line-height);
+  color: var(--dev-text-muted);
   margin: 0;
 }
 
 .status.loading {
-  color: #8ab4ff;
+  color: var(--dev-text-accent);
 }
 
 .status.error {
@@ -159,9 +165,10 @@
 
   h3 {
     margin: 0.5rem 0 0.35rem;
-    font-size: 0.78rem;
+    font-family: var(--dev-font-ui);
+    font-size: var(--dev-font-size-md);
     font-weight: 600;
-    color: #aeb7c4;
+    color: var(--dev-text-heading);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -172,7 +179,7 @@
     border: 1px solid #3a4048;
     border-radius: 4px;
     color: #c5d0e0;
-    font-family: ui-monospace, monospace;
+    font-family: var(--dev-font-mono);
     font-size: 0.68rem;
     padding: 0.45rem;
     box-sizing: border-box;
@@ -180,8 +187,8 @@
 }
 
 .copy-status {
-  font-size: 0.72rem;
-  color: #7dcea0;
+  font-size: var(--dev-font-size-xs);
+  color: var(--dev-text-success);
 }
 
 .panel-actions {

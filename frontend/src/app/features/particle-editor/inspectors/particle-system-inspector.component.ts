@@ -37,6 +37,8 @@ export class ParticleSystemInspectorComponent {
   @Input({ required: true }) system!: ParticleSystemEditable;
   @Input({ required: true }) particleTextures: ParticleTextureEntry[] = [];
   @Input() playing = false;
+  @Input() readonly = false;
+  @Input() siblingModules: { id: string; name: string }[] = [];
 
   @Output() systemChange = new EventEmitter<void>();
   @Output() durationChange = new EventEmitter<void>();
@@ -101,5 +103,51 @@ export class ParticleSystemInspectorComponent {
     }
 
     this.setAtlasRangeEdge.emit(edge);
+  }
+
+  addSubEmitter(): void {
+    const first = this.siblingModules[0];
+    if (!first) return;
+    this.system.subEmitters = [
+      ...this.system.subEmitters,
+      {
+        targetSystemId: first.id,
+        trigger: 'death',
+        probability: 1,
+        inheritVelocity: false,
+      },
+    ];
+    this.systemChange.emit();
+  }
+
+  removeSubEmitter(index: number): void {
+    this.system.subEmitters = this.system.subEmitters.filter((_, i) => i !== index);
+    this.systemChange.emit();
+  }
+
+  onRenderModeChange(): void {
+    this.systemChange.emit();
+  }
+
+  onBlendModeChange(): void {
+    if (this.system.blendMode !== 'alpha') {
+      this.system.alphaCutoff = null;
+    }
+    this.systemChange.emit();
+  }
+
+  setAlphaCutoffEnabled(enabled: boolean): void {
+    this.system.alphaCutoff = enabled ? 0.5 : null;
+    this.systemChange.emit();
+  }
+
+  onAlphaCutoffChange(value: number | string | null): void {
+    if (value === '' || value === null) {
+      this.system.alphaCutoff = 0;
+    } else {
+      const n = typeof value === 'number' ? value : Number(value);
+      this.system.alphaCutoff = Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0;
+    }
+    this.systemChange.emit();
   }
 }

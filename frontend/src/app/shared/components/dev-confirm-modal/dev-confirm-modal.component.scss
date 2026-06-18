@@ -1,0 +1,24 @@
+@use '../../styles/dev-editor-tokens';
+
+.dev-confirm-message {
+  margin: 0;
+  font-family: var(--dev-font-ui);
+  font-size: var(--dev-font-size-md);
+  line-height: var(--dev-line-height);
+  color: var(--dev-text-primary);
+}
+
+.danger-btn {
+  background: #5c2d2d;
+  border: 1px solid #8a4040;
+  color: var(--dev-text-danger);
+  border-radius: 4px;
+  padding: 0.35rem 0.55rem;
+  font-family: var(--dev-font-ui);
+  font-size: var(--dev-font-size-sm);
+  cursor: pointer;
+
+  &:hover {
+    background: #703838;
+  }
+}

@@ -5,7 +5,8 @@ export type HierarchyNodeKind =
   | 'empty'
   | 'collider'
   | 'particleSystem'
-  | 'effectRoot';
+  | 'effectRoot'
+  | 'effectGroup';
 
 export interface HierarchyNode {
   id: string;
@@ -18,12 +19,14 @@ export interface HierarchyNode {
   sceneName?: string;
   /** Runtime-generated node, not part of the imported source model. */
   isGenerated?: boolean;
+  /** Particle editor: catalog reference metadata for hierarchy rows. */
+  particlePresetRef?: import('./particle/types').ParticlePresetRef;
 }
 
 export interface HierarchyReorderEvent {
   sourceId: string;
   targetId: string;
-  position: 'before' | 'after';
+  position: 'before' | 'after' | 'inside';
 }
 
 /** Reorder a flat sibling list (particle systems under one effect root). */

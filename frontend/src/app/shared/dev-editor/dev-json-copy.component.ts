@@ -11,6 +11,7 @@ import { copyJsonToClipboard } from './dev-editor.utils';
 export class DevJsonCopyComponent {
   @Input() title = 'Export';
   @Input() data: unknown = null;
+  @Input() beforeCopy?: () => void;
 
   copying = false;
   status = '';
@@ -25,6 +26,7 @@ export class DevJsonCopyComponent {
     this.copying = true;
     this.status = '';
     try {
+      this.beforeCopy?.();
       await copyJsonToClipboard(this.data);
       this.setStatus('Copied to clipboard.', false);
     } catch (err) {

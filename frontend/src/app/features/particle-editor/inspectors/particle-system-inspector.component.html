@@ -1,3 +1,4 @@
+<fieldset class="particle-inspector-body" [disabled]="readonly">
 <div class="inspector-toolbar">
   <label class="field">
     <span>Name</span>
@@ -265,14 +266,81 @@
   <h3>Renderer</h3>
 
   <label class="field">
+    <span>Particle render</span>
+    <select [(ngModel)]="system.renderMode" (ngModelChange)="onRenderModeChange()">
+      <option value="billboard">Billboard (sprite)</option>
+      <option value="mesh">Mesh (GLB instance)</option>
+    </select>
+  </label>
+
+  @if (system.renderMode === 'mesh') {
+    <label class="field">
+      <span>Mesh GLB URL</span>
+      <input
+        type="text"
+        [(ngModel)]="system.mesh.glbUrl"
+        (ngModelChange)="systemChange.emit()"
+        placeholder="/assets/models/debris.glb"
+      />
+    </label>
+    <label class="field">
+      <span>Mesh scale</span>
+      <input
+        type="number"
+        min="0.01"
+        step="0.05"
+        [(ngModel)]="system.mesh.uniformScale"
+        (ngModelChange)="systemChange.emit()"
+      />
+    </label>
+    <label class="field checkbox">
+      <input
+        type="checkbox"
+        [(ngModel)]="system.mesh.randomRotation"
+        (ngModelChange)="systemChange.emit()"
+      />
+      <span>Random rotation per particle</span>
+    </label>
+    <p class="hint">Mesh particles use thin instancing — not billboard sprites.</p>
+  }
+
+  <label class="field">
     <span>Blend mode</span>
-    <select [(ngModel)]="system.blendMode" (ngModelChange)="systemChange.emit()">
+    <select [(ngModel)]="system.blendMode" (ngModelChange)="onBlendModeChange()">
       <option value="add">Additive (glow)</option>
       <option value="alpha">Alpha blend</option>
       <option value="multiply">Multiply</option>
       <option value="oneone">OneOne</option>
     </select>
   </label>
+
+  @if (system.blendMode === 'alpha') {
+    <p class="hint">Alpha blend multiplies the texture alpha channel with particle color alpha.</p>
+
+    <label class="field checkbox">
+      <input
+        type="checkbox"
+        [ngModel]="system.alphaCutoff !== null"
+        (ngModelChange)="setAlphaCutoffEnabled($event)"
+      />
+      <span>Alpha cutoff</span>
+    </label>
+
+    @if (system.alphaCutoff !== null) {
+      <label class="field">
+        <span>Cutoff threshold</span>
+        <input
+          type="number"
+          min="0"
+          max="1"
+          step="0.01"
+          [(ngModel)]="system.alphaCutoff"
+          (ngModelChange)="onAlphaCutoffChange($event)"
+        />
+      </label>
+      <p class="hint">Pixels with alpha below the threshold are discarded (alpha test).</p>
+    }
+  }
 
   <label class="field">
     <span>Emission map</span>
@@ -293,3 +361,61 @@
     (colorChange)="systemChange.emit()"
   />
 </section>
+
+<section class="inspector-section">
+  <h3>Sub-emitters</h3>
+  <p class="hint">
+    Spawn another module when particles die (death) or are born (birth / attached trail).
+    Target modules used only as sub-emitters are not auto-played in Play all.
+  </p>
+
+  @for (link of system.subEmitters; track $index) {
+    <div class="sub-emitter-row">
+      <label class="field">
+        <span>Target module</span>
+        <select [(ngModel)]="link.targetSystemId" (ngModelChange)="systemChange.emit()">
+          @for (mod of siblingModules; track mod.id) {
+            <option [value]="mod.id">{{ mod.name }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">
+        <span>Trigger</span>
+        <select [(ngModel)]="link.trigger" (ngModelChange)="systemChange.emit()">
+          <option value="death">On death</option>
+          <option value="birth">On birth (attached)</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Probability</span>
+        <input
+          type="number"
+          min="0"
+          max="1"
+          step="0.05"
+          [(ngModel)]="link.probability"
+          (ngModelChange)="systemChange.emit()"
+        />
+      </label>
+      <label class="field checkbox">
+        <input
+          type="checkbox"
+          [(ngModel)]="link.inheritVelocity"
+          (ngModelChange)="systemChange.emit()"
+        />
+        <span>Inherit velocity</span>
+      </label>
+      <button type="button" class="secondary-btn" (click)="removeSubEmitter($index)">Remove</button>
+    </div>
+  }
+
+  <button
+    type="button"
+    class="secondary-btn"
+    (click)="addSubEmitter()"
+    [disabled]="!siblingModules.length"
+  >
+    Add sub-emitter
+  </button>
+</section>
+</fieldset>

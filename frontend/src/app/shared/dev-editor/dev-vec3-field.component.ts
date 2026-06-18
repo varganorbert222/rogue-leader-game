@@ -17,12 +17,22 @@ export class DevVec3FieldComponent {
   @Input() step = 0.1;
   @Output() vectorChange = new EventEmitter<void>();
 
-  onChange(): void {
-    if (this.min !== null) {
-      this.vector.x = Math.max(this.min, this.vector.x);
-      this.vector.y = Math.max(this.min, this.vector.y);
-      this.vector.z = Math.max(this.min, this.vector.z);
+  onChange(axis: 'x' | 'y' | 'z', value: number | string | null): void {
+    if (value === '' || value === null) {
+      return;
     }
+    const n = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(n)) {
+      return;
+    }
+    this.vector[axis] = this.min !== null ? Math.max(this.min, n) : n;
     this.vectorChange.emit();
+  }
+
+  onBlur(axis: 'x' | 'y' | 'z'): void {
+    if (!Number.isFinite(this.vector[axis])) {
+      this.vector[axis] = this.min !== null ? this.min : 0;
+      this.vectorChange.emit();
+    }
   }
 }

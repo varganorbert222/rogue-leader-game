@@ -1,90 +1,218 @@
-<app-dev-editor-shell
-  title="Particle System Editor"
-  badge="dev"
-  leftTitle="Effect"
-  rightTitle="Particle System"
-  (canvasReady)="onCanvasReady($event)"
->
-  <div devEditorLeft>
-    <section class="inspector-section">
-      <label class="field">
-        <span>Preset</span>
-        <select
-          [ngModel]="selectedPresetId"
-          (ngModelChange)="onPresetChange($event)"
-          [disabled]="loading"
-        >
-          @for (preset of presets; track preset.id) {
-            <option [value]="preset.id">{{ preset.label }}</option>
-          }
-        </select>
-      </label>
-
-      <div class="panel-actions">
-        <button type="button" class="secondary-btn" (click)="newPreset()">New</button>
-        <button type="button" class="secondary-btn" (click)="duplicatePreset()">Duplicate</button>
-      </div>
-
-      @if (effect) {
-        <label class="field">
-          <span>Effect name</span>
-          <input type="text" [(ngModel)]="effect.name" (ngModelChange)="onEffectNameChange()" />
-        </label>
-      }
-    </section>
-
-    <app-hierarchy-panel
-      title="Modules"
-      [resetKey]="hierarchyRevision"
-      [nodes]="hierarchy"
-      [selectedId]="selectedSystemId"
-      [editable]="true"
-      [flatReorderUnderRoot]="true"
-      emptyMessage="Add a particle system module"
-      (nodeSelect)="onHierarchySelect($event)"
-      (nodeReorder)="onHierarchyReorder($event)"
-    />
-
-    <div class="panel-actions">
-      <button type="button" class="secondary-btn" (click)="addSystem()">+ Module</button>
-      <button
-        type="button"
-        class="secondary-btn"
-        (click)="removeSelectedSystem()"
-        [disabled]="!selectedSystem || (effect?.systems?.length ?? 0) <= 1"
-      >
-        Remove
-      </button>
-    </div>
-
-    <p class="hint">
-      Orbit: drag · Zoom: wheel · Bloom matches in-game render.json · Drag modules to reorder.
-    </p>
-
-    <app-dev-editor-status [loading]="loading" [errorMessage]="errorMessage" />
-  </div>
-
-  <div devEditorRight>
-    @if (!selectedSystem) {
-      <p class="hint">Select a module in the hierarchy.</p>
-    } @else {
-      <app-particle-system-inspector
-        [system]="selectedSystem"
-        [particleTextures]="particleTextures"
-        [playing]="playing"
-        (systemChange)="onSystemFieldChange()"
-        (durationChange)="onDurationChange()"
-        (loopingChange)="onLoopingChange()"
-        (emissionModeChange)="onEmissionModeChange()"
-        (albedoTextureChange)="onAlbedoTextureChange()"
-        (atlasCellSelect)="onSystemFieldChange()"
-        (setAtlasRangeEdge)="onSystemFieldChange()"
-        (playAll)="playPreview()"
-        (playModule)="playSelectedSystem()"
-        (stop)="stopPreview()"
-      />
-    }
-
-    <app-dev-json-copy title="Presets" [data]="savePayload" />
-  </div>
-</app-dev-editor-shell>
+<app-dev-editor-shell
+  title="Particle System Editor"
+  badge="dev"
+  leftTitle="Effect"
+  rightTitle="Particle System"
+  (canvasReady)="onCanvasReady($event)"
+>
+  <div devEditorLeft>
+    <section class="inspector-section">
+      <label class="field">
+        <span>Preset</span>
+        <select
+          [ngModel]="selectedPresetId"
+          (ngModelChange)="onPresetChange($event)"
+          [disabled]="loading"
+        >
+          @for (preset of presets; track preset.id) {
+            <option [value]="preset.id">{{ preset.label }}</option>
+          }
+        </select>
+      </label>
+
+      <div class="panel-actions">
+        <button type="button" class="secondary-btn" (click)="newPreset()">New</button>
+        <button type="button" class="secondary-btn" (click)="duplicatePreset()">Duplicate</button>
+        <button
+          type="button"
+          class="danger-btn"
+          (click)="deletePreset()"
+          [disabled]="presets.length <= 1 || loading"
+          title="Delete the selected effect preset"
+        >
+          Delete
+        </button>
+      </div>
+
+      @if (effect) {
+        <label class="field">
+          <span>Effect name</span>
+          <input type="text" [(ngModel)]="effect.name" (ngModelChange)="onEffectNameChange()" />
+        </label>
+      }
+    </section>
+
+    <app-hierarchy-panel
+      title="Modules"
+      [resetKey]="hierarchyRevision"
+      [nodes]="hierarchy"
+      [selectedId]="selectedNodeId"
+      [editable]="true"
+      [treeReorder]="true"
+      [showRowActions]="true"
+      [showGeneratedBadge]="false"
+      [canRemoveNode]="canRemoveHierarchyNode"
+      [showClipboardActions]="true"
+      [clipboardReady]="treeClipboardReady"
+      [canCopyNode]="canCopyHierarchyNode"
+      [canCutNode]="canCutHierarchyNode"
+      [canPasteIntoNode]="canPasteIntoHierarchyNode"
+      emptyMessage="Use + on the effect root to add a module"
+      (nodeSelect)="onHierarchySelect($event)"
+      (nodeReorder)="onHierarchyReorder($event)"
+      (addBelow)="onAddBelow($event)"
+      (removeNode)="onRemoveHierarchyNode($event)"
+      (contextAction)="onHierarchyContextAction($event)"
+    />
+
+    <p class="hint">
+      + add as child · − remove · right-click menu (copy/cut/paste/delete) · drag to reorder or reparent.
+      Transform offsets parent-child layout in preview.
+    </p>
+
+    <app-dev-editor-status [loading]="loading" [errorMessage]="errorMessage" />
+  </div>
+
+  <div devEditorRight>
+    @if (selectedTreeNode) {
+      <section class="inspector-section">
+        <h3>Transform</h3>
+        <p class="hint">Local position, rotation (deg), and scale relative to parent.</p>
+        <div class="transform-tool-row panel-actions">
+          <button
+            type="button"
+            class="secondary-btn"
+            [class.active]="transformGizmoMode === 'position'"
+            (click)="setTransformGizmoMode('position')"
+          >
+            Move
+          </button>
+          <button
+            type="button"
+            class="secondary-btn"
+            [class.active]="transformGizmoMode === 'rotation'"
+            (click)="setTransformGizmoMode('rotation')"
+          >
+            Rotate
+          </button>
+          <button
+            type="button"
+            class="secondary-btn"
+            [class.active]="transformGizmoMode === 'scale'"
+            (click)="setTransformGizmoMode('scale')"
+          >
+            Scale
+          </button>
+        </div>
+        <app-dev-vec3-field
+          label="Position"
+          [vector]="selectedTreeNode.transform.position"
+          (vectorChange)="onTransformChange()"
+          [step]="0.1"
+        />
+        <app-dev-vec3-field
+          label="Rotation (deg)"
+          [vector]="selectedTreeNode.transform.rotationDeg"
+          (vectorChange)="onTransformChange()"
+          [step]="1"
+        />
+        <app-dev-vec3-field
+          label="Scale"
+          [vector]="selectedTreeNode.transform.scale"
+          (vectorChange)="onTransformChange()"
+          [step]="0.05"
+        />
+      </section>
+    }
+
+    @if (selectedGroupNode) {
+      <section class="inspector-section">
+        <h3>Group</h3>
+        <label class="field">
+          <span>Group name</span>
+          <input
+            type="text"
+            [(ngModel)]="selectedGroupNode.name"
+            (ngModelChange)="onGroupNameChange()"
+          />
+        </label>
+        <p class="hint">Groups organize child modules; transform offsets all descendants.</p>
+      </section>
+    } @else if (!selectedSystem || !selectedSlot) {
+      <p class="hint">Select a node in the hierarchy.</p>
+    } @else {
+      @if (selectedSlot.presetRef) {
+        <section class="ref-banner" [class.readonly]="selectedSystemReadonly" [class.edit]="selectedSlot.presetRef.mode === 'edit'">
+          <p>
+            @if (selectedSystemReadonly) {
+              <strong>Read-only reference</strong> — {{ selectedRefLabel }}
+            } @else {
+              <strong>Linked edit reference</strong> — {{ selectedRefLabel }}. Edits update the source preset.
+            }
+          </p>
+          <div class="panel-actions">
+            @if (selectedSlot.presetRef.mode === 'readonly') {
+              <button type="button" class="secondary-btn" (click)="setSelectedRefMode('edit')">Switch to edit link</button>
+            } @else {
+              <button type="button" class="secondary-btn" (click)="setSelectedRefMode('readonly')">Switch to read-only</button>
+            }
+            <button type="button" class="secondary-btn" (click)="detachSelectedAsClone()">Detach as clone</button>
+          </div>
+        </section>
+      }
+
+      @if (!selectedSlot.presetRef) {
+        <label class="field">
+          <span>Module name</span>
+          <input
+            type="text"
+            [(ngModel)]="selectedSlot.name"
+            (ngModelChange)="onSlotNameChange()"
+          />
+        </label>
+      }
+
+      <app-particle-system-inspector
+        [system]="selectedSystem"
+        [particleTextures]="particleTextures"
+        [siblingModules]="siblingModuleOptions"
+        [playing]="playing"
+        [readonly]="selectedSystemReadonly"
+        (systemChange)="onSystemFieldChange()"
+        (durationChange)="onDurationChange()"
+        (loopingChange)="onLoopingChange()"
+        (emissionModeChange)="onEmissionModeChange()"
+        (albedoTextureChange)="onAlbedoTextureChange()"
+        (atlasCellSelect)="onSystemFieldChange()"
+        (setAtlasRangeEdge)="onSystemFieldChange()"
+        (playAll)="playPreview()"
+        (playModule)="playSelectedSystem()"
+        (stop)="stopPreview()"
+      />
+    }
+
+    <app-dev-json-copy title="Presets" [data]="savePayload" [beforeCopy]="syncBeforeExport" />
+  </div>
+</app-dev-editor-shell>
+
+<app-particle-catalog-modal
+  [open]="catalogModalOpen"
+  [anchorLabel]="catalogAnchorLabel"
+  [presets]="presets"
+  [initialMode]="catalogInitialMode"
+  [allowBlank]="catalogAllowBlank"
+  (cancel)="onCatalogModalCancel()"
+  (confirm)="onCatalogModalConfirm($event)"
+/>
+
+<app-dev-confirm-modal
+  [open]="deleteModalOpen"
+  title="Delete preset"
+  [message]="deleteModalMessage"
+  [detail]="deleteModalDetail"
+  confirmLabel="Delete"
+  cancelLabel="Cancel"
+  variant="danger"
+  (cancel)="onDeleteModalCancel()"
+  (confirm)="onDeleteModalConfirm()"
+/>

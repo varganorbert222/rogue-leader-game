@@ -6,161 +6,197 @@
       "effect": {
         "id": "preset_explosion",
         "name": "Explosion",
-        "systems": [
+        "tree": [
           {
             "id": "ps_explosion",
             "name": "Burst",
-            "duration": 0,
-            "looping": false,
-            "startDelay": 0,
-            "capacity": 120,
-            "minLifeTime": 0.2,
-            "maxLifeTime": 0.6,
-            "minSize": 0.3,
-            "maxSize": 1.2,
-            "sizeOverLifetime": {
-              "mode": "range",
-              "rangeStart": 1,
-              "rangeEnd": 0,
-              "keyframes": [
-                {
-                  "time": 0,
-                  "value": 1
-                },
-                {
-                  "time": 1,
-                  "value": 0
-                }
-              ]
-            },
-            "minStartSpeedMps": 6,
-            "maxStartSpeedMps": 14,
-            "minStartRotationDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "maxStartRotationDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "minRotationSpeedDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "maxRotationSpeedDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "rotationOverLifetime": {
-              "mode": "range",
-              "rangeStart": {
-                "x": 1,
-                "y": 1,
-                "z": 1
-              },
-              "rangeEnd": {
+            "kind": "particleSystem",
+            "children": [],
+            "transform": {
+              "position": {
                 "x": 0,
                 "y": 0,
                 "z": 0
               },
-              "keyframes": [
-                {
-                  "time": 0,
-                  "value": {
-                    "x": 1,
-                    "y": 1,
-                    "z": 1
-                  }
-                },
-                {
-                  "time": 1,
-                  "value": {
-                    "x": 0,
-                    "y": 0,
-                    "z": 0
-                  }
-                }
-              ]
-            },
-            "gravity": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "playbackSpeed": 1,
-            "emissionMode": "burst",
-            "emitRate": 800,
-            "burstCount": 120,
-            "shape": {
-              "type": "point",
-              "direction1": {
-                "x": -1,
-                "y": -1,
-                "z": -1
-              },
-              "direction2": {
-                "x": 1,
-                "y": 1,
-                "z": 1
-              },
-              "boxMin": {
+              "rotationDeg": {
                 "x": 0,
                 "y": 0,
                 "z": 0
               },
-              "boxMax": {
-                "x": 0,
-                "y": 0,
-                "z": 0
-              },
-              "radius": 0.5,
-              "length": 1,
-              "tubeRadius": 0.15
-            },
-            "color1": {
-              "r": 1,
-              "g": 0.6,
-              "b": 0.1,
-              "a": 1
-            },
-            "color2": {
-              "r": 1,
-              "g": 0.2,
-              "b": 0,
-              "a": 0.5
-            },
-            "colorDead": {
-              "r": 0,
-              "g": 0,
-              "b": 0,
-              "a": 0
-            },
-            "albedoTexture": {
-              "textureId": "flare",
-              "isAtlas": false,
-              "tileWidth": 512,
-              "tileHeight": 512,
-              "startCellIndex": 0,
-              "endCellIndex": 0,
-              "cellIndex": 0,
-              "animationSpeed": 1,
-              "animationLoop": true
-            },
-            "emission": {
-              "textureId": "",
-              "color": {
+              "scale": {
                 "x": 1,
                 "y": 1,
                 "z": 1
               }
             },
-            "blendMode": "add"
+            "slot": {
+              "id": "ps_explosion",
+              "name": "Burst",
+              "config": {
+                "id": "ps_explosion",
+                "name": "Burst",
+                "renderMode": "billboard",
+                "mesh": {
+                  "glbUrl": "",
+                  "uniformScale": 1,
+                  "randomRotation": true
+                },
+                "subEmitters": [],
+                "duration": 0,
+                "looping": false,
+                "startDelay": 0,
+                "capacity": 120,
+                "minLifeTime": 0.2,
+                "maxLifeTime": 0.6,
+                "minSize": 0.3,
+                "maxSize": 1.2,
+                "sizeOverLifetime": {
+                  "mode": "range",
+                  "rangeStart": 1,
+                  "rangeEnd": 0,
+                  "keyframes": [
+                    {
+                      "time": 0,
+                      "value": 1
+                    },
+                    {
+                      "time": 1,
+                      "value": 0
+                    }
+                  ]
+                },
+                "minStartSpeedMps": 6,
+                "maxStartSpeedMps": 14,
+                "minStartRotationDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "maxStartRotationDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "minRotationSpeedDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "maxRotationSpeedDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "rotationOverLifetime": {
+                  "mode": "range",
+                  "rangeStart": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                  },
+                  "rangeEnd": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "keyframes": [
+                    {
+                      "time": 0,
+                      "value": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1
+                      }
+                    },
+                    {
+                      "time": 1,
+                      "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0
+                      }
+                    }
+                  ]
+                },
+                "gravity": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "playbackSpeed": 1,
+                "emissionMode": "burst",
+                "emitRate": 800,
+                "burstCount": 120,
+                "shape": {
+                  "type": "point",
+                  "direction1": {
+                    "x": -1,
+                    "y": -1,
+                    "z": -1
+                  },
+                  "direction2": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                  },
+                  "boxMin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "boxMax": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "radius": 0.5,
+                  "length": 1,
+                  "tubeRadius": 0.15
+                },
+                "color1": {
+                  "r": 1,
+                  "g": 0.6,
+                  "b": 0.1,
+                  "a": 1
+                },
+                "color2": {
+                  "r": 1,
+                  "g": 0.2,
+                  "b": 0,
+                  "a": 0.5
+                },
+                "colorDead": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0,
+                  "a": 0
+                },
+                "albedoTexture": {
+                  "textureId": "flare",
+                  "isAtlas": false,
+                  "tileWidth": 512,
+                  "tileHeight": 512,
+                  "startCellIndex": 0,
+                  "endCellIndex": 0,
+                  "cellIndex": 0,
+                  "animationSpeed": 1,
+                  "animationLoop": true
+                },
+                "emission": {
+                  "textureId": "",
+                  "color": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                  }
+                },
+                "blendMode": "add",
+                "alphaCutoff": null
+              }
+            }
           }
-        ]
+        ],
+        "systems": []
       }
     },
     {
@@ -169,161 +205,197 @@
       "effect": {
         "id": "preset_hit_spark",
         "name": "Hit Spark",
-        "systems": [
+        "tree": [
           {
             "id": "ps_hit_spark",
             "name": "Spark",
-            "duration": 0,
-            "looping": false,
-            "startDelay": 0,
-            "capacity": 30,
-            "minLifeTime": 0.05,
-            "maxLifeTime": 0.2,
-            "minSize": 0.1,
-            "maxSize": 0.4,
-            "sizeOverLifetime": {
-              "mode": "range",
-              "rangeStart": 1,
-              "rangeEnd": 0,
-              "keyframes": [
-                {
-                  "time": 0,
-                  "value": 1
-                },
-                {
-                  "time": 1,
-                  "value": 0
-                }
-              ]
-            },
-            "minStartSpeedMps": 4,
-            "maxStartSpeedMps": 10,
-            "minStartRotationDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "maxStartRotationDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "minRotationSpeedDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "maxRotationSpeedDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "rotationOverLifetime": {
-              "mode": "range",
-              "rangeStart": {
-                "x": 1,
-                "y": 1,
-                "z": 1
-              },
-              "rangeEnd": {
+            "kind": "particleSystem",
+            "children": [],
+            "transform": {
+              "position": {
                 "x": 0,
                 "y": 0,
                 "z": 0
               },
-              "keyframes": [
-                {
-                  "time": 0,
-                  "value": {
-                    "x": 1,
-                    "y": 1,
-                    "z": 1
-                  }
-                },
-                {
-                  "time": 1,
-                  "value": {
-                    "x": 0,
-                    "y": 0,
-                    "z": 0
-                  }
-                }
-              ]
-            },
-            "gravity": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "playbackSpeed": 1,
-            "emissionMode": "burst",
-            "emitRate": 200,
-            "burstCount": 30,
-            "shape": {
-              "type": "point",
-              "direction1": {
-                "x": -1,
-                "y": -1,
-                "z": -1
-              },
-              "direction2": {
-                "x": 1,
-                "y": 1,
-                "z": 1
-              },
-              "boxMin": {
+              "rotationDeg": {
                 "x": 0,
                 "y": 0,
                 "z": 0
               },
-              "boxMax": {
-                "x": 0,
-                "y": 0,
-                "z": 0
-              },
-              "radius": 0.5,
-              "length": 1,
-              "tubeRadius": 0.15
-            },
-            "color1": {
-              "r": 0.5,
-              "g": 0.8,
-              "b": 1,
-              "a": 1
-            },
-            "color2": {
-              "r": 1,
-              "g": 1,
-              "b": 1,
-              "a": 0
-            },
-            "colorDead": {
-              "r": 0,
-              "g": 0,
-              "b": 0,
-              "a": 0
-            },
-            "albedoTexture": {
-              "textureId": "flare",
-              "isAtlas": false,
-              "tileWidth": 512,
-              "tileHeight": 512,
-              "startCellIndex": 0,
-              "endCellIndex": 0,
-              "cellIndex": 0,
-              "animationSpeed": 1,
-              "animationLoop": true
-            },
-            "emission": {
-              "textureId": "",
-              "color": {
+              "scale": {
                 "x": 1,
                 "y": 1,
                 "z": 1
               }
             },
-            "blendMode": "add"
+            "slot": {
+              "id": "ps_hit_spark",
+              "name": "Spark",
+              "config": {
+                "id": "ps_hit_spark",
+                "name": "Spark",
+                "renderMode": "billboard",
+                "mesh": {
+                  "glbUrl": "",
+                  "uniformScale": 1,
+                  "randomRotation": true
+                },
+                "subEmitters": [],
+                "duration": 0,
+                "looping": false,
+                "startDelay": 0,
+                "capacity": 30,
+                "minLifeTime": 0.05,
+                "maxLifeTime": 0.2,
+                "minSize": 0.1,
+                "maxSize": 0.4,
+                "sizeOverLifetime": {
+                  "mode": "range",
+                  "rangeStart": 1,
+                  "rangeEnd": 0,
+                  "keyframes": [
+                    {
+                      "time": 0,
+                      "value": 1
+                    },
+                    {
+                      "time": 1,
+                      "value": 0
+                    }
+                  ]
+                },
+                "minStartSpeedMps": 4,
+                "maxStartSpeedMps": 10,
+                "minStartRotationDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "maxStartRotationDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "minRotationSpeedDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "maxRotationSpeedDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "rotationOverLifetime": {
+                  "mode": "range",
+                  "rangeStart": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                  },
+                  "rangeEnd": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "keyframes": [
+                    {
+                      "time": 0,
+                      "value": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1
+                      }
+                    },
+                    {
+                      "time": 1,
+                      "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0
+                      }
+                    }
+                  ]
+                },
+                "gravity": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "playbackSpeed": 1,
+                "emissionMode": "burst",
+                "emitRate": 200,
+                "burstCount": 30,
+                "shape": {
+                  "type": "point",
+                  "direction1": {
+                    "x": -1,
+                    "y": -1,
+                    "z": -1
+                  },
+                  "direction2": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                  },
+                  "boxMin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "boxMax": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "radius": 0.5,
+                  "length": 1,
+                  "tubeRadius": 0.15
+                },
+                "color1": {
+                  "r": 0.5,
+                  "g": 0.8,
+                  "b": 1,
+                  "a": 1
+                },
+                "color2": {
+                  "r": 1,
+                  "g": 1,
+                  "b": 1,
+                  "a": 0
+                },
+                "colorDead": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0,
+                  "a": 0
+                },
+                "albedoTexture": {
+                  "textureId": "flare",
+                  "isAtlas": false,
+                  "tileWidth": 512,
+                  "tileHeight": 512,
+                  "startCellIndex": 0,
+                  "endCellIndex": 0,
+                  "cellIndex": 0,
+                  "animationSpeed": 1,
+                  "animationLoop": true
+                },
+                "emission": {
+                  "textureId": "",
+                  "color": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                  }
+                },
+                "blendMode": "add",
+                "alphaCutoff": null
+              }
+            }
           }
-        ]
+        ],
+        "systems": []
       }
     },
     {
@@ -332,161 +404,197 @@
       "effect": {
         "id": "preset_debris_smoke",
         "name": "Debris Smoke",
-        "systems": [
+        "tree": [
           {
             "id": "ps_debris_smoke",
             "name": "Smoke",
-            "duration": 0,
-            "looping": true,
-            "startDelay": 0,
-            "capacity": 60,
-            "minLifeTime": 0.6,
-            "maxLifeTime": 1.8,
-            "minSize": 0.25,
-            "maxSize": 1.1,
-            "sizeOverLifetime": {
-              "mode": "range",
-              "rangeStart": 1,
-              "rangeEnd": 0,
-              "keyframes": [
-                {
-                  "time": 0,
-                  "value": 1
-                },
-                {
-                  "time": 1,
-                  "value": 0
-                }
-              ]
-            },
-            "minStartSpeedMps": 0.5,
-            "maxStartSpeedMps": 2,
-            "minStartRotationDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "maxStartRotationDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "minRotationSpeedDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "maxRotationSpeedDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "rotationOverLifetime": {
-              "mode": "range",
-              "rangeStart": {
-                "x": 1,
-                "y": 1,
-                "z": 1
-              },
-              "rangeEnd": {
+            "kind": "particleSystem",
+            "children": [],
+            "transform": {
+              "position": {
                 "x": 0,
                 "y": 0,
                 "z": 0
               },
-              "keyframes": [
-                {
-                  "time": 0,
-                  "value": {
-                    "x": 1,
-                    "y": 1,
-                    "z": 1
-                  }
-                },
-                {
-                  "time": 1,
-                  "value": {
-                    "x": 0,
-                    "y": 0,
-                    "z": 0
-                  }
-                }
-              ]
-            },
-            "gravity": {
-              "x": 0,
-              "y": 0.4,
-              "z": 0
-            },
-            "playbackSpeed": 1,
-            "emissionMode": "rate",
-            "emitRate": 35,
-            "burstCount": 0,
-            "shape": {
-              "type": "box",
-              "direction1": {
-                "x": -0.25,
-                "y": 0.4,
-                "z": -0.25
+              "rotationDeg": {
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
-              "direction2": {
-                "x": 0.25,
-                "y": 1.2,
-                "z": 0.25
-              },
-              "boxMin": {
-                "x": -0.15,
-                "y": -0.15,
-                "z": -0.15
-              },
-              "boxMax": {
-                "x": 0.15,
-                "y": 0.15,
-                "z": 0.15
-              },
-              "radius": 0.5,
-              "length": 1,
-              "tubeRadius": 0.15
-            },
-            "color1": {
-              "r": 0.35,
-              "g": 0.35,
-              "b": 0.35,
-              "a": 0.55
-            },
-            "color2": {
-              "r": 0.15,
-              "g": 0.15,
-              "b": 0.15,
-              "a": 0
-            },
-            "colorDead": {
-              "r": 0,
-              "g": 0,
-              "b": 0,
-              "a": 0
-            },
-            "albedoTexture": {
-              "textureId": "flare",
-              "isAtlas": false,
-              "tileWidth": 512,
-              "tileHeight": 512,
-              "startCellIndex": 0,
-              "endCellIndex": 0,
-              "cellIndex": 0,
-              "animationSpeed": 1,
-              "animationLoop": true
-            },
-            "emission": {
-              "textureId": "",
-              "color": {
+              "scale": {
                 "x": 1,
                 "y": 1,
                 "z": 1
               }
             },
-            "blendMode": "alpha"
+            "slot": {
+              "id": "ps_debris_smoke",
+              "name": "Smoke",
+              "config": {
+                "id": "ps_debris_smoke",
+                "name": "Smoke",
+                "renderMode": "billboard",
+                "mesh": {
+                  "glbUrl": "",
+                  "uniformScale": 1,
+                  "randomRotation": true
+                },
+                "subEmitters": [],
+                "duration": 0,
+                "looping": false,
+                "startDelay": 0,
+                "capacity": 60,
+                "minLifeTime": 0.6,
+                "maxLifeTime": 1.8,
+                "minSize": 0.25,
+                "maxSize": 1.1,
+                "sizeOverLifetime": {
+                  "mode": "range",
+                  "rangeStart": 1,
+                  "rangeEnd": 0,
+                  "keyframes": [
+                    {
+                      "time": 0,
+                      "value": 1
+                    },
+                    {
+                      "time": 1,
+                      "value": 0
+                    }
+                  ]
+                },
+                "minStartSpeedMps": 0.5,
+                "maxStartSpeedMps": 2,
+                "minStartRotationDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "maxStartRotationDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "minRotationSpeedDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "maxRotationSpeedDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "rotationOverLifetime": {
+                  "mode": "range",
+                  "rangeStart": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                  },
+                  "rangeEnd": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "keyframes": [
+                    {
+                      "time": 0,
+                      "value": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1
+                      }
+                    },
+                    {
+                      "time": 1,
+                      "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0
+                      }
+                    }
+                  ]
+                },
+                "gravity": {
+                  "x": 0,
+                  "y": 0.4,
+                  "z": 0
+                },
+                "playbackSpeed": 1,
+                "emissionMode": "rate",
+                "emitRate": 35,
+                "burstCount": 0,
+                "shape": {
+                  "type": "box",
+                  "direction1": {
+                    "x": -0.25,
+                    "y": 0.4,
+                    "z": -0.25
+                  },
+                  "direction2": {
+                    "x": 0.25,
+                    "y": 1.2,
+                    "z": 0.25
+                  },
+                  "boxMin": {
+                    "x": -0.15,
+                    "y": -0.15,
+                    "z": -0.15
+                  },
+                  "boxMax": {
+                    "x": 0.15,
+                    "y": 0.15,
+                    "z": 0.15
+                  },
+                  "radius": 0.5,
+                  "length": 1,
+                  "tubeRadius": 0.15
+                },
+                "color1": {
+                  "r": 0.35,
+                  "g": 0.35,
+                  "b": 0.35,
+                  "a": 0.55
+                },
+                "color2": {
+                  "r": 0.15,
+                  "g": 0.15,
+                  "b": 0.15,
+                  "a": 0
+                },
+                "colorDead": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0,
+                  "a": 0
+                },
+                "albedoTexture": {
+                  "textureId": "flare",
+                  "isAtlas": false,
+                  "tileWidth": 512,
+                  "tileHeight": 512,
+                  "startCellIndex": 0,
+                  "endCellIndex": 0,
+                  "cellIndex": 0,
+                  "animationSpeed": 1,
+                  "animationLoop": true
+                },
+                "emission": {
+                  "textureId": "",
+                  "color": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                  }
+                },
+                "blendMode": "alpha",
+                "alphaCutoff": null
+              }
+            }
           }
-        ]
+        ],
+        "systems": []
       }
     },
     {
@@ -495,161 +603,197 @@
       "effect": {
         "id": "preset_debris_fire",
         "name": "Debris Fire",
-        "systems": [
+        "tree": [
           {
             "id": "ps_debris_fire",
             "name": "Fire",
-            "duration": 0,
-            "looping": true,
-            "startDelay": 0,
-            "capacity": 80,
-            "minLifeTime": 0.15,
-            "maxLifeTime": 0.55,
-            "minSize": 0.15,
-            "maxSize": 0.75,
-            "sizeOverLifetime": {
-              "mode": "range",
-              "rangeStart": 1,
-              "rangeEnd": 0,
-              "keyframes": [
-                {
-                  "time": 0,
-                  "value": 1
-                },
-                {
-                  "time": 1,
-                  "value": 0
-                }
-              ]
-            },
-            "minStartSpeedMps": 0.8,
-            "maxStartSpeedMps": 2.5,
-            "minStartRotationDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "maxStartRotationDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "minRotationSpeedDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "maxRotationSpeedDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "rotationOverLifetime": {
-              "mode": "range",
-              "rangeStart": {
-                "x": 1,
-                "y": 1,
-                "z": 1
-              },
-              "rangeEnd": {
+            "kind": "particleSystem",
+            "children": [],
+            "transform": {
+              "position": {
                 "x": 0,
                 "y": 0,
                 "z": 0
               },
-              "keyframes": [
-                {
-                  "time": 0,
-                  "value": {
-                    "x": 1,
-                    "y": 1,
-                    "z": 1
-                  }
-                },
-                {
-                  "time": 1,
-                  "value": {
-                    "x": 0,
-                    "y": 0,
-                    "z": 0
-                  }
-                }
-              ]
-            },
-            "gravity": {
-              "x": 0,
-              "y": 0.15,
-              "z": 0
-            },
-            "playbackSpeed": 1,
-            "emissionMode": "rate",
-            "emitRate": 90,
-            "burstCount": 0,
-            "shape": {
-              "type": "box",
-              "direction1": {
-                "x": -0.35,
-                "y": -0.15,
-                "z": -0.35
+              "rotationDeg": {
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
-              "direction2": {
-                "x": 0.35,
-                "y": 0.45,
-                "z": 0.35
-              },
-              "boxMin": {
-                "x": -0.1,
-                "y": -0.1,
-                "z": -0.1
-              },
-              "boxMax": {
-                "x": 0.1,
-                "y": 0.1,
-                "z": 0.1
-              },
-              "radius": 0.5,
-              "length": 1,
-              "tubeRadius": 0.15
-            },
-            "color1": {
-              "r": 1,
-              "g": 0.75,
-              "b": 0.15,
-              "a": 0.95
-            },
-            "color2": {
-              "r": 0.9,
-              "g": 0.15,
-              "b": 0,
-              "a": 0
-            },
-            "colorDead": {
-              "r": 0,
-              "g": 0,
-              "b": 0,
-              "a": 0
-            },
-            "albedoTexture": {
-              "textureId": "flare",
-              "isAtlas": false,
-              "tileWidth": 512,
-              "tileHeight": 512,
-              "startCellIndex": 0,
-              "endCellIndex": 0,
-              "cellIndex": 0,
-              "animationSpeed": 1,
-              "animationLoop": true
-            },
-            "emission": {
-              "textureId": "",
-              "color": {
+              "scale": {
                 "x": 1,
                 "y": 1,
                 "z": 1
               }
             },
-            "blendMode": "add"
+            "slot": {
+              "id": "ps_debris_fire",
+              "name": "Fire",
+              "config": {
+                "id": "ps_debris_fire",
+                "name": "Fire",
+                "renderMode": "billboard",
+                "mesh": {
+                  "glbUrl": "",
+                  "uniformScale": 1,
+                  "randomRotation": true
+                },
+                "subEmitters": [],
+                "duration": 0,
+                "looping": false,
+                "startDelay": 0,
+                "capacity": 80,
+                "minLifeTime": 0.15,
+                "maxLifeTime": 0.55,
+                "minSize": 0.15,
+                "maxSize": 0.75,
+                "sizeOverLifetime": {
+                  "mode": "range",
+                  "rangeStart": 1,
+                  "rangeEnd": 0,
+                  "keyframes": [
+                    {
+                      "time": 0,
+                      "value": 1
+                    },
+                    {
+                      "time": 1,
+                      "value": 0
+                    }
+                  ]
+                },
+                "minStartSpeedMps": 0.8,
+                "maxStartSpeedMps": 2.5,
+                "minStartRotationDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "maxStartRotationDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "minRotationSpeedDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "maxRotationSpeedDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "rotationOverLifetime": {
+                  "mode": "range",
+                  "rangeStart": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                  },
+                  "rangeEnd": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "keyframes": [
+                    {
+                      "time": 0,
+                      "value": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1
+                      }
+                    },
+                    {
+                      "time": 1,
+                      "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0
+                      }
+                    }
+                  ]
+                },
+                "gravity": {
+                  "x": 0,
+                  "y": 0.15,
+                  "z": 0
+                },
+                "playbackSpeed": 1,
+                "emissionMode": "rate",
+                "emitRate": 90,
+                "burstCount": 0,
+                "shape": {
+                  "type": "box",
+                  "direction1": {
+                    "x": -0.35,
+                    "y": -0.15,
+                    "z": -0.35
+                  },
+                  "direction2": {
+                    "x": 0.35,
+                    "y": 0.45,
+                    "z": 0.35
+                  },
+                  "boxMin": {
+                    "x": -0.1,
+                    "y": -0.1,
+                    "z": -0.1
+                  },
+                  "boxMax": {
+                    "x": 0.1,
+                    "y": 0.1,
+                    "z": 0.1
+                  },
+                  "radius": 0.5,
+                  "length": 1,
+                  "tubeRadius": 0.15
+                },
+                "color1": {
+                  "r": 1,
+                  "g": 0.75,
+                  "b": 0.15,
+                  "a": 0.95
+                },
+                "color2": {
+                  "r": 0.9,
+                  "g": 0.15,
+                  "b": 0,
+                  "a": 0
+                },
+                "colorDead": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0,
+                  "a": 0
+                },
+                "albedoTexture": {
+                  "textureId": "flare",
+                  "isAtlas": false,
+                  "tileWidth": 512,
+                  "tileHeight": 512,
+                  "startCellIndex": 0,
+                  "endCellIndex": 0,
+                  "cellIndex": 0,
+                  "animationSpeed": 1,
+                  "animationLoop": true
+                },
+                "emission": {
+                  "textureId": "",
+                  "color": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                  }
+                },
+                "blendMode": "add",
+                "alphaCutoff": null
+              }
+            }
           }
-        ]
+        ],
+        "systems": []
       }
     },
     {
@@ -658,314 +802,385 @@
       "effect": {
         "id": "preset_explosion_combo",
         "name": "Explosion Combo",
-        "systems": [
+        "tree": [
           {
             "id": "ps_combo_burst",
             "name": "Burst",
-            "duration": 2,
-            "looping": true,
-            "startDelay": 0,
-            "capacity": 120,
-            "minLifeTime": 1,
-            "maxLifeTime": 2,
-            "minSize": 5,
-            "maxSize": 6,
-            "sizeOverLifetime": {
-              "mode": "range",
-              "rangeStart": 1,
-              "rangeEnd": 0.8,
-              "keyframes": [
-                {
-                  "time": 0,
-                  "value": 1
-                },
-                {
-                  "time": 1,
-                  "value": 0
-                }
-              ]
-            },
-            "minStartSpeedMps": 0,
-            "maxStartSpeedMps": 0.5,
-            "minStartRotationDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "maxStartRotationDeg": {
-              "x": 90,
-              "y": 90,
-              "z": 90
-            },
-            "minRotationSpeedDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "maxRotationSpeedDeg": {
-              "x": 5,
-              "y": 5,
-              "z": 5
-            },
-            "rotationOverLifetime": {
-              "mode": "range",
-              "rangeStart": {
+            "kind": "particleSystem",
+            "children": [],
+            "transform": {
+              "position": {
                 "x": 0,
                 "y": 0,
                 "z": 0
               },
-              "rangeEnd": {
-                "x": 1,
-                "y": 1,
-                "z": 1
-              },
-              "keyframes": [
-                {
-                  "time": 0,
-                  "value": {
-                    "x": 1,
-                    "y": 1,
-                    "z": 1
-                  }
-                },
-                {
-                  "time": 1,
-                  "value": {
-                    "x": 0,
-                    "y": 0,
-                    "z": 0
-                  }
-                }
-              ]
-            },
-            "gravity": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "playbackSpeed": 1,
-            "emissionMode": "burst",
-            "emitRate": 1,
-            "burstCount": 16,
-            "shape": {
-              "type": "sphere",
-              "direction1": {
-                "x": -1,
-                "y": -1,
-                "z": -1
-              },
-              "direction2": {
-                "x": 1,
-                "y": 1,
-                "z": 1
-              },
-              "boxMin": {
+              "rotationDeg": {
                 "x": 0,
                 "y": 0,
                 "z": 0
               },
-              "boxMax": {
-                "x": 0,
-                "y": 0,
-                "z": 0
-              },
-              "radius": 2,
-              "length": 1,
-              "tubeRadius": 0.15
-            },
-            "color1": {
-              "r": 1,
-              "g": 0.6,
-              "b": 0.1,
-              "a": 1
-            },
-            "color2": {
-              "r": 1,
-              "g": 0.2,
-              "b": 0,
-              "a": 0.5
-            },
-            "colorDead": {
-              "r": 0,
-              "g": 0,
-              "b": 0,
-              "a": 0
-            },
-            "albedoTexture": {
-              "textureId": "particles_01",
-              "isAtlas": true,
-              "tileWidth": 256,
-              "tileHeight": 256,
-              "startCellIndex": 0,
-              "endCellIndex": 22,
-              "cellIndex": 0,
-              "animationSpeed": 1,
-              "animationLoop": true
-            },
-            "emission": {
-              "textureId": "particles_01",
-              "color": {
+              "scale": {
                 "x": 1,
                 "y": 1,
                 "z": 1
               }
             },
-            "blendMode": "add"
+            "slot": {
+              "id": "ps_combo_burst",
+              "name": "Burst",
+              "config": {
+                "id": "ps_combo_burst",
+                "name": "Burst",
+                "renderMode": "billboard",
+                "mesh": {
+                  "glbUrl": "",
+                  "uniformScale": 1,
+                  "randomRotation": true
+                },
+                "subEmitters": [],
+                "duration": 2,
+                "looping": false,
+                "startDelay": 0,
+                "capacity": 120,
+                "minLifeTime": 1,
+                "maxLifeTime": 2,
+                "minSize": 5,
+                "maxSize": 6,
+                "sizeOverLifetime": {
+                  "mode": "range",
+                  "rangeStart": 1,
+                  "rangeEnd": 0.8,
+                  "keyframes": [
+                    {
+                      "time": 0,
+                      "value": 1
+                    },
+                    {
+                      "time": 1,
+                      "value": 0
+                    }
+                  ]
+                },
+                "minStartSpeedMps": 0,
+                "maxStartSpeedMps": 0.5,
+                "minStartRotationDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "maxStartRotationDeg": {
+                  "x": 90,
+                  "y": 90,
+                  "z": 90
+                },
+                "minRotationSpeedDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "maxRotationSpeedDeg": {
+                  "x": 5,
+                  "y": 5,
+                  "z": 5
+                },
+                "rotationOverLifetime": {
+                  "mode": "range",
+                  "rangeStart": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "rangeEnd": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                  },
+                  "keyframes": [
+                    {
+                      "time": 0,
+                      "value": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1
+                      }
+                    },
+                    {
+                      "time": 1,
+                      "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0
+                      }
+                    }
+                  ]
+                },
+                "gravity": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "playbackSpeed": 1,
+                "emissionMode": "burst",
+                "emitRate": 1,
+                "burstCount": 16,
+                "shape": {
+                  "type": "sphere",
+                  "direction1": {
+                    "x": -1,
+                    "y": -1,
+                    "z": -1
+                  },
+                  "direction2": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                  },
+                  "boxMin": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "boxMax": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "radius": 2,
+                  "length": 1,
+                  "tubeRadius": 0.15
+                },
+                "color1": {
+                  "r": 1,
+                  "g": 0.6,
+                  "b": 0.1,
+                  "a": 1
+                },
+                "color2": {
+                  "r": 1,
+                  "g": 0.2,
+                  "b": 0,
+                  "a": 0.5
+                },
+                "colorDead": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0,
+                  "a": 0
+                },
+                "albedoTexture": {
+                  "textureId": "particles_01",
+                  "isAtlas": true,
+                  "tileWidth": 256,
+                  "tileHeight": 256,
+                  "startCellIndex": 0,
+                  "endCellIndex": 22,
+                  "cellIndex": 0,
+                  "animationSpeed": 1,
+                  "animationLoop": true
+                },
+                "emission": {
+                  "textureId": "particles_01",
+                  "color": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                  }
+                },
+                "blendMode": "add",
+                "alphaCutoff": null
+              }
+            }
           },
           {
             "id": "ps_combo_smoke",
             "name": "Smoke trail",
-            "duration": 1.8,
-            "looping": true,
-            "startDelay": 0,
-            "capacity": 60,
-            "minLifeTime": 1,
-            "maxLifeTime": 2,
-            "minSize": 1,
-            "maxSize": 2,
-            "sizeOverLifetime": {
-              "mode": "range",
-              "rangeStart": 1,
-              "rangeEnd": 0,
-              "keyframes": [
-                {
-                  "time": 0,
-                  "value": 1
-                },
-                {
-                  "time": 1,
-                  "value": 0
-                }
-              ]
-            },
-            "minStartSpeedMps": 0.5,
-            "maxStartSpeedMps": 2,
-            "minStartRotationDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "maxStartRotationDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "minRotationSpeedDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "maxRotationSpeedDeg": {
-              "x": 0,
-              "y": 0,
-              "z": 0
-            },
-            "rotationOverLifetime": {
-              "mode": "range",
-              "rangeStart": {
-                "x": 1,
-                "y": 1,
-                "z": 1
-              },
-              "rangeEnd": {
+            "kind": "particleSystem",
+            "children": [],
+            "transform": {
+              "position": {
                 "x": 0,
                 "y": 0,
                 "z": 0
               },
-              "keyframes": [
-                {
-                  "time": 0,
-                  "value": {
-                    "x": 1,
-                    "y": 1,
-                    "z": 1
-                  }
-                },
-                {
-                  "time": 1,
-                  "value": {
-                    "x": 0,
-                    "y": 0,
-                    "z": 0
-                  }
-                }
-              ]
-            },
-            "gravity": {
-              "x": 0,
-              "y": 0.4,
-              "z": 0
-            },
-            "playbackSpeed": 1,
-            "emissionMode": "burst",
-            "emitRate": 35,
-            "burstCount": 32,
-            "shape": {
-              "type": "sphere",
-              "direction1": {
-                "x": -0.25,
-                "y": 0.4,
-                "z": -0.25
+              "rotationDeg": {
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
-              "direction2": {
-                "x": 0.25,
-                "y": 1.2,
-                "z": 0.25
-              },
-              "boxMin": {
-                "x": -0.15,
-                "y": -0.15,
-                "z": -0.15
-              },
-              "boxMax": {
-                "x": 0.15,
-                "y": 0.15,
-                "z": 0.15
-              },
-              "radius": 2,
-              "length": 1,
-              "tubeRadius": 0.15
-            },
-            "color1": {
-              "r": 0.35,
-              "g": 0.35,
-              "b": 0.35,
-              "a": 0.55
-            },
-            "color2": {
-              "r": 0.15,
-              "g": 0.15,
-              "b": 0.15,
-              "a": 0
-            },
-            "colorDead": {
-              "r": 0,
-              "g": 0,
-              "b": 0,
-              "a": 0
-            },
-            "albedoTexture": {
-              "textureId": "particles_01",
-              "isAtlas": true,
-              "tileWidth": 256,
-              "tileHeight": 256,
-              "startCellIndex": 23,
-              "endCellIndex": 31,
-              "cellIndex": 23,
-              "animationSpeed": 1,
-              "animationLoop": true
-            },
-            "emission": {
-              "textureId": "",
-              "color": {
+              "scale": {
                 "x": 1,
                 "y": 1,
                 "z": 1
               }
             },
-            "blendMode": "alpha"
+            "slot": {
+              "id": "ps_combo_smoke",
+              "name": "Smoke trail",
+              "config": {
+                "id": "ps_combo_smoke",
+                "name": "Smoke trail",
+                "renderMode": "billboard",
+                "mesh": {
+                  "glbUrl": "",
+                  "uniformScale": 1,
+                  "randomRotation": true
+                },
+                "subEmitters": [],
+                "duration": 2,
+                "looping": false,
+                "startDelay": 0,
+                "capacity": 60,
+                "minLifeTime": 1,
+                "maxLifeTime": 2,
+                "minSize": 4,
+                "maxSize": 6,
+                "sizeOverLifetime": {
+                  "mode": "range",
+                  "rangeStart": 1,
+                  "rangeEnd": 0,
+                  "keyframes": [
+                    {
+                      "time": 0,
+                      "value": 1
+                    },
+                    {
+                      "time": 1,
+                      "value": 0
+                    }
+                  ]
+                },
+                "minStartSpeedMps": 0,
+                "maxStartSpeedMps": 0,
+                "minStartRotationDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "maxStartRotationDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "minRotationSpeedDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "maxRotationSpeedDeg": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "rotationOverLifetime": {
+                  "mode": "range",
+                  "rangeStart": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                  },
+                  "rangeEnd": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                  },
+                  "keyframes": [
+                    {
+                      "time": 0,
+                      "value": {
+                        "x": 1,
+                        "y": 1,
+                        "z": 1
+                      }
+                    },
+                    {
+                      "time": 1,
+                      "value": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0
+                      }
+                    }
+                  ]
+                },
+                "gravity": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "playbackSpeed": 1,
+                "emissionMode": "burst",
+                "emitRate": 35,
+                "burstCount": 32,
+                "shape": {
+                  "type": "sphere",
+                  "direction1": {
+                    "x": -0.25,
+                    "y": 0.4,
+                    "z": -0.25
+                  },
+                  "direction2": {
+                    "x": 0.25,
+                    "y": 1.2,
+                    "z": 0.25
+                  },
+                  "boxMin": {
+                    "x": -0.15,
+                    "y": -0.15,
+                    "z": -0.15
+                  },
+                  "boxMax": {
+                    "x": 0.15,
+                    "y": 0.15,
+                    "z": 0.15
+                  },
+                  "radius": 4,
+                  "length": 1,
+                  "tubeRadius": 0.15
+                },
+                "color1": {
+                  "r": 1,
+                  "g": 0.2,
+                  "b": 0,
+                  "a": 1
+                },
+                "color2": {
+                  "r": 1,
+                  "g": 0.5843137254901961,
+                  "b": 0,
+                  "a": 1
+                },
+                "colorDead": {
+                  "r": 0,
+                  "g": 0,
+                  "b": 0,
+                  "a": 0
+                },
+                "albedoTexture": {
+                  "textureId": "particles_01",
+                  "isAtlas": true,
+                  "tileWidth": 256,
+                  "tileHeight": 256,
+                  "startCellIndex": 23,
+                  "endCellIndex": 31,
+                  "cellIndex": 23,
+                  "animationSpeed": 1,
+                  "animationLoop": true
+                },
+                "emission": {
+                  "textureId": "",
+                  "color": {
+                    "x": 1,
+                    "y": 1,
+                    "z": 1
+                  }
+                },
+                "blendMode": "add",
+                "alphaCutoff": null
+              }
+            }
           }
-        ]
+        ],
+        "systems": []
       }
     }
   ]

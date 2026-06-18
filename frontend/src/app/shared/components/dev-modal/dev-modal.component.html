@@ -1,0 +1,22 @@
+@if (open) {
+  <div class="dev-modal-backdrop" (click)="onBackdropClick($event)">
+    <div
+      class="dev-modal-card"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="title ? titleId : null"
+    >
+      @if (title) {
+        <h3 [id]="titleId">{{ title }}</h3>
+      }
+
+      <div class="dev-modal-body">
+        <ng-content />
+      </div>
+
+      <div class="dev-modal-actions">
+        <ng-content select="[devModalActions]" />
+      </div>
+    </div>
+  </div>
+}
