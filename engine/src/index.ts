@@ -470,7 +470,7 @@ export {
   ShipAnimationController,
 } from './animation/ship-animation-controller';
 export { resetShipAnimations } from './animation/reset-ship-animations';
-export { resolveWreckPath } from './loaders/wreck-path';
+export { resolvePropWreckPath, resolveWreckPath } from './loaders/wreck-path';
 export {
   ProjectileMeshPool,
   syncProjectileMeshTransform,

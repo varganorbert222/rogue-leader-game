@@ -37,6 +37,7 @@ export interface WreckSpawnKinematics {
   position: Vector3;
   rotationQuaternion: Quaternion;
   velocity: Vector3;
+  scaling?: Vector3;
 }
 
 export function resolveMissionEnvironment(config: {
@@ -103,6 +104,18 @@ export class WreckDebrisManager {
     );
   }
 
+  async preloadAsteroidWrecks(prefabId: string, manifest: AssetManifest): Promise<void> {
+    const entry = manifest.props[prefabId];
+    if (!entry?.variants?.length) return;
+
+    const scale = Array.isArray(entry.scale) ? entry.scale[1] : entry.scale;
+    await Promise.all(
+      entry.variants.map((variantPath) =>
+        this.wreckLoader.loadPropWreck(variantPath, variantPath, scale)
+      )
+    );
+  }
+
   spawnFromShip(
     shipId: string,
     entry: ShipManifestEntry,
@@ -116,6 +129,19 @@ export class WreckDebrisManager {
           this.spawnFromTemplate(loaded, kinematics, explosionCenter);
         }
       });
+      return;
+    }
+
+    this.spawnFromTemplate(template, kinematics, explosionCenter);
+  }
+
+  spawnFromAsteroidVariant(
+    variantPath: string,
+    kinematics: WreckSpawnKinematics,
+    explosionCenter?: Vector3,
+  ): void {
+    const template = this.wreckLoader.getCached(variantPath);
+    if (!template) {
       return;
     }
 
@@ -178,6 +204,9 @@ export class WreckDebrisManager {
     instance.setEnabled(true);
     instance.position = kinematics.position.clone();
     instance.rotationQuaternion = kinematics.rotationQuaternion.clone();
+    if (kinematics.scaling) {
+      instance.scaling.copyFrom(kinematics.scaling);
+    }
     ensureNodeWorldMatrix(instance);
 
     const pieceMeshes = filterDebrisPieceMeshes(

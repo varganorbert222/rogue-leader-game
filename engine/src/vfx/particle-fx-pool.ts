@@ -4,11 +4,11 @@ import {
   Scene,
   Vector3,
   type AbstractMesh,
-} from '@babylonjs/core';
-import { ObjectPool } from '../pool/object-pool';
-import { getFlareTexture } from './vfx-textures';
+} from "@babylonjs/core";
+import { ObjectPool } from "../pool/object-pool";
+import { getFlareTexture } from "./vfx-textures";
 
-type BurstKind = 'explosion' | 'hitSpark';
+type BurstKind = "explosion" | "hitSpark";
 
 const BURST_RELEASE_SEC: Record<BurstKind, number> = {
   explosion: 1.1,
@@ -56,11 +56,11 @@ export class ParticleFxPool {
   }
 
   playExplosion(position: Vector3): void {
-    this.playBurst(this.explosionPool.acquire(), 'explosion', position);
+    this.playBurst(this.explosionPool.acquire(), "explosion", position);
   }
 
   playHitSpark(position: Vector3): void {
-    this.playBurst(this.hitSparkPool.acquire(), 'hitSpark', position);
+    this.playBurst(this.hitSparkPool.acquire(), "hitSpark", position);
   }
 
   attachDebrisSmoke(emitter: AbstractMesh): ParticleSystem {
@@ -78,11 +78,11 @@ export class ParticleFxPool {
   }
 
   releaseDebrisEffect(ps: ParticleSystem): void {
-    if (ps.name.includes('smoke')) {
+    if (ps.name.includes("smoke")) {
       this.debrisSmokePool.release(ps);
       return;
     }
-    if (ps.name.includes('fire')) {
+    if (ps.name.includes("fire")) {
       this.debrisFirePool.release(ps);
     }
   }
@@ -94,16 +94,20 @@ export class ParticleFxPool {
     this.debrisFirePool.drain();
   }
 
-  private playBurst(ps: ParticleSystem, kind: BurstKind, position: Vector3): void {
+  private playBurst(
+    ps: ParticleSystem,
+    kind: BurstKind,
+    position: Vector3,
+  ): void {
     this.applyAdditiveBurstBlend(ps);
     ps.emitter = position.clone();
-    ps.manualEmitCount = kind === 'explosion' ? 120 : 30;
+    ps.manualEmitCount = kind === "explosion" ? 120 : 30;
     ps.start();
 
     const releaseSec = BURST_RELEASE_SEC[kind];
     setTimeout(() => {
       ps.stop();
-      if (kind === 'explosion') {
+      if (kind === "explosion") {
         this.explosionPool.release(ps);
       } else {
         this.hitSparkPool.release(ps);
@@ -123,7 +127,7 @@ export class ParticleFxPool {
   }
 
   private createExplosionSystem(): ParticleSystem {
-    const ps = new ParticleSystem('explosion_pooled', 120, this.scene);
+    const ps = new ParticleSystem("explosion_pooled", 120, this.scene);
     this.applyAdditiveBurstBlend(ps);
     ps.minEmitBox = ps.maxEmitBox = Vector3.Zero();
     ps.color1 = new Color4(1, 0.6, 0.1, 1);
@@ -140,7 +144,7 @@ export class ParticleFxPool {
   }
 
   private createHitSparkSystem(): ParticleSystem {
-    const ps = new ParticleSystem('hit_pooled', 30, this.scene);
+    const ps = new ParticleSystem("hit_pooled", 30, this.scene);
     this.applyAdditiveBurstBlend(ps);
     ps.color1 = new Color4(0.5, 0.8, 1, 1);
     ps.color2 = new Color4(1, 1, 1, 0);
@@ -155,7 +159,7 @@ export class ParticleFxPool {
   }
 
   private createDebrisSmokeSystem(): ParticleSystem {
-    const ps = new ParticleSystem('debris_smoke_pooled', 60, this.scene);
+    const ps = new ParticleSystem("debris_smoke_pooled", 60, this.scene);
     ps.particleTexture = getFlareTexture(this.scene);
     ps.minEmitBox = new Vector3(-0.15, -0.15, -0.15);
     ps.maxEmitBox = new Vector3(0.15, 0.15, 0.15);
@@ -175,7 +179,7 @@ export class ParticleFxPool {
   }
 
   private createDebrisFireSystem(): ParticleSystem {
-    const ps = new ParticleSystem('debris_fire_pooled', 80, this.scene);
+    const ps = new ParticleSystem("debris_fire_pooled", 80, this.scene);
     this.applyAdditiveBurstBlend(ps);
     ps.minEmitBox = new Vector3(-0.1, -0.1, -0.1);
     ps.maxEmitBox = new Vector3(0.1, 0.1, 0.1);

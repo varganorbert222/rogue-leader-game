@@ -14,3 +14,8 @@ export function resolveWreckPath(entry: ShipManifestEntry): string | null {
 
   return basePath.replace(/_LOD/i, '_x_LOD');
 }
+
+/** Derive prop wreck GLB from variant path (`asteroid_01.glb` → `asteroid_01_x.glb`). */
+export function resolvePropWreckPath(variantPath: string): string {
+  return variantPath.replace(/\.glb$/i, '_x.glb');
+}

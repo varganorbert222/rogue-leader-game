@@ -69,14 +69,17 @@ export class MissionAssetPreloader {
       const asteroidEntry = ctx.manifest.props[plan.asteroidPrefabId];
       if (asteroidEntry) {
         ctx.onMessage?.("Preloading asteroids…");
-        asteroidPromise = ctx.shipLoader
-          .loadPropVariantTemplates(plan.asteroidPrefabId, asteroidEntry)
-          .then((templates) => {
-            for (const template of templates) {
-              preparePropInstanceTemplate(template);
-            }
-            this.asteroidTemplates = templates;
-          });
+        asteroidPromise = Promise.all([
+          ctx.shipLoader
+            .loadPropVariantTemplates(plan.asteroidPrefabId, asteroidEntry)
+            .then((templates) => {
+              for (const template of templates) {
+                preparePropInstanceTemplate(template);
+              }
+              this.asteroidTemplates = templates;
+            }),
+          ctx.wreckDebris.preloadAsteroidWrecks(plan.asteroidPrefabId, ctx.manifest),
+        ]).then(() => undefined);
       }
     }
 

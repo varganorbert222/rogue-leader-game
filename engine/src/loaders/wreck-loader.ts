@@ -11,7 +11,7 @@ import { warnMissingOnce } from './asset-manifest';
 import { attachGltfImportToParent } from './gltf-import-utils';
 import { applyModelAxisCorrection } from './ship-axis-convention';
 import { disableMeshBackfaceCulling, applyMeshAlphaCutoff } from '../render/mesh-material-utils';
-import { resolveWreckPath } from './wreck-path';
+import { resolvePropWreckPath, resolveWreckPath } from './wreck-path';
 
 export interface WreckTemplate {
   root: TransformNode;
@@ -33,8 +33,45 @@ export class WreckLoader {
     private readonly baseUrl: string
   ) {}
 
-  getCached(shipId: string): WreckTemplate | undefined {
-    return this.cache.get(shipId);
+  getCached(cacheKey: string): WreckTemplate | undefined {
+    return this.cache.get(cacheKey);
+  }
+
+  async loadPropWreck(
+    cacheKey: string,
+    variantPath: string,
+    scale: number,
+  ): Promise<WreckTemplate | null> {
+    const cached = this.cache.get(cacheKey);
+    if (cached) return cached;
+
+    const relativePath = resolvePropWreckPath(variantPath);
+    const url = `${this.baseUrl}/${relativePath}`;
+    try {
+      const result = await SceneLoader.ImportMeshAsync('', url, '', this.scene);
+      if (result.meshes.length === 0 && (result.transformNodes?.length ?? 0) === 0) {
+        throw new Error('empty prop wreck');
+      }
+
+      const root = new TransformNode(`${cacheKey}_wreck_tpl`, this.scene);
+      attachGltfImportToParent(result, root);
+      root.scaling.set(scale, scale, scale);
+
+      const allMeshes = root
+        .getChildMeshes(false)
+        .filter((mesh): mesh is Mesh => mesh instanceof Mesh);
+      const pieceMeshes = filterDebrisPieceMeshes(allMeshes);
+      disableMeshBackfaceCulling(pieceMeshes as AbstractMesh[]);
+      applyMeshAlphaCutoff(pieceMeshes as AbstractMesh[]);
+      root.setEnabled(false);
+
+      const template: WreckTemplate = { root, pieceMeshes };
+      this.cache.set(cacheKey, template);
+      return template;
+    } catch {
+      warnMissingOnce(`prop-wreck:${cacheKey}`);
+      return null;
+    }
   }
 
   async loadWreck(shipId: string, entry: ShipManifestEntry): Promise<WreckTemplate | null> {
