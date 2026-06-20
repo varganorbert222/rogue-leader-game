@@ -10,7 +10,7 @@ import {
   atlasCellColumn,
   atlasCellRow,
   countAtlasCells,
-} from '@rogue-leader/engine';
+} from '@rogue-leader/engine/dev';
 
 interface AtlasGridCell {
   index: number;

@@ -6,10 +6,10 @@ import {
 } from '../../ai/behavior-npc-input';
 import { areFactionsHostile } from '../../combat/faction';
 import { updateWeaponAimForObserver } from '../../combat/targeting/weapon-aim-controller';
-import type { CombatConfig } from '../../data/config/combat-config';
-import type { NpcBehaviorConfig } from '../../data/config/npc-behavior-config';
-import { Role } from '../components/role-tag';
-import { entityToTargetEntity } from '../queries/combat-queries';
+import type { CombatConfig } from '../../config/loaders/combat-config';
+import type { NpcBehaviorConfig } from '../../config/loaders/npc-behavior-config';
+import { Role } from '../../ecs/components/role-tag';
+import { entityToTargetEntity } from '../../ecs/queries/combat-queries';
 import {
   applyShipFlightInput,
   getShipCruiseSpeed,
@@ -17,9 +17,9 @@ import {
   getShipRotation,
   getShipSpeed,
   getShipVelocity,
-} from '../queries/ship-queries';
-import type { World } from '../world';
-import type { EntityId } from '../entity-id';
+} from '../../ecs/queries/ship-queries';
+import type { World } from '../../ecs/world';
+import type { EntityId } from '../../ecs/entity-id';
 import { getShipForward } from '../../flight/ship-forward';
 import type { CombatSystem } from '../../combat/systems/combat-system';
 

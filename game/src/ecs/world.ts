@@ -6,8 +6,6 @@ import {
 import type { ComponentKey, ComponentMap } from './component-map';
 import { Role } from './components/role-tag';
 import { entityId, type EntityId } from './entity-id';
-import { AsteroidSpawnService } from '../hazards/asteroid-spawn-service';
-import { runAsteroidTumbleSystem } from './systems/asteroid-tumble-system';
 
 type ComponentStore<K extends ComponentKey> = Map<EntityId, ComponentMap[K]>;
 
@@ -19,7 +17,6 @@ export class World {
   private readonly stores = new Map<ComponentKey, ComponentStore<ComponentKey>>();
   private nextSeq = 0;
   playerEntity?: EntityId;
-  readonly asteroids = new AsteroidSpawnService();
 
   spawn(rawId?: string): EntityId {
     const id = entityId(rawId ?? `entity_${this.nextSeq++}`);
@@ -109,10 +106,6 @@ export class World {
     return collectLodRuntimes(this);
   }
 
-  updateHazards(dt: number): void {
-    runAsteroidTumbleSystem(this, dt);
-  }
-
   clear(): void {
     this.entities.clear();
     this.stores.clear();
@@ -121,7 +114,6 @@ export class World {
   }
 
   dispose(): void {
-    this.asteroids.dispose(this);
     this.clear();
   }
 }

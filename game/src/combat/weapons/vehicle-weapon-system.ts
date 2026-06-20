@@ -2,17 +2,17 @@ import { Vector3, type TransformNode } from "@babylonjs/core";
 import { degToRad, detectWeaponMounts } from "@rogue-leader/engine";
 import type { ShipAnchors, ShipManifestEntry } from "@rogue-leader/engine";
 import type { GameEventBus } from "../../core/events/game-events";
-import type { WeaponsManifest } from "../../data/config/weapons-manifest";
-import type { TargetingConfig } from "../../data/config/combat-config";
+import type { WeaponsManifest } from "../../config/loaders/weapons-manifest";
+import type { TargetingConfig } from "../../config/loaders/combat-config";
 import {
   resolveShipWeaponGroups,
   resolveGroupFireRateSec,
   mountAssignmentKey,
   type MountGroupAssignment,
   type ResolvedShipWeaponGroup,
-} from "../../data/config/ship-weapon-groups";
-import { selectMountsForEnergyLevel } from "../../data/config/weapon-firing-pattern";
-import { resolveShipWeaponsConfig } from "../../data/config/ship-weapons-config";
+} from "../../config/loaders/ship-weapon-groups";
+import { selectMountsForEnergyLevel } from "../../config/loaders/weapon-firing-pattern";
+import { resolveShipWeaponsConfig } from "../../config/loaders/ship-weapons-config";
 import type { WeaponEnergyComponent } from "../../ecs/components/weapon-energy-component";
 import { isTargetInAimHemisphere } from "../targeting/aim-solver";
 import type { FactionId } from "../faction";

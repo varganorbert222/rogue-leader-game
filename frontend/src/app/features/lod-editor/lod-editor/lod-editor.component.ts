@@ -28,7 +28,7 @@ import {
   type LodMetric,
   type LodPreviewLiveState,
   type LodPreviewSnapshot,
-} from '@rogue-leader/engine';
+} from '@rogue-leader/engine/dev';
 import { DevEditorShellComponent } from '../../../shared/dev-editor/dev-editor-shell/dev-editor-shell.component';
 import { DevJsonCopyComponent } from '../../../shared/dev-editor/dev-json-copy/dev-json-copy.component';
 import { DevEditorStatusComponent } from '../../../shared/dev-editor/dev-editor-status/dev-editor-status.component';

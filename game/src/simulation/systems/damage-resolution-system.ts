@@ -1,28 +1,21 @@
 import { ParticleFx } from "@rogue-leader/engine";
 import { Quaternion, Vector3 } from "@babylonjs/core";
-
-import { EntityDestroyKinds, SfxClipIds } from "../../../data/constants";
-
-import { Role as EntityRole } from "../../../ecs/components/role-tag";
-
-import { GameEvents } from "../../../core/events/game-events";
-
-import type { EntityId } from "../../../ecs/entity-id";
-
+import { EntityDestroyKinds, SfxClipIds } from "../../config/constants";
+import { Role as EntityRole } from "../../ecs/components/role-tag";
+import { GameEvents } from "../../core/events/game-events";
+import type { EntityId } from "../../ecs/entity-id";
 import {
   getShipPosition,
   getShipRotation,
   getShipVelocity,
   prepareShipForPool,
-} from "../../../ecs/queries/ship-queries";
-
-import type { ProjectileHit } from "../../../combat/systems/combat-system";
-
-import type { MissionRuntimeContext } from "../mission-runtime-context";
+} from "../../ecs/queries/ship-queries";
+import type { ProjectileHit } from "../../combat/systems/combat-system";
+import { spawnEntityDeathVfx } from "../../vfx/entity-death-vfx";
+import type { MissionRuntimeContext } from "../runtime-context";
 
 export function resolveProjectileHit(
   ctx: MissionRuntimeContext,
-
   hit: ProjectileHit,
 ): void {
   ParticleFx.hitSpark(ctx.host.scene, hit.point);
@@ -35,11 +28,8 @@ export function resolveProjectileHit(
   ctx.events.emit(
     GameEvents.projectileHit({
       weaponId: hit.weaponId,
-
       behavior: hit.behavior,
-
       sfx: hitSfx,
-
       position: hit.point.clone(),
     }),
   );
@@ -47,15 +37,11 @@ export function resolveProjectileHit(
   if (!hit.targetId) return;
 
   const world = ctx.world;
-
   const entityId = world.findEntity(hit.targetId);
-
   if (!entityId) return;
 
   const role = world.get(entityId, "role");
-
   const health = world.get(entityId, "health");
-
   if (!role || !health) return;
 
   if (role === EntityRole.Player) {
@@ -74,7 +60,6 @@ export function resolveProjectileHit(
     }
 
     ctx.camera.shake();
-
     return;
   }
 
@@ -99,43 +84,28 @@ export function resolveProjectileHit(
 
 export function destroyNpcEntity(
   ctx: MissionRuntimeContext,
-
   entityId: EntityId,
 ): void {
   const world = ctx.world;
-
   const shipIdentity = world.get(entityId, "shipIdentity");
-
   if (!shipIdentity) return;
-
-  const entry = ctx.assetManifest.ships[shipIdentity.shipId];
 
   const position = getShipPosition(world, entityId);
 
-  if (entry) {
-    ctx.wreckDebris.spawnFromShip(
-      shipIdentity.shipId,
-
-      entry,
-
-      {
-        position: position.clone(),
-
-        rotationQuaternion: getShipRotation(world, entityId).clone(),
-
-        velocity: getShipVelocity(world, entityId).clone(),
-      },
-    );
-  }
-
-  ParticleFx.explosion(ctx.host.scene, position);
+  spawnEntityDeathVfx(ctx, {
+    entityId,
+    position,
+    kinematics: {
+      position: position.clone(),
+      rotationQuaternion: getShipRotation(world, entityId).clone(),
+      velocity: getShipVelocity(world, entityId).clone(),
+    },
+  });
 
   ctx.events.emit(
     GameEvents.entityDestroyed({
       kind: EntityDestroyKinds.Fighter,
-
       shipId: shipIdentity.shipId,
-
       position: position.clone(),
     }),
   );
@@ -144,7 +114,6 @@ export function destroyNpcEntity(
 
   ctx.assetPreloader.shipPool.releaseNpcShip(
     shipIdentity.shipId,
-
     shipIdentity.loadedEntity,
   );
 
@@ -154,51 +123,36 @@ export function destroyNpcEntity(
 export function destroyAsteroidEntity(
   ctx: Pick<
     MissionRuntimeContext,
-    "host" | "events" | "world" | "wreckDebris" | "assetManifest" | "config"
+    "host" | "events" | "world" | "deathEffects" | "config" | "asteroids"
   >,
-
   entityId: EntityId,
 ): void {
   const body = ctx.world.get(entityId, "asteroidBody");
-
   if (!body) return;
 
   const position = body.root.getAbsolutePosition().clone();
 
-  const prefabId = ctx.config.asteroids?.prefabId;
-
-  const entry = prefabId ? ctx.assetManifest.props[prefabId] : undefined;
-
-  const variantPath = entry?.variants?.[body.variantIndex];
-
-  if (variantPath) {
-    ctx.wreckDebris.spawnFromAsteroidVariant(
-      variantPath,
-
-      {
-        position,
-
-        rotationQuaternion:
-          body.root.absoluteRotationQuaternion?.clone() ??
-          Quaternion.Identity(),
-
-        velocity: Vector3.Zero(),
-
-        scaling:
-          body.root.absoluteScaling?.clone() ?? body.root.scaling.clone(),
-      },
-    );
-  }
-
-  ParticleFx.explosion(ctx.host.scene, position);
+  spawnEntityDeathVfx(ctx, {
+    entityId,
+    deathPrefabId: ctx.config.asteroids?.deathPrefabId,
+    position,
+    kinematics: {
+      position,
+      rotationQuaternion:
+        body.root.absoluteRotationQuaternion?.clone() ??
+        Quaternion.Identity(),
+      velocity: Vector3.Zero(),
+      scaling:
+        body.root.absoluteScaling?.clone() ?? body.root.scaling.clone(),
+    },
+  });
 
   ctx.events.emit(
     GameEvents.entityDestroyed({
       kind: EntityDestroyKinds.Asteroid,
-
       position: position.clone(),
     }),
   );
 
-  ctx.world.asteroids.remove(ctx.world, entityId);
+  ctx.asteroids.remove(ctx.world, entityId);
 }

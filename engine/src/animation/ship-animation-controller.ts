@@ -51,15 +51,12 @@ export class ShipAnimationController {
 
     this.clearEndObserver();
     group.stop();
-
-    if (transition.speed < 0) {
-      group.goToFrame(group.to);
-    } else {
-      group.goToFrame(group.from);
+    // 0% = group.from (folded), 100% = group.to (open). Speed sign sets direction.
+    group.start(false, transition.speed, group.from, group.to);
+    if (!group.isStarted) {
+      return false;
     }
 
-    group.speedRatio = transition.speed;
-    group.play(false);
     this.playing = true;
     this.activeGroup = group;
 
@@ -68,12 +65,8 @@ export class ShipAnimationController {
       this.activeGroup = null;
       this.state = targetState;
       this.clearEndObserver();
-      group.pause();
-      if (transition.speed < 0) {
-        group.goToFrame(group.from);
-      } else {
-        group.goToFrame(group.to);
-      }
+      const settleFrame = transition.speed < 0 ? group.from : group.to;
+      this.snapClipToFrame(group, settleFrame);
       onComplete?.(targetState);
     });
 
@@ -92,7 +85,9 @@ export class ShipAnimationController {
   dispose(): void {
     this.clearEndObserver();
     for (const group of this.groups.values()) {
-      group.stop();
+      if (group.isStarted) {
+        group.pause();
+      }
     }
   }
 
@@ -100,10 +95,20 @@ export class ShipAnimationController {
     for (const clipName of this.uniqueClipNames()) {
       const group = this.groups.get(clipName);
       if (!group) continue;
-      group.stop();
-      group.goToFrame(this.frameForState(this.config.initialState, clipName));
-      group.pause();
+      this.snapClipToFrame(
+        group,
+        this.frameForState(this.config.initialState, clipName),
+      );
     }
+  }
+
+  /** Babylon only applies {@link AnimationGroup.goToFrame} while the group is started. */
+  private snapClipToFrame(group: AnimationGroup, frame: number): void {
+    group.stop();
+    group.start(false, 1, group.from, group.to);
+    if (!group.isStarted) return;
+    group.goToFrame(frame);
+    group.pause();
   }
 
   private uniqueClipNames(): string[] {

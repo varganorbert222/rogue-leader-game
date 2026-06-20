@@ -6,7 +6,10 @@ export type HierarchyNodeKind =
   | 'collider'
   | 'particleSystem'
   | 'effectRoot'
-  | 'effectGroup';
+  | 'effectGroup'
+  | 'prefabRoot'
+  | 'prefabGroup'
+  | 'prefabModel';
 
 export interface HierarchyNode {
   id: string;
@@ -21,6 +24,12 @@ export interface HierarchyNode {
   isGenerated?: boolean;
   /** Particle editor: catalog reference metadata for hierarchy rows. */
   particlePresetRef?: import('./particle/types').ParticlePresetRef;
+  /** Prefab manager: manifest model reference metadata. */
+  modelRef?: import('./prefab/types').PrefabModelRef;
+  /** Prefab manager: nested prefab reference metadata. */
+  prefabNestedRef?: import('./prefab/types').PrefabNestedRef;
+  /** Prefab manager: node lives under a read-only nested prefab reference subtree. */
+  readonlySubtree?: boolean;
 }
 
 export interface HierarchyReorderEvent {

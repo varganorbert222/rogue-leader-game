@@ -7,8 +7,8 @@ import {
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import type { CurveKeyframeEditable } from '@rogue-leader/engine';
-import { cloneCurveKeyframes, normalizeCurveKeyframes } from '@rogue-leader/engine';
+import type { CurveKeyframeEditable } from '@rogue-leader/engine/dev';
+import { cloneCurveKeyframes, normalizeCurveKeyframes } from '@rogue-leader/engine/dev';
 
 const PAD_LEFT = 28;
 const PAD_RIGHT = 10;

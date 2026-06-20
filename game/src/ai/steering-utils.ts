@@ -1,6 +1,6 @@
 import { Quaternion, Vector3 } from '@babylonjs/core';
 import { isNearZero } from '@rogue-leader/engine';
-import type { NpcStateId } from '../data/config/npc-behavior-config';
+import type { NpcStateId } from '../config/loaders/npc-behavior-config';
 import { directionToVehicleInput } from '../flight/flight-steering';
 import { getShipForward } from '../flight/ship-forward';
 import type { VehicleInput } from '../player/input/vehicle-input';

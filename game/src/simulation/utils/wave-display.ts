@@ -1,4 +1,4 @@
-import type { MissionWave } from '../../mission-types';
+import type { MissionWave } from '../../mission/mission-types';
 
 /** Waves defined in mission config (may be empty). */
 export function missionWaves(waves?: MissionWave[]): MissionWave[] {

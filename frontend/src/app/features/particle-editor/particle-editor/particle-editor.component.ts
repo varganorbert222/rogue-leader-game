@@ -47,7 +47,7 @@ import {
   type ParticleSystemSlot,
   type ParticleTextureEntry,
   type DevTransformGizmoMode,
-} from '@rogue-leader/engine';
+} from '@rogue-leader/engine/dev';
 import { DevConfirmModalComponent } from '../../../shared/components/dev-confirm-modal/dev-confirm-modal.component';
 import { HierarchyPanelComponent } from '../../../shared/components/hierarchy-panel/hierarchy-panel.component';
 import type { HierarchyContextAction } from '../../../shared/components/hierarchy-panel/hierarchy-panel.component';

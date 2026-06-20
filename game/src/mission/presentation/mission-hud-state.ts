@@ -1,5 +1,5 @@
 import { Quaternion, type Scene } from '@babylonjs/core';
-import { AmmoIds } from '../../data/constants';
+import { AmmoIds } from '../../config/constants';
 import {
   RETICLE_INNER_DISTANCE,
   RETICLE_OUTER_DISTANCE,
@@ -16,7 +16,7 @@ import type { World } from '../../ecs/world';
 import {
   hudCurrentWave,
   hudTotalWaves,
-} from '../simulation/utils/wave-display';
+} from '../../simulation/utils/wave-display';
 import type { MissionConfig } from '../mission-types';
 
 export interface MissionLoadState {

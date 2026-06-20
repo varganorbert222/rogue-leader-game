@@ -279,7 +279,16 @@ export function buildReferencedPresetTree(
 ): ParticleEffectTreeNode[] {
   const preset = catalog.find((entry) => entry.id === presetId);
   if (!preset) return [];
-  return preset.effect.tree.map((node) => mirrorTreeNodeAsPresetRef(node, presetId, mode));
+
+  return [
+    {
+      id: nextGroupId(),
+      name: preset.effect.name,
+      kind: 'group',
+      transform: defaultNodeTransform(),
+      children: preset.effect.tree.map((node) => mirrorTreeNodeAsPresetRef(node, presetId, mode)),
+    },
+  ];
 }
 
 /** Detached deep copy of a catalog preset's full tree (new ids). */

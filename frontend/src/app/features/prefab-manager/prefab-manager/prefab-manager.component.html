@@ -1,0 +1,188 @@
+<app-dev-editor-shell
+  title="Prefab Manager"
+  badge="dev"
+  leftTitle="Prefab"
+  rightTitle="Inspector"
+  (canvasReady)="onCanvasReady($event)"
+>
+  <div devEditorLeft>
+    <app-dev-inspector-section title="Library">
+      <label class="field">
+        <span>Prefab</span>
+        <select
+          [ngModel]="selectedPrefabId"
+          (ngModelChange)="onPrefabChange($event)"
+          [disabled]="loading"
+        >
+          @for (entry of prefabs; track entry.id) {
+            <option [value]="entry.id">{{ entry.label }}</option>
+          }
+        </select>
+      </label>
+
+      <div class="panel-actions">
+        <button type="button" class="secondary-btn" (click)="newPrefab()">New</button>
+        <button type="button" class="secondary-btn" (click)="duplicatePrefab()">Duplicate</button>
+        <button
+          type="button"
+          class="danger-btn"
+          (click)="deletePrefab()"
+          [disabled]="prefabs.length <= 1 || loading"
+        >
+          Delete
+        </button>
+      </div>
+
+      @if (prefab) {
+        <label class="field">
+          <span>Prefab name</span>
+          <input type="text" [(ngModel)]="prefab.name" (ngModelChange)="onPrefabNameChange()" />
+        </label>
+      }
+    </app-dev-inspector-section>
+
+    <app-hierarchy-panel
+      title="Hierarchy"
+      [resetKey]="hierarchyRevision"
+      [nodes]="hierarchy"
+      [selectedId]="selectedNodeId"
+      [editable]="true"
+      [treeReorder]="true"
+      [showRowActions]="true"
+      [showGeneratedBadge]="false"
+      [canRemoveNode]="canRemoveHierarchyNode"
+      [canAddBelowNode]="canAddBelowHierarchyNode"
+      [canDragNode]="canDragHierarchyNode"
+      [showClipboardActions]="true"
+      [clipboardReady]="treeClipboardReady"
+      [canCopyNode]="canCopyHierarchyNode"
+      [canCutNode]="canCutHierarchyNode"
+      [canPasteIntoNode]="canPasteIntoHierarchyNode"
+      emptyMessage="Use + on the prefab root to add a model, particle, or nested prefab"
+      (nodeSelect)="onHierarchySelect($event)"
+      (nodeReorder)="onHierarchyReorder($event)"
+      (addBelow)="onAddBelow($event)"
+      (removeNode)="onRemoveHierarchyNode($event)"
+      (contextAction)="onHierarchyContextAction($event)"
+    />
+
+    <p class="hint">
+      + add node · − remove · right-click menu · drag to reorder.
+      Models and particle presets are read-only references; transforms are editable.
+    </p>
+
+    <app-dev-editor-status [loading]="loading" [errorMessage]="errorMessage" />
+  </div>
+
+  <div devEditorRight>
+    @if (selectedTreeNode && selectedTreeNode.kind !== 'sceneNode') {
+      <app-dev-transform-inspector
+        [transform]="selectedTreeNode.transform"
+        [gizmoMode]="transformGizmoMode"
+        (transformChange)="onTransformChange()"
+        (gizmoModeChange)="setTransformGizmoMode($event)"
+      />
+    }
+
+    @if (selectedGroupNode) {
+      <section class="inspector-section">
+        <h3>Group</h3>
+        <label class="field">
+          <span>Group name</span>
+          <input
+            type="text"
+            [(ngModel)]="selectedGroupNode.name"
+            (ngModelChange)="onGroupNameChange()"
+          />
+        </label>
+      </section>
+    } @else if (selectedSlot && isPrefabModelSlot(selectedSlot)) {
+      <app-prefab-model-inspector
+        [name]="selectedSlot.name"
+        [modelRef]="selectedSlot.modelRef"
+        [models]="models"
+      />
+    } @else if (selectedSlot && isPrefabNestedSlot(selectedSlot)) {
+      <section class="ref-banner" [class.readonly]="selectedSlot.nestedRef.mode === 'readonly'" [class.edit]="selectedSlot.nestedRef.mode === 'edit'">
+        <p>
+          @if (selectedSlot.nestedRef.mode === 'readonly') {
+            <strong>Read-only nested prefab</strong> — {{ selectedNestedRefLabel }}
+          } @else {
+            <strong>Linked edit reference</strong> — {{ selectedNestedRefLabel }}
+          }
+        </p>
+        <div class="panel-actions">
+          @if (selectedSlot.nestedRef.mode === 'readonly') {
+            <button type="button" class="secondary-btn" (click)="setSelectedNestedRefMode('edit')">Switch to edit link</button>
+          } @else {
+            <button type="button" class="secondary-btn" (click)="setSelectedNestedRefMode('readonly')">Switch to read-only</button>
+          }
+          <button type="button" class="secondary-btn" (click)="detachSelectedAsClone()">Detach as clone</button>
+        </div>
+      </section>
+      @if (selectedSlot.nestedRef.mode === 'edit') {
+        <label class="field">
+          <span>Node name</span>
+          <input type="text" [(ngModel)]="selectedSlot.name" (ngModelChange)="onSlotNameChange()" />
+        </label>
+      }
+    } @else if (selectedSystem && selectedSlot && isPrefabParticleSlot(selectedSlot)) {
+      <section class="ref-banner readonly">
+        <p><strong>Read-only particle reference</strong> — {{ selectedSlot.name }}</p>
+      </section>
+
+      <app-particle-system-inspector
+        [system]="selectedSystem"
+        [particleTextures]="particleTextures"
+        [siblingModules]="[]"
+        [playing]="playing"
+        [readonly]="true"
+        (playAll)="playPreview()"
+        (playModule)="playSelectedSystem()"
+        (stop)="stopPreview()"
+      />
+    } @else if (selectedSceneNode) {
+      <section class="inspector-section">
+        <h3>Imported scene node</h3>
+        <p class="readonly-banner"><strong>Read-only GLB hierarchy</strong></p>
+        <dl class="readonly-fields">
+          <dt>Name</dt>
+          <dd>{{ selectedSceneNode.name }}</dd>
+          @if (selectedSceneNode.sceneName) {
+            <dt>Scene name</dt>
+            <dd>{{ selectedSceneNode.sceneName }}</dd>
+          }
+        </dl>
+        <p class="hint">Part of the referenced model's imported hierarchy. Remove the parent model to delete it.</p>
+      </section>
+    } @else if (!selectedTreeNode) {
+      <p class="hint">Select a node in the hierarchy.</p>
+    }
+
+    <app-dev-json-copy title="library.json" [data]="savePayload" [beforeCopy]="syncBeforeExport" />
+  </div>
+</app-dev-editor-shell>
+
+<app-prefab-insert-modal
+  [open]="insertModalOpen"
+  [anchorLabel]="insertAnchorLabel"
+  [models]="models"
+  [particlePresets]="particlePresets"
+  [prefabs]="prefabs"
+  [currentPrefabId]="selectedPrefabId"
+  [initialMode]="insertInitialMode"
+  (cancel)="onInsertModalCancel()"
+  (confirm)="onInsertModalConfirm($event)"
+/>
+
+<app-dev-confirm-modal
+  [open]="deleteModalOpen"
+  title="Delete prefab"
+  [message]="deleteModalMessage"
+  [detail]="deleteModalDetail"
+  confirmLabel="Delete"
+  cancelLabel="Cancel"
+  variant="danger"
+  (cancel)="onDeleteModalCancel()"
+  (confirm)="onDeleteModalConfirm()"
+/>

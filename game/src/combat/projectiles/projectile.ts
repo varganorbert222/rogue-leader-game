@@ -5,7 +5,7 @@ import { areFactionsHostile } from '../faction';
 import type { FactionId } from '../faction';
 import type { CombatTeam } from '../weapons/combat-team';
 import type { ProjectileConfig } from './projectile-config';
-import { ProjectileBehaviors } from '../../data/constants/weapon-behaviors';
+import { ProjectileBehaviors } from '../../config/constants/weapon-behaviors';
 import {
   detectProjectileNearMiss,
   type ProjectilePassByObserver,

@@ -23,7 +23,7 @@ export interface ShipFlightStatsManifest {
 
 export interface ShipManifestEntry {
   lod?: LodManifestValue;
-  /** Wreck / debris GLB (`*_x_LOD*.glb`). Auto-derived from first LOD path when omitted. */
+  /** Destroyed-model GLB path override for dev tooling (`*_x_LOD*.glb`). Auto-derived when omitted. */
   wreck?: string;
   scale: number | [number, number, number];
   colliderRadius: number;
@@ -46,6 +46,8 @@ export interface ShipManifestEntry {
   abilities?: ShipAbilitiesManifest;
   /** Cockpit interior GLB + first-person camera tuning. */
   cockpit?: CockpitConfig;
+  /** Prefab library id spawned on death (wreck mesh + authored VFX). */
+  deathPrefabId?: string;
 }
 
 export interface ShipAnimationTransitionDef {
@@ -175,6 +177,8 @@ export interface PropManifestEntry {
   colliderRadius: number;
   /** `named` = `collider` / `collider_*` nodes; `visual` = render meshes (asteroids). */
   colliderSource?: PropColliderSource;
+  /** Prefab library id spawned on death (wreck mesh + authored VFX). */
+  deathPrefabId?: string;
 }
 
 export interface SkyboxCubemapEntry {

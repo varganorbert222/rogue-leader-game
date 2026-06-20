@@ -1,4 +1,4 @@
-import type { NpcBehaviorConfig } from '../../data/config/npc-behavior-config';
+import type { NpcBehaviorConfig } from '../../config/loaders/npc-behavior-config';
 
 import type { DebugPreferences } from '../../debug/debug-preferences';
 
@@ -36,7 +36,7 @@ import { getShipPosition } from '../../ecs/queries/ship-queries';
 
 import type { World } from '../../ecs/world';
 
-import { getNpcSteeringDebug } from '../../ecs/systems/npc-system';
+import { getNpcSteeringDebug } from '../../simulation/systems/npc-system';
 
 
 

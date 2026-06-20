@@ -1,18 +1,18 @@
 import { Vector3 } from '@babylonjs/core';
 import type { AssetManifest, GltfShipLoader } from '@rogue-leader/engine';
-import { BehaviorNpcInput } from '../../../ai/behavior-npc-input';
-import type { MissionNavigation } from '../../../ai/navigation/mission-navigation';
-import { resolveFaction, type FactionId } from '../../../combat/faction';
-import { resolveWaveEnemyShipId } from '../../../data/config/faction-ship-roster';
-import type { CombatConfig } from '../../../data/config/combat-config';
-import type { NpcBehaviorConfig } from '../../../data/config/npc-behavior-config';
-import { WinConditionTypes } from '../../../data/constants';
-import { HealthComponent } from '../../../ecs/components/health-component';
-import { spawnNpcEntity } from '../../../ecs/spawn/entity-factory';
-import type { World } from '../../../ecs/world';
-import type { MissionAssetPreloader } from '../../../mission/loading/mission-asset-preloader';
-import type { CombatSystem } from '../../../combat/systems/combat-system';
-import type { MissionConfig, MissionWave } from '../../mission-types';
+import { BehaviorNpcInput } from '../../ai/behavior-npc-input';
+import type { MissionNavigation } from '../../ai/navigation/mission-navigation';
+import { resolveFaction, type FactionId } from '../../combat/faction';
+import { resolveWaveEnemyShipId } from '../../config/loaders/faction-ship-roster';
+import type { CombatConfig } from '../../config/loaders/combat-config';
+import type { NpcBehaviorConfig } from '../../config/loaders/npc-behavior-config';
+import { WinConditionTypes } from '../../config/constants';
+import { HealthComponent } from '../../ecs/components/health-component';
+import { spawnNpcEntity } from '../../ecs/spawn/entity-factory';
+import type { World } from '../../ecs/world';
+import type { MissionAssetPreloader } from '../../mission/loading/mission-asset-preloader';
+import type { CombatSystem } from '../../combat/systems/combat-system';
+import type { MissionConfig, MissionWave } from '../../mission/mission-types';
 import { missionWaveCount, missionWaves } from '../utils/wave-display';
 
 export interface WaveSpawnState {

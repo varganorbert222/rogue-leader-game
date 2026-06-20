@@ -1,23 +1,23 @@
 import { Vector3 } from '@babylonjs/core';
-import { buildSphereBody, getEffectiveCollisionBounds } from '../../../collision/collision-system';
+import { buildSphereBody, getEffectiveCollisionBounds } from '../../collision/collision-system';
 import {
   computeCollisionDamage,
   resolveSphereCollision,
-} from '../../../collision/ship-collision-response';
+} from '../../collision/ship-collision-response';
 import {
   DEFAULT_ASTEROID_CONTACT_MATERIAL,
   DEFAULT_SHIP_CONTACT_MATERIAL,
-} from '../../../physics/ship-contact-math';
-import { Role as EntityRole } from '../../../ecs/components/role-tag';
-import { entityToSphereBody } from '../../../ecs/queries/combat-queries';
+} from '../../physics/ship-contact-math';
+import { Role as EntityRole } from '../../ecs/components/role-tag';
+import { entityToSphereBody } from '../../ecs/queries/combat-queries';
 import {
   applyShipCollisionResponse,
   getShipPosition,
   getShipVelocity,
-} from '../../../ecs/queries/ship-queries';
-import type { EntityId } from '../../../ecs/entity-id';
-import { GameEvents } from '../../../core/events/game-events';
-import type { MissionRuntimeContext } from '../mission-runtime-context';
+} from '../../ecs/queries/ship-queries';
+import type { EntityId } from '../../ecs/entity-id';
+import { GameEvents } from '../../core/events/game-events';
+import type { MissionRuntimeContext } from '../runtime-context';
 import { destroyNpcEntity } from './damage-resolution-system';
 
 const COLLISION_COOLDOWN_SEC = 0.9;

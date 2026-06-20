@@ -1,61 +1,37 @@
 import { Vector3 } from '@babylonjs/core';
 import type { GltfShipLoader } from '@rogue-leader/engine';
-import { CombatTeams } from '../../../data/constants';
-import { resolveFaction } from '../../../combat/faction';
-import { GameEvents } from '../../../core/events/game-events';
-import { collectHostileTargets } from '../../../ecs/queries/combat-queries';
-import { runNpcSystem } from '../../../ecs/systems/npc-system';
-import { runPlayerSystem } from '../../../ecs/systems/player-system';
-import type { EntityId } from '../../../ecs/entity-id';
-import type { PlayerInput } from '../../../player/input/player-input';
-import type { GameAudioUpdateContext } from '../../../audio/game-audio-bridge';
-import type { WreckDebrisManager } from '../../../vfx/wreck-debris-manager';
-import { buildMissionAudioContext } from '../services/mission-audio-context';
-import type { MissionRuntimeContext } from '../mission-runtime-context';
+import type { EntityId } from '../../ecs/entity-id';
+import type { PlayerInput } from '../../player/input/player-input';
+import type { GameAudioUpdateContext } from '../../audio/game-audio-bridge';
+import type { MissionRuntimeContext } from '../runtime-context';
 import { resolveProjectileHit } from '../systems/damage-resolution-system';
-import { updateShipCollisions, createShipCollisionState } from '../systems/ship-collision-system';
-import { updateMissionLodStates } from '../systems/lod-update-system';
 import {
-  createInitialWaveState,
-  updateWaveSpawning,
-  type WaveSpawnState,
-} from '../systems/wave-spawn-system';
+  SimulationSystemRegistry,
+  type SimulationTickInput,
+  type SimulationTickResult,
+} from '../system-registry';
+import type { WaveSpawnState } from '../systems/wave-spawn-system';
 
-export interface MissionSimulationTickInput {
-  dt: number;
-  playerId: EntityId;
-  playerInput: PlayerInput;
-  boundary?: { center: Vector3; radius: number };
-  shipLoader: GltfShipLoader;
-  wreckDebris: WreckDebrisManager;
-  prevListenerPosition: Vector3 | null;
-}
-
-export interface MissionSimulationTickResult {
-  waveState: WaveSpawnState;
-  audioContext: GameAudioUpdateContext;
-  prevListenerPosition: Vector3;
-}
+export type MissionSimulationTickInput = SimulationTickInput;
+export type MissionSimulationTickResult = SimulationTickResult;
 
 /** Fixed-order per-frame mission simulation tick. */
 export class MissionSimulationCoordinator {
-  private waveState: WaveSpawnState;
-  private readonly shipCollisionState = createShipCollisionState();
+  private readonly registry: SimulationSystemRegistry;
 
   constructor(
     private readonly runtime: MissionRuntimeContext,
     waveState?: WaveSpawnState,
   ) {
-    this.waveState = waveState ?? createInitialWaveState(runtime.config);
+    this.registry = new SimulationSystemRegistry(runtime, waveState);
   }
 
   getWaveState(): WaveSpawnState {
-    return this.waveState;
+    return this.registry.getWaveState();
   }
 
   resetWaveState(config = this.runtime.config): void {
-    this.waveState = createInitialWaveState(config);
-    this.shipCollisionState.pairCooldowns.clear();
+    this.registry.resetWaveState(config);
   }
 
   wireCombatTargets(): void {
@@ -66,103 +42,6 @@ export class MissionSimulationCoordinator {
   }
 
   tick(input: MissionSimulationTickInput): MissionSimulationTickResult {
-    const { dt, playerId, playerInput, boundary, shipLoader, wreckDebris } =
-      input;
-    const world = this.runtime.world;
-
-    const weaponEnergy = world.get(playerId, 'weaponEnergy');
-    weaponEnergy?.setRegenBlocked(playerInput.combat.fire);
-
-    runPlayerSystem({
-      world,
-      playerId,
-      dt,
-      scene: this.runtime.host.scene,
-      input: playerInput,
-      boundary,
-      camera: this.runtime.camera,
-      combat: this.runtime.combat,
-      events: this.runtime.events,
-      targetingConfig: this.runtime.combatConfig.targeting,
-      radarRadius: this.runtime.combatConfig.radar.radius,
-      hostileTargets: collectHostileTargets(
-        world,
-        world.get(playerId, 'faction')!,
-      ),
-    });
-
-    if (world.has(playerId, 'flight')) {
-      this.runtime.combat.updatePassByObserver({
-        position: this.runtime.camera.getCamera().position.clone(),
-        team: CombatTeams.Player,
-      });
-    }
-
-    this.runtime.combat.updateWeapons(world.collectShipWeaponSystems(), dt);
-    weaponEnergy?.endFrame(dt);
-
-    runNpcSystem(
-      {
-        scene: this.runtime.host.scene,
-        world,
-        combat: this.runtime.combat,
-        combatConfig: this.runtime.combatConfig,
-        npcBehaviorConfig: this.runtime.npcBehaviorConfig,
-      },
-      dt,
-      playerId,
-      boundary,
-    );
-
-    if (playerInput.vehicle.boost) {
-      this.runtime.events.emit(GameEvents.boostStarted());
-    }
-
-    updateWaveSpawning(
-      this.waveState,
-      dt,
-      this.runtime.config,
-      world.getNpcCount(),
-      {
-        world,
-        assetManifest: this.runtime.assetManifest,
-        assetPreloader: this.runtime.assetPreloader,
-        shipLoader,
-        combat: this.runtime.combat,
-        combatConfig: this.runtime.combatConfig,
-        npcBehaviorConfig: this.runtime.npcBehaviorConfig,
-        missionNavigation: this.runtime.missionNavigation,
-        playerFaction:
-          world.get(playerId, 'faction') ??
-          resolveFaction(
-            this.runtime.assetManifest.ships[this.runtime.config.player.shipId]
-              ?.faction,
-          ),
-      },
-    );
-
-    world.updateHazards(dt);
-    updateShipCollisions(this.runtime, this.shipCollisionState, dt);
-
-    updateMissionLodStates(this.runtime.host.scene, world.collectLodRuntimes());
-
-    wreckDebris.update(dt);
-
-    const audioFrame = buildMissionAudioContext({
-      world,
-      playerId,
-      input: playerInput,
-      dt,
-      camera: this.runtime.camera.getCamera(),
-      cockpitView: this.runtime.camera.getMode() === 'cockpit',
-      npcBehaviorConfig: this.runtime.npcBehaviorConfig,
-      prevListenerPosition: input.prevListenerPosition,
-    });
-
-    return {
-      waveState: this.waveState,
-      audioContext: audioFrame.context,
-      prevListenerPosition: audioFrame.prevListenerPosition,
-    };
+    return this.registry.tick(input);
   }
 }

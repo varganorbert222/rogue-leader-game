@@ -15,7 +15,7 @@ import {
   type CurveKeyframeEditable,
   type Vec3CurveKeyframeEditable,
   type Vec3Editable,
-} from '@rogue-leader/engine';
+} from '@rogue-leader/engine/dev';
 import { DevCurveEditorComponent } from '../dev-curve-editor/dev-curve-editor.component';
 
 type CurveAxis = 'x' | 'y' | 'z';

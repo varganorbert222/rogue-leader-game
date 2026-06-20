@@ -8,7 +8,7 @@ import {
   getShipWorldPosition,
 } from "../ecs/queries/ship-queries";
 import { ShipAudioCatalog } from "./ship-audio-map";
-import type { SfxClipId } from "../data/constants/audio-clips";
+import type { SfxClipId } from "../config/constants/audio-clips";
 
 const INBOUND_TRIGGER_RANGE = 50;
 const INBOUND_RESET_RANGE = 50;

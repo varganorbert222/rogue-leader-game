@@ -4,7 +4,7 @@ import {
   SIZE_OVER_LIFETIME_PRESETS,
   cloneCurveKeyframes,
   type SizeOverLifetimeEditable,
-} from '@rogue-leader/engine';
+} from '@rogue-leader/engine/dev';
 import { DevCurveEditorComponent } from '../../../../shared/dev-editor/dev-curve-editor/dev-curve-editor.component';
 
 @Component({

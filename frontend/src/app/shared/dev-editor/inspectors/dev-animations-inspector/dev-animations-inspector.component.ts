@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
-import type { DevPreviewAnimationInfo } from '@rogue-leader/engine';
+import type { DevPreviewAnimationInfo } from '@rogue-leader/engine/dev';
 import { DevInspectorSectionComponent } from '../dev-inspector-section/dev-inspector-section.component';
 
 @Component({

@@ -19,7 +19,12 @@
   }
 
   @if (hud.reticleInner.visible && hud.reticleOuter.visible) {
-    <svg class="reticle-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+    <svg
+      class="reticle-svg"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
       <line
         class="reticle-forward-line"
         [attr.x1]="hud.reticleInner.xPct"
@@ -58,15 +63,30 @@
     <div class="bars">
       <div class="bar health">
         <span>Hull</span>
-        <div class="track"><div class="fill" [style.width.%]="(hud.health / hud.maxHealth) * 100"></div></div>
+        <div class="track">
+          <div
+            class="fill"
+            [style.width.%]="(hud.health / hud.maxHealth) * 100"
+          ></div>
+        </div>
       </div>
       <div class="bar shield">
         <span>Shield</span>
-        <div class="track"><div class="fill" [style.width.%]="(hud.shield / hud.maxShield) * 100"></div></div>
+        <div class="track">
+          <div
+            class="fill"
+            [style.width.%]="(hud.shield / hud.maxShield) * 100"
+          ></div>
+        </div>
       </div>
       <div class="bar energy">
         <span>Energy</span>
-        <div class="track"><div class="fill" [style.width.%]="(hud.energy / hud.maxEnergy) * 100"></div></div>
+        <div class="track">
+          <div
+            class="fill"
+            [style.width.%]="(hud.energy / hud.maxEnergy) * 100"
+          ></div>
+        </div>
       </div>
     </div>
     <div class="status">
@@ -79,7 +99,14 @@
     <div class="radar" aria-label="Radar">
       <div class="blip player"></div>
     </div>
-    <button type="button" class="hud-debug-btn" (click)="toggleDebug()" title="Debug (F3)">Debug</button>
+    <button
+      type="button"
+      class="hud-debug-btn"
+      (click)="toggleDebug()"
+      title="Debug (F3)"
+    >
+      Debug
+    </button>
   </div>
 
   @if (paused && !showSettings && !showControls && !showDebug) {
@@ -87,10 +114,12 @@
       <h2>Paused</h2>
       <button type="button" (click)="togglePause()">Resume</button>
       <button type="button" (click)="openSettings()">Settings</button>
-      <button type="button" (click)="openControls()">Irányítás</button>
+      <button type="button" (click)="openControls()">Controls</button>
       <button type="button" (click)="openDebug()">Debug</button>
       <button type="button" (click)="quitToMenu()">Quit to Menu</button>
-      <button type="button" (click)="quitToMissionSelect()">Mission Select</button>
+      <button type="button" (click)="quitToMissionSelect()">
+        Mission Select
+      </button>
     </div>
   }
 
@@ -124,7 +153,10 @@
     <div class="overlay debug">
       <div class="debug-panel-wrap">
         <h2>Debug</h2>
-        <p class="debug-intro">Toggle overlays, 3D zone wireframes, and per-object label gizmos. Settings are saved automatically.</p>
+        <p class="debug-intro">
+          Toggle overlays, 3D zone wireframes, and per-object label gizmos.
+          Settings are saved automatically.
+        </p>
         <app-debug-panel (debugChange)="onDebugChange($event)" />
         <button type="button" (click)="closeDebug()">Back to pause</button>
       </div>
@@ -134,7 +166,11 @@
   @if (showShipSelect) {
     <app-ship-select-overlay
       [ships]="selectableShips"
-      [title]="sessionPhase === 'ship_select' && endState === null ? 'Choose your fighter' : 'Choose your fighter'"
+      [title]="
+        sessionPhase === 'ship_select' && endState === null
+          ? 'Choose your fighter'
+          : 'Choose your fighter'
+      "
       subtitle="Faction follows ship type — Rebel or Imperial."
       (previewReady)="onShipPreviewReady($event)"
       (previewShip)="onPreviewShip($event)"
@@ -145,10 +181,12 @@
 
   @if (endState) {
     <div class="overlay end">
-      <h2>{{ endState === 'won' ? 'Mission Complete' : 'Mission Failed' }}</h2>
+      <h2>{{ endState === "won" ? "Mission Complete" : "Mission Failed" }}</h2>
       <p>{{ missionName }}</p>
       <button type="button" (click)="quitToMenu()">Return to Menu</button>
-      <button type="button" (click)="quitToMissionSelect()">Mission Select</button>
+      <button type="button" (click)="quitToMissionSelect()">
+        Mission Select
+      </button>
     </div>
   }
 </div>

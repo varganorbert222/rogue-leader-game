@@ -1,24 +1,25 @@
 import { GltfShipLoader, LodShipLoader, loadAssetManifest, RuntimePaths, type AssetManifest, type LodLoadProgress } from '@rogue-leader/engine';
 import type { BabylonHost } from '@rogue-leader/engine';
-import { loadCombatConfig, type CombatConfig } from '../../data/config/combat-config';
-import { loadWeaponsManifest, type WeaponsManifest } from '../../data/config/weapons-manifest';
-import { loadNpcBehaviorConfig, type NpcBehaviorConfig } from '../../data/config/npc-behavior-config';
-import { loadRenderConfig, type RenderConfig } from '../../data/config/render-config';
+import { loadCombatConfig, type CombatConfig } from '../../config/loaders/combat-config';
+import { loadWeaponsManifest, type WeaponsManifest } from '../../config/loaders/weapons-manifest';
+import { loadNpcBehaviorConfig, type NpcBehaviorConfig } from '../../config/loaders/npc-behavior-config';
+import { loadRenderConfig, type RenderConfig } from '../../config/loaders/render-config';
 import { MissionNavigation } from '../../ai/navigation/mission-navigation';
 import { CombatSystem } from '../../combat/systems/combat-system';
 import { GameEvents, type GameEventBus } from '../../core/events/game-events';
 import { WeaponHitSfxResolver } from '../../audio/weapon-hit-sfx';
 import { WeaponFireSfxResolver, isWarheadPassByWeapon } from '../../audio/weapon-pass-by-sfx';
-import { SfxClipIds } from '../../data/constants/audio-clips';
-import type { WreckDebrisManager } from '../../vfx/wreck-debris-manager';
+import { SfxClipIds } from '../../config/constants/audio-clips';
+import type { DeathEffectManager } from '../../vfx/death-effect-manager';
 import type { CameraController } from '../../flight/camera-controller';
 import type { CollisionSystem } from '../../collision/collision-system';
 import type { DebugPreferences } from '../../debug/debug-preferences';
 import { MissionAssetPreloader } from '../loading/mission-asset-preloader';
 import { requireMissionConfig } from '../mission-registry';
 import type { MissionConfig } from '../mission-types';
-import type { MissionRuntimeContext } from '../simulation/mission-runtime-context';
-import { MissionSimulationCoordinator } from '../simulation/coordinator/mission-simulation-coordinator';
+import { AsteroidSpawnService } from '../../hazards/asteroid-spawn-service';
+import type { MissionRuntimeContext } from '../../simulation/runtime-context';
+import { MissionSimulationCoordinator } from '../../simulation/coordinator/mission-simulation-coordinator';
 import type { World } from '../../ecs/world';
 
 export interface MissionBootstrapInput {
@@ -28,7 +29,8 @@ export interface MissionBootstrapInput {
   collision: CollisionSystem;
   camera: CameraController;
   events: GameEventBus;
-  wreckDebris: WreckDebrisManager;
+  deathEffects: DeathEffectManager;
+  asteroids: AsteroidSpawnService;
   debugPreferences: DebugPreferences;
   onLoadMessage?: (message: string) => void;
   onLoadProgress?: (progress: LodLoadProgress) => void;
@@ -79,7 +81,7 @@ export class MissionBootstrap {
       weaponsManifest,
       scene: input.host.scene,
       shipLoader,
-      wreckDebris: input.wreckDebris,
+      deathEffects: input.deathEffects,
       audio: input.host.audio,
       onMessage: input.onLoadMessage,
     });
@@ -105,7 +107,8 @@ export class MissionBootstrap {
       combat,
       collision: input.collision,
       camera: input.camera,
-      wreckDebris: input.wreckDebris,
+      deathEffects: input.deathEffects,
+      asteroids: input.asteroids,
       assetPreloader,
       assetManifest,
       weaponsManifest,

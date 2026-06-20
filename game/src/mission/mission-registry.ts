@@ -1,4 +1,4 @@
-import { MissionIds } from "../data/constants";
+import { MissionIds } from "../config/constants";
 import type { MissionConfig } from "./mission-types";
 import asteroidFieldSpace from "./configs/asteroid-field-space.json";
 import mission02 from "./configs/mission-02-hoth-surface.json";

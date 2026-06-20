@@ -1,0 +1,12 @@
+<app-dev-inspector-section title="Model reference">
+  <p class="readonly-banner"><strong>Read-only manifest reference</strong></p>
+  <dl class="readonly-fields">
+    <dt>Name</dt>
+    <dd>{{ name }}</dd>
+    <dt>Model</dt>
+    <dd>{{ modelLabel() }}</dd>
+    <dt>Variant</dt>
+    <dd>{{ variantLabelText() }}</dd>
+  </dl>
+  <p class="hint">Only the node transform is editable. The GLB comes from the asset manifest.</p>
+</app-dev-inspector-section>

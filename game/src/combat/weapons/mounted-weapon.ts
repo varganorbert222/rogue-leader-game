@@ -2,7 +2,7 @@ import { Vector3 } from "@babylonjs/core";
 import type { DetectedWeaponMount } from "@rogue-leader/engine";
 import { getMountForward } from "@rogue-leader/engine";
 import { GameEvents, type GameEventBus } from '../../core/events/game-events';
-import { ProjectileBehaviors } from '../../data/constants/weapon-behaviors';
+import { ProjectileBehaviors } from '../../config/constants/weapon-behaviors';
 import {
   clampToDeflectionCone,
   computeConvergenceDirection,
@@ -17,7 +17,7 @@ import type {
   ResolvedWeaponDefinition,
   WeaponFireGroup,
 } from "./weapon-definition";
-import { mountAssignmentKey } from "../../data/config/ship-weapon-groups";
+import { mountAssignmentKey } from "../../config/loaders/ship-weapon-groups";
 
 export class MountedWeapon {
   private cooldown = 0;

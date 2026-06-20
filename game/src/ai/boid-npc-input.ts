@@ -1,6 +1,6 @@
 import { Vector3 } from '@babylonjs/core';
 import { randomSign } from '@rogue-leader/engine';
-import type { NpcBehaviorConfig, NpcStateId } from '../data/config/npc-behavior-config';
+import type { NpcBehaviorConfig, NpcStateId } from '../config/loaders/npc-behavior-config';
 import { getShipForward } from '../flight/ship-forward';
 import type { NpcInput, NpcInputContext, NpcInputResult } from '../player/input/npc-input';
 import {

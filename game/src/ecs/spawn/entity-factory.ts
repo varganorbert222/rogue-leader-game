@@ -1,8 +1,9 @@
 import type { LoadedEntity, ShipManifestEntry } from '@rogue-leader/engine';
+import { resolveShipDeathPrefabId } from '@rogue-leader/engine';
 import type { FactionId } from '../../combat/faction';
 import type { CombatTeam } from '../../combat/weapons/combat-team';
 import type { VehicleWeaponSystem } from '../../combat/weapons/vehicle-weapon-system';
-import type { ShipFlightStatsConfig } from '../../data/config/ship-flight-stats';
+import type { ShipFlightStatsConfig } from '../../config/loaders/ship-flight-stats';
 import { HealthComponent } from '../components/health-component';
 import type { WeaponEnergyComponent } from '../components/weapon-energy-component';
 import { Role } from '../components/role-tag';
@@ -56,7 +57,19 @@ function spawnShipEntity(
     flightDefaults: options.flightDefaults,
   });
   attachShipComponents(world, id, built);
+  attachDeathEffectRef(world, id, options.shipEntry);
   return built;
+}
+
+function attachDeathEffectRef(
+  world: World,
+  id: EntityId,
+  shipEntry: ShipManifestEntry,
+): void {
+  const prefabId = resolveShipDeathPrefabId(shipEntry);
+  if (prefabId) {
+    world.add(id, 'deathEffectRef', { prefabId });
+  }
 }
 
 export function spawnPlayerEntity(

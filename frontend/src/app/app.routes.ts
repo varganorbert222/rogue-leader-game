@@ -7,6 +7,7 @@ import { SettingsComponent } from './features/settings/settings/settings.compone
 import { LodEditorComponent } from './features/lod-editor/lod-editor/lod-editor.component';
 import { CockpitEditorComponent } from './features/cockpit-editor/cockpit-editor/cockpit-editor.component';
 import { ParticleEditorComponent } from './features/particle-editor/particle-editor/particle-editor.component';
+import { PrefabManagerComponent } from './features/prefab-manager/prefab-manager/prefab-manager.component';
 import { EncyclopediaComponent } from './features/encyclopedia/encyclopedia/encyclopedia.component';
 
 export const routes: Routes = [
@@ -16,6 +17,7 @@ export const routes: Routes = [
   { path: 'dev/lod-editor', component: LodEditorComponent },
   { path: 'dev/cockpit-editor', component: CockpitEditorComponent },
   { path: 'dev/particle-editor', component: ParticleEditorComponent },
+  { path: 'dev/prefab-manager', component: PrefabManagerComponent },
   { path: 'encyclopedia', component: EncyclopediaComponent },
   { path: 'settings', component: SettingsComponent },
   { path: 'controls', component: ControlsComponent },

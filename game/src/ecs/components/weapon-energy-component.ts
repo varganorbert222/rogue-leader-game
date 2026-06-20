@@ -1,8 +1,8 @@
 import type {
   ResolvedShipWeaponGroup,
   ShipWeaponEnergyPoolConfig,
-} from '../../data/config/ship-weapons-config';
-import type { WeaponFiringMode } from '../../data/config/weapon-firing-pattern';
+} from '../../config/loaders/ship-weapons-config';
+import type { WeaponFiringMode } from '../../config/loaders/weapon-firing-pattern';
 
 interface PendingSequenceAdvance {
   mode: Exclude<WeaponFiringMode, 'full'>;

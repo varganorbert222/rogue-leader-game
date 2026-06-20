@@ -60,6 +60,17 @@
                 >
                   {{ presetRefBadgeLabel(row.node.particlePresetRef.mode) }}
                 </span>
+              } @else if (row.node.modelRef) {
+                <span class="preset-ref-badge readonly" title="Manifest model reference">ref</span>
+              } @else if (row.node.prefabNestedRef) {
+                <span
+                  class="preset-ref-badge"
+                  [class.readonly]="row.node.prefabNestedRef.mode === 'readonly'"
+                  [class.edit]="row.node.prefabNestedRef.mode === 'edit'"
+                  [title]="presetRefBadgeTitle(row.node.prefabNestedRef.mode)"
+                >
+                  {{ presetRefBadgeLabel(row.node.prefabNestedRef.mode) }}
+                </span>
               }
               <span class="kind-tag">{{ row.node.kind }}</span>
             </span>
@@ -69,6 +80,7 @@
                   type="button"
                   class="row-action-btn add-btn"
                   title="Add below (catalog)"
+                  [disabled]="!canAddBelowNode(row.node)"
                   (click)="onAddClick(row.node, $event)"
                 >
                   +
@@ -97,8 +109,8 @@
       [style.top.px]="contextMenu.y"
       (click)="$event.stopPropagation()"
     >
-      <button type="button" (click)="onContextPick('addCatalog')">Reuse saved preset…</button>
-      <button type="button" (click)="onContextPick('addBlank')">Blank module</button>
+      <button type="button" [disabled]="!canAddBelowNode(contextMenu.node)" (click)="onContextPick('addCatalog')">Reuse saved preset…</button>
+      <button type="button" [disabled]="!canAddBelowNode(contextMenu.node)" (click)="onContextPick('addBlank')">Blank module</button>
       @if (showClipboardActions) {
         <div class="context-menu-separator" role="separator"></div>
         <button

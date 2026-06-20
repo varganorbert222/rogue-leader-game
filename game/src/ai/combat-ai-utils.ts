@@ -1,4 +1,4 @@
-import type { NpcBehaviorConfig, NpcStateId } from '../data/config/npc-behavior-config';
+import type { NpcBehaviorConfig, NpcStateId } from '../config/loaders/npc-behavior-config';
 import type { FlockCombatRole } from './navigation/nav-types';
 import type { EnemyBehavior } from './enemy-behavior';
 

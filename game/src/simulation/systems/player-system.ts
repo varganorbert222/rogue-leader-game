@@ -5,7 +5,7 @@ import {
 } from "@rogue-leader/engine";
 import type { TargetEntity } from "../../combat/targeting/targeting-system";
 import { updateWeaponAimForObserver } from "../../combat/targeting/weapon-aim-controller";
-import type { TargetingConfig } from "../../data/config/combat-config";
+import type { TargetingConfig } from "../../config/loaders/combat-config";
 import type { CameraController } from "../../flight/camera-controller";
 import { RETICLE_INNER_DISTANCE } from "../../flight/flight-constants";
 import { projectWorldToScreen } from "../../flight/screen-project";
@@ -25,9 +25,9 @@ import {
   getVisualBankAngle,
   hasSfoil,
   tryToggleSfoil,
-} from "../queries/ship-queries";
-import type { World } from "../world";
-import type { EntityId } from "../entity-id";
+} from "../../ecs/queries/ship-queries";
+import type { World } from "../../ecs/world";
+import type { EntityId } from "../../ecs/entity-id";
 
 export interface PlayerSystemContext {
   world: World;

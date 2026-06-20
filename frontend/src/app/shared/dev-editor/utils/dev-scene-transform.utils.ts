@@ -2,8 +2,8 @@ import type {
   DevNodeTransform,
   DevTransformGizmoMode,
   HierarchyNodeTransformInfo,
-} from '@rogue-leader/engine';
-import { hierarchyTransformToDevNode } from '@rogue-leader/engine';
+} from '@rogue-leader/engine/dev';
+import { hierarchyTransformToDevNode } from '@rogue-leader/engine/dev';
 
 export interface DevSceneTransformPreview {
   setTransformEditable?(editable: boolean): void;

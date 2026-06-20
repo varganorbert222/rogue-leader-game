@@ -11,6 +11,8 @@
     "declarationMap": true,
     "sourceMap": true,
     "paths": {
+      "@rogue-leader/engine": ["engine/src/index.ts"],
+      "@rogue-leader/engine/dev": ["engine/src/dev/index.ts"],
       "@engine/*": ["engine/src/*"],
       "@game/*": ["game/src/*"]
     }

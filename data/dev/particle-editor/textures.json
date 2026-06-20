@@ -9,8 +9,8 @@
     },
     {
       "id": "particles_01",
-      "label": "Particle Atlas 1",
-      "file": "atlased_particles_01.png",
+      "label": "Particles 1",
+      "file": "particles_01.png",
       "width": 4096,
       "height": 4096,
       "atlas": {

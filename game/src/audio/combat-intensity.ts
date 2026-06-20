@@ -2,7 +2,7 @@ import { Vector3 } from "@babylonjs/core";
 import {
   DamageSeverities,
   type DamageSeverity,
-} from "../data/constants/damage-severity";
+} from "../config/constants/damage-severity";
 
 export interface CombatIntensitySnapshot {
   enemyCount: number;

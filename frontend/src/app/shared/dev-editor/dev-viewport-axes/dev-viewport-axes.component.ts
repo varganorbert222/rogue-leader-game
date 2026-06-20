@@ -2,7 +2,7 @@ import { Component, inject, NgZone, signal, ViewEncapsulation } from '@angular/c
 import {
   computeViewportAxisGizmoLines,
   type ViewportAxisGizmoLine,
-} from '@rogue-leader/engine';
+} from '@rogue-leader/engine/dev';
 import type { Camera } from '@babylonjs/core';
 
 @Component({

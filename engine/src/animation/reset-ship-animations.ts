@@ -13,6 +13,5 @@ export function resetShipAnimations(
   }
 
   const controller = new ShipAnimationController(loaded.animationGroups, config);
-  controller.snapToInitialState();
   controller.dispose();
 }

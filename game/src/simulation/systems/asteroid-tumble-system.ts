@@ -1,6 +1,6 @@
 import { Quaternion } from '@babylonjs/core';
-import { Role } from '../components/role-tag';
-import type { World } from '../world';
+import { Role } from '../../ecs/components/role-tag';
+import type { World } from '../../ecs/world';
 
 export function runAsteroidTumbleSystem(world: World, dt: number): void {
   for (const id of world.queryByRole(Role.Asteroid)) {

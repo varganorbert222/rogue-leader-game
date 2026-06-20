@@ -1,6 +1,6 @@
-import { Factions } from '../data/constants/factions';
-import { SfxClipIds, type SfxClipId } from '../data/constants/audio-clips';
-import { ShipIds, type ShipId } from '../data/constants/ships';
+import { Factions } from '../config/constants/factions';
+import { SfxClipIds, type SfxClipId } from '../config/constants/audio-clips';
+import { ShipIds, type ShipId } from '../config/constants/ships';
 
 /** Maps ship and faction ids to audio clip ids. */
 export class ShipAudioCatalog {

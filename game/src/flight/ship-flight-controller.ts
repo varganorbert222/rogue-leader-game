@@ -15,7 +15,7 @@ import {
   ROLL_IDLE_DELAY_SEC,
   type FlightAssistOptions,
 } from './flight-assist';
-import type { ResolvedShipFlightStats } from '../data/config/ship-flight-stats';
+import type { ResolvedShipFlightStats } from '../config/loaders/ship-flight-stats';
 import { computeRogueFlightAxes } from './rogue-flight-controls';
 import { applySoftBoundary, type SoftBoundary } from './soft-boundary';
 import { getShipForward, shipRotationFromHeading } from './ship-forward';

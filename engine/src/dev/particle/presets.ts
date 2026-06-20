@@ -1,4 +1,5 @@
 import { DevConfigPaths } from '../dev-config-paths';
+import { RuntimePaths } from '../../runtime-paths';
 import { color4, vec3 } from '../shared/editable-primitives';
 import { defaultParticleEffect, defaultParticleShape } from './defaults';
 import { normalizeParticleEffect } from './normalize';
@@ -166,18 +167,21 @@ const BUILTIN_PRESETS: ParticlePresetEntry[] = [
   },
 ];
 export async function loadParticlePresets(): Promise<ParticlePresetEntry[]> {
-  try {
-    const res = await fetch(DevConfigPaths.particleEditor.presets);
-    if (!res.ok) return getBuiltinParticlePresets();
-    const json = (await res.json()) as { presets?: ParticlePresetEntry[] };
-    if (!json.presets?.length) return getBuiltinParticlePresets();
-    return json.presets.map((preset) => ({
-      ...preset,
-      effect: normalizeParticleEffect(preset.effect),
-    }));
-  } catch {
-    return getBuiltinParticlePresets();
+  for (const url of [RuntimePaths.particlePresets, DevConfigPaths.particleEditor.presets]) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const json = (await res.json()) as { presets?: ParticlePresetEntry[] };
+      if (!json.presets?.length) continue;
+      return json.presets.map((preset) => ({
+        ...preset,
+        effect: normalizeParticleEffect(preset.effect),
+      }));
+    } catch {
+      // try next source
+    }
   }
+  return getBuiltinParticlePresets();
 }
 
 export function getBuiltinParticlePresets(): ParticlePresetEntry[] {

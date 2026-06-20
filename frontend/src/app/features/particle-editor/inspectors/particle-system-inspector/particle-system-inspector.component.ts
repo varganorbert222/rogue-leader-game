@@ -8,7 +8,7 @@ import {
   syncStaticAtlasCell,
   type ParticleSystemEditable,
   type ParticleTextureEntry,
-} from '@rogue-leader/engine';
+} from '@rogue-leader/engine/dev';
 import { DevColorFieldComponent } from '../../../../shared/dev-editor/dev-color-field/dev-color-field.component';
 import { DevHdrColorFieldComponent } from '../../../../shared/dev-editor/dev-hdr-color-field/dev-hdr-color-field.component';
 import { DevVec3FieldComponent } from '../../../../shared/dev-editor/dev-vec3-field/dev-vec3-field.component';

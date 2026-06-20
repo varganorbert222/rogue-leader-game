@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
-import type { HierarchyNode, HierarchyOutlinerState } from '@rogue-leader/engine';
+import type { HierarchyNode, HierarchyOutlinerState } from '@rogue-leader/engine/dev';
 import { HierarchyPanelComponent } from '../../components/hierarchy-panel/hierarchy-panel.component';
 
 @Component({

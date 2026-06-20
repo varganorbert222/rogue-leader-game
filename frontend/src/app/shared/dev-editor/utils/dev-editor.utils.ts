@@ -7,10 +7,10 @@ import {
   type LodEditorModelEntry,
   type LodEditorModelVariant,
   resolveModelVariantPath,
-} from '@rogue-leader/engine';
+} from '@rogue-leader/engine/dev';
 import type { ChangeDetectorRef } from '@angular/core';
 import type { Camera } from '@babylonjs/core';
-import { startDevPreviewRenderLoop as engineStartDevPreviewRenderLoop } from '@rogue-leader/engine';
+import { startDevPreviewRenderLoop as engineStartDevPreviewRenderLoop } from '@rogue-leader/engine/dev';
 
 export function toErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
@@ -160,18 +160,18 @@ export interface DevSceneHierarchyPreview {
   getHierarchy(): HierarchyNode[];
   getDefaultViewportState(): HierarchyOutlinerState;
   applyHierarchyViewport(state: HierarchyOutlinerState): void;
-  listAnimations?(): import('@rogue-leader/engine').DevPreviewAnimationInfo[];
+  listAnimations?(): import('@rogue-leader/engine/dev').DevPreviewAnimationInfo[];
   getPlayingAnimationIndex?(): number | null;
   playAnimation?(index: number): void;
   stopAnimations?(): void;
-  highlightNode?(sceneName: string | undefined): import('@rogue-leader/engine').HierarchyNodeTransformInfo | null;
+  highlightNode?(sceneName: string | undefined): import('@rogue-leader/engine/dev').HierarchyNodeTransformInfo | null;
   clearHighlight?(): void;
   setTransformEditable?(editable: boolean): void;
-  onTransformGizmoChange?(handler: (info: import('@rogue-leader/engine').HierarchyNodeTransformInfo) => void): void;
-  setTransformGizmoMode?(mode: import('@rogue-leader/engine').DevTransformGizmoMode): void;
+  onTransformGizmoChange?(handler: (info: import('@rogue-leader/engine/dev').HierarchyNodeTransformInfo) => void): void;
+  setTransformGizmoMode?(mode: import('@rogue-leader/engine/dev').DevTransformGizmoMode): void;
   updateSelectedNodeTransform?(
-    transform: import('@rogue-leader/engine').DevNodeTransform,
-  ): import('@rogue-leader/engine').HierarchyNodeTransformInfo | null;
+    transform: import('@rogue-leader/engine/dev').DevNodeTransform,
+  ): import('@rogue-leader/engine/dev').HierarchyNodeTransformInfo | null;
 }
 
 export interface DevSceneHierarchyView {
@@ -183,8 +183,8 @@ export interface DevSceneHierarchyView {
 export function beginSceneHierarchyLoad(
   view: DevSceneHierarchyView & {
     nodeTransform?: HierarchyNodeTransformInfo | null;
-    selectionTransform?: import('@rogue-leader/engine').DevNodeTransform | null;
-    transformGizmoMode?: import('@rogue-leader/engine').DevTransformGizmoMode;
+    selectionTransform?: import('@rogue-leader/engine/dev').DevNodeTransform | null;
+    transformGizmoMode?: import('@rogue-leader/engine/dev').DevTransformGizmoMode;
   },
   preview?: DevSceneHierarchyPreview,
 ): void {
@@ -206,7 +206,7 @@ export function beginSceneHierarchyLoad(
 
 export function commitSceneHierarchyLoad(
   view: DevSceneHierarchyView & {
-    animations?: import('@rogue-leader/engine').DevPreviewAnimationInfo[];
+    animations?: import('@rogue-leader/engine/dev').DevPreviewAnimationInfo[];
     playingAnimationIndex?: number | null;
   },
   preview: DevSceneHierarchyPreview,
@@ -227,7 +227,7 @@ export function failSceneHierarchyLoad(view: DevSceneHierarchyView): void {
 export function refreshScenePreviewUi(
   preview: DevSceneHierarchyPreview,
   state: {
-    animations: import('@rogue-leader/engine').DevPreviewAnimationInfo[];
+    animations: import('@rogue-leader/engine/dev').DevPreviewAnimationInfo[];
     playingAnimationIndex: number | null;
   },
 ): void {

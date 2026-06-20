@@ -18,7 +18,7 @@ import {
   type DevTransformGizmoMode,
   type DevNodeTransform,
   type LodEditorModelEntry,
-} from '@rogue-leader/engine';
+} from '@rogue-leader/engine/dev';
 import { DevEditorShellComponent } from '../../../shared/dev-editor/dev-editor-shell/dev-editor-shell.component';
 import { DevEditorStatusComponent } from '../../../shared/dev-editor/dev-editor-status/dev-editor-status.component';
 import { DevModelPickerComponent } from '../../../shared/dev-editor/dev-model-picker/dev-model-picker.component';

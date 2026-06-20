@@ -1,4 +1,4 @@
-import type { ProjectileBehavior, WeaponHomingConfig } from '../../data/config/weapons-manifest';
+import type { ProjectileBehavior, WeaponHomingConfig } from '../../config/loaders/weapons-manifest';
 
 import type { ProjectileVisualConfig } from '@rogue-leader/engine';
 

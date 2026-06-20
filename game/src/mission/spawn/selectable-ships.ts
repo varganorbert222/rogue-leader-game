@@ -1,5 +1,5 @@
 import type { AssetManifest } from '@rogue-leader/engine';
-import { ShipIds } from '../../data/constants/ships';
+import { ShipIds } from '../../config/constants/ships';
 
 export interface SelectableShipInfo {
   shipId: string;

@@ -1,0 +1,208 @@
+{
+  "prefabs": [
+    {
+      "id": "asteroid_with_smoke",
+      "label": "Asteroid + smoke",
+      "prefab": {
+        "id": "prefab_asteroid_smoke",
+        "name": "Asteroid + smoke",
+        "tree": [
+          {
+            "id": "mdl_asteroid",
+            "name": "Asteroid",
+            "kind": "model",
+            "children": [],
+            "transform": {
+              "position": { "x": 0, "y": 0, "z": 0 },
+              "rotationDeg": { "x": 0, "y": 0, "z": 0 },
+              "scale": { "x": 1, "y": 1, "z": 1 }
+            },
+            "slot": {
+              "id": "mdl_asteroid",
+              "name": "Asteroid",
+              "modelRef": {
+                "modelId": "asteroid",
+                "variantId": "asteroid_01_x"
+              }
+            }
+          },
+          {
+            "id": "ps_smoke",
+            "name": "Smoke",
+            "kind": "particleSystem",
+            "children": [],
+            "transform": {
+              "position": { "x": 0, "y": 0.5, "z": 0 },
+              "rotationDeg": { "x": 0, "y": 0, "z": 0 },
+              "scale": { "x": 1, "y": 1, "z": 1 }
+            },
+            "slot": {
+              "id": "ps_smoke",
+              "name": "Smoke",
+              "particleRef": {
+                "presetId": "debris_smoke",
+                "systemId": "ps_debris_smoke"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "tie_fighter_x_prefab",
+      "label": "tie_fighter_x_prefab",
+      "prefab": {
+        "id": "tie_fighter_x_prefab",
+        "name": "tie_fighter_x_prefab",
+        "tree": [
+          {
+            "id": "grp_tie_explosion",
+            "name": "Explosion Combo",
+            "kind": "group",
+            "children": [
+              {
+                "id": "ps_tie_burst",
+                "name": "Burst",
+                "kind": "particleSystem",
+                "children": [],
+                "transform": {
+                  "position": { "x": 0, "y": 0, "z": 0 },
+                  "rotationDeg": { "x": 0, "y": 0, "z": 0 },
+                  "scale": { "x": 1, "y": 1, "z": 1 }
+                },
+                "slot": {
+                  "id": "ps_tie_burst",
+                  "name": "Burst",
+                  "particleRef": {
+                    "presetId": "explosion_combo",
+                    "systemId": "ps_combo_burst"
+                  }
+                }
+              },
+              {
+                "id": "ps_tie_smoke",
+                "name": "Smoke trail",
+                "kind": "particleSystem",
+                "children": [],
+                "transform": {
+                  "position": { "x": 0, "y": 0, "z": 0 },
+                  "rotationDeg": { "x": 0, "y": 0, "z": 0 },
+                  "scale": { "x": 1, "y": 1, "z": 1 }
+                },
+                "slot": {
+                  "id": "ps_tie_smoke",
+                  "name": "Smoke trail",
+                  "particleRef": {
+                    "presetId": "explosion_combo",
+                    "systemId": "ps_combo_smoke"
+                  }
+                }
+              }
+            ],
+            "transform": {
+              "position": { "x": 0, "y": 0, "z": 0 },
+              "rotationDeg": { "x": 0, "y": 0, "z": 0 },
+              "scale": { "x": 1, "y": 1, "z": 1 }
+            }
+          },
+          {
+            "id": "mdl_tie_wreck",
+            "name": "tie_fighter (destroyed)",
+            "kind": "model",
+            "children": [],
+            "transform": {
+              "position": { "x": 0, "y": 0, "z": 0 },
+              "rotationDeg": { "x": 0, "y": 0, "z": 0 },
+              "scale": { "x": 1, "y": 1, "z": 1 }
+            },
+            "slot": {
+              "id": "mdl_tie_wreck",
+              "name": "tie_fighter (destroyed)",
+              "modelRef": {
+                "modelId": "tie_fighter_x"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "xwing_x_prefab",
+      "label": "xwing_x_prefab",
+      "prefab": {
+        "id": "xwing_x_prefab",
+        "name": "xwing_x_prefab",
+        "tree": [
+          {
+            "id": "grp_xwing_explosion",
+            "name": "Explosion Combo",
+            "kind": "group",
+            "children": [
+              {
+                "id": "ps_xwing_burst",
+                "name": "Burst",
+                "kind": "particleSystem",
+                "children": [],
+                "transform": {
+                  "position": { "x": 0, "y": 0, "z": 0 },
+                  "rotationDeg": { "x": 0, "y": 0, "z": 0 },
+                  "scale": { "x": 1, "y": 1, "z": 1 }
+                },
+                "slot": {
+                  "id": "ps_xwing_burst",
+                  "name": "Burst",
+                  "particleRef": {
+                    "presetId": "explosion_combo",
+                    "systemId": "ps_combo_burst"
+                  }
+                }
+              },
+              {
+                "id": "ps_xwing_smoke",
+                "name": "Smoke trail",
+                "kind": "particleSystem",
+                "children": [],
+                "transform": {
+                  "position": { "x": 0, "y": 0, "z": 0 },
+                  "rotationDeg": { "x": 0, "y": 0, "z": 0 },
+                  "scale": { "x": 1, "y": 1, "z": 1 }
+                },
+                "slot": {
+                  "id": "ps_xwing_smoke",
+                  "name": "Smoke trail",
+                  "particleRef": {
+                    "presetId": "explosion_combo",
+                    "systemId": "ps_combo_smoke"
+                  }
+                }
+              }
+            ],
+            "transform": {
+              "position": { "x": 0, "y": 0, "z": 0 },
+              "rotationDeg": { "x": 0, "y": 0, "z": 0 },
+              "scale": { "x": 1, "y": 1, "z": 1 }
+            }
+          },
+          {
+            "id": "mdl_xwing_wreck",
+            "name": "xwing (destroyed)",
+            "kind": "model",
+            "children": [],
+            "transform": {
+              "position": { "x": 0, "y": 0, "z": 0 },
+              "rotationDeg": { "x": 0, "y": 0, "z": 0 },
+              "scale": { "x": 1, "y": 1, "z": 1 }
+            },
+            "slot": {
+              "id": "mdl_xwing_wreck",
+              "name": "xwing (destroyed)",
+              "modelRef": {
+                "modelId": "xwing_x"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

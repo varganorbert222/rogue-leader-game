@@ -1,17 +1,18 @@
 <section class="controls-root">
   <header class="controls-header">
     <div>
-      <h2>{{ title }}</h2>
+      <h2>Controls</h2>
       <p class="hint">
-        @if (locale === 'hu') {
-          Kattints a Bind gombra, majd nyomj meg egy billentyűt vagy kontroller gombot. Esc = mégse.
+        @if (locale === "hu") {
+          Kattints a Bind gombra, majd nyomj meg egy billentyűt vagy kontroller
+          gombot. Esc = mégse.
         } @else {
           Click Bind, then press a key or controller button. Esc = cancel.
         }
       </p>
     </div>
     <button type="button" class="btn ghost" (click)="resetDefaults()">
-      {{ locale === 'hu' ? 'Alapértelmezés' : 'Reset defaults' }}
+      {{ locale === "hu" ? "Alapértelmezés" : "Reset defaults" }}
     </button>
   </header>
 
@@ -23,7 +24,7 @@
       [class.active]="activeTab === 'keyboard'"
       (click)="setTab('keyboard')"
     >
-      {{ locale === 'hu' ? 'Billentyűzet' : 'Keyboard' }}
+      {{ locale === "hu" ? "Billentyűzet" : "Keyboard" }}
     </button>
     @if (hasGamepad) {
       <button
@@ -33,21 +34,21 @@
         [class.active]="activeTab === 'gamepad'"
         (click)="setTab('gamepad')"
       >
-        {{ locale === 'hu' ? 'Játékvezérlő' : 'Gamepad' }}
+        {{ locale === "hu" ? "Játékvezérlő" : "Gamepad" }}
       </button>
     }
   </nav>
 
   @if (captureTarget) {
     <div class="capture-banner" role="status">
-      {{ locale === 'hu' ? 'Várakozás bemenetre…' : 'Waiting for input…' }}
+      {{ locale === "hu" ? "Várakozás bemenetre…" : "Waiting for input…" }}
       <button type="button" class="btn ghost" (click)="cancelCapture()">
-        {{ locale === 'hu' ? 'Mégse' : 'Cancel' }}
+        {{ locale === "hu" ? "Mégse" : "Cancel" }}
       </button>
     </div>
   }
 
-  @if (activeTab === 'keyboard') {
+  @if (activeTab === "keyboard") {
     <div class="binding-grid">
       @for (actionId of axisActionIds; track actionId) {
         <article class="binding-card">
@@ -55,10 +56,16 @@
           <div class="pole-row">
             <span class="pole-label">+</span>
             <div class="chips">
-              @for (code of axisKeys(actionId, 'positive'); track code) {
+              @for (code of axisKeys(actionId, "positive"); track code) {
                 <span class="chip">
                   {{ formatKey(code) }}
-                  <button type="button" class="chip-x" (click)="removeKey(actionId, 'positive', code)">×</button>
+                  <button
+                    type="button"
+                    class="chip-x"
+                    (click)="removeKey(actionId, 'positive', code)"
+                  >
+                    ×
+                  </button>
                 </span>
               }
             </div>
@@ -74,10 +81,16 @@
           <div class="pole-row">
             <span class="pole-label">−</span>
             <div class="chips">
-              @for (code of axisKeys(actionId, 'negative'); track code) {
+              @for (code of axisKeys(actionId, "negative"); track code) {
                 <span class="chip">
                   {{ formatKey(code) }}
-                  <button type="button" class="chip-x" (click)="removeKey(actionId, 'negative', code)">×</button>
+                  <button
+                    type="button"
+                    class="chip-x"
+                    (click)="removeKey(actionId, 'negative', code)"
+                  >
+                    ×
+                  </button>
                 </span>
               }
             </div>
@@ -101,7 +114,13 @@
               @for (code of buttonKeys(actionId); track code) {
                 <span class="chip">
                   {{ formatKey(code) }}
-                  <button type="button" class="chip-x" (click)="removeKey(actionId, 'button', code)">×</button>
+                  <button
+                    type="button"
+                    class="chip-x"
+                    (click)="removeKey(actionId, 'button', code)"
+                  >
+                    ×
+                  </button>
                 </span>
               }
             </div>
@@ -119,24 +138,37 @@
     </div>
   }
 
-  @if (activeTab === 'gamepad' && hasGamepad) {
+  @if (activeTab === "gamepad" && hasGamepad) {
     <div class="gamepad-meta">
       <label class="select-row">
-        {{ locale === 'hu' ? 'Aktív kontroller' : 'Active controller' }}
-        <select [(ngModel)]="config.gamepad.selectedGamepadId" (change)="onGamepadSelect()">
-          <option [ngValue]="null">{{ locale === 'hu' ? 'Automatikus' : 'Automatic' }}</option>
+        {{ locale === "hu" ? "Aktív kontroller" : "Active controller" }}
+        <select
+          [(ngModel)]="config.gamepad.selectedGamepadId"
+          (change)="onGamepadSelect()"
+        >
+          <option [ngValue]="null">
+            {{ locale === "hu" ? "Automatikus" : "Automatic" }}
+          </option>
           @for (pad of gamepads; track pad.index) {
             <option [ngValue]="pad.id">{{ pad.label }}</option>
           }
         </select>
       </label>
       @if (savedGamepadMissing()) {
-        <p class="hint warn">{{ locale === 'hu' ? 'A mentett kontroller nincs csatlakoztatva.' : 'Saved controller is not connected.' }}</p>
+        <p class="hint warn">
+          {{
+            locale === "hu"
+              ? "A mentett kontroller nincs csatlakoztatva."
+              : "Saved controller is not connected."
+          }}
+        </p>
       }
     </div>
 
     <details class="stick-panel" open>
-      <summary>{{ locale === 'hu' ? 'Bal kar — repülés' : 'Left stick — flight' }}</summary>
+      <summary>
+        {{ locale === "hu" ? "Bal kar — repülés" : "Left stick — flight" }}
+      </summary>
       <div class="sliders">
         <label>
           Deadzone
@@ -147,10 +179,14 @@
             [ngModel]="config.gamepad.leftStick.deadzone * 100"
             (ngModelChange)="setLeftDeadzone($event)"
           />
-          <span>{{ (config.gamepad.leftStick.deadzone * 100) | number:'1.0-0' }}%</span>
+          <span
+            >{{
+              config.gamepad.leftStick.deadzone * 100 | number: "1.0-0"
+            }}%</span
+          >
         </label>
         <label>
-          {{ locale === 'hu' ? 'Érzékenység' : 'Sensitivity' }}
+          {{ locale === "hu" ? "Érzékenység" : "Sensitivity" }}
           <input
             type="range"
             min="25"
@@ -158,10 +194,12 @@
             [ngModel]="config.gamepad.leftStick.sensitivity * 100"
             (ngModelChange)="setLeftSensitivity($event)"
           />
-          <span>{{ config.gamepad.leftStick.sensitivity | number:'1.1-1' }}×</span>
+          <span
+            >{{ config.gamepad.leftStick.sensitivity | number: "1.1-1" }}×</span
+          >
         </label>
         <label>
-          {{ locale === 'hu' ? 'Görbe' : 'Response curve' }}
+          {{ locale === "hu" ? "Görbe" : "Response curve" }}
           <input
             type="range"
             min="50"
@@ -169,21 +207,31 @@
             [ngModel]="config.gamepad.leftStick.exponent * 100"
             (ngModelChange)="setLeftExponent($event)"
           />
-          <span>{{ config.gamepad.leftStick.exponent | number:'1.1-1' }}</span>
+          <span>{{ config.gamepad.leftStick.exponent | number: "1.1-1" }}</span>
         </label>
         <label class="check">
-          <input type="checkbox" [(ngModel)]="config.gamepad.leftStick.invertX" (change)="onStickChange()" />
-          {{ locale === 'hu' ? 'X tengely invert' : 'Invert X axis' }}
+          <input
+            type="checkbox"
+            [(ngModel)]="config.gamepad.leftStick.invertX"
+            (change)="onStickChange()"
+          />
+          {{ locale === "hu" ? "X tengely invert" : "Invert X axis" }}
         </label>
         <label class="check">
-          <input type="checkbox" [(ngModel)]="config.gamepad.leftStick.invertY" (change)="onStickChange()" />
-          {{ locale === 'hu' ? 'Y tengely invert' : 'Invert Y axis' }}
+          <input
+            type="checkbox"
+            [(ngModel)]="config.gamepad.leftStick.invertY"
+            (change)="onStickChange()"
+          />
+          {{ locale === "hu" ? "Y tengely invert" : "Invert Y axis" }}
         </label>
       </div>
     </details>
 
     <details class="stick-panel">
-      <summary>{{ locale === 'hu' ? 'Jobb kar — kamera' : 'Right stick — camera' }}</summary>
+      <summary>
+        {{ locale === "hu" ? "Jobb kar — kamera" : "Right stick — camera" }}
+      </summary>
       <div class="sliders">
         <label>
           Deadzone
@@ -194,10 +242,14 @@
             [ngModel]="config.gamepad.rightStick.deadzone * 100"
             (ngModelChange)="setRightDeadzone($event)"
           />
-          <span>{{ (config.gamepad.rightStick.deadzone * 100) | number:'1.0-0' }}%</span>
+          <span
+            >{{
+              config.gamepad.rightStick.deadzone * 100 | number: "1.0-0"
+            }}%</span
+          >
         </label>
         <label>
-          {{ locale === 'hu' ? 'Érzékenység' : 'Sensitivity' }}
+          {{ locale === "hu" ? "Érzékenység" : "Sensitivity" }}
           <input
             type="range"
             min="25"
@@ -207,7 +259,7 @@
           />
         </label>
         <label>
-          {{ locale === 'hu' ? 'Görbe' : 'Response curve' }}
+          {{ locale === "hu" ? "Görbe" : "Response curve" }}
           <input
             type="range"
             min="50"
@@ -217,18 +269,32 @@
           />
         </label>
         <label class="check">
-          <input type="checkbox" [(ngModel)]="config.gamepad.rightStick.invertX" (change)="onStickChange()" />
-          {{ locale === 'hu' ? 'X invert' : 'Invert X' }}
+          <input
+            type="checkbox"
+            [(ngModel)]="config.gamepad.rightStick.invertX"
+            (change)="onStickChange()"
+          />
+          {{ locale === "hu" ? "X invert" : "Invert X" }}
         </label>
         <label class="check">
-          <input type="checkbox" [(ngModel)]="config.gamepad.rightStick.invertY" (change)="onStickChange()" />
-          {{ locale === 'hu' ? 'Y invert' : 'Invert Y' }}
+          <input
+            type="checkbox"
+            [(ngModel)]="config.gamepad.rightStick.invertY"
+            (change)="onStickChange()"
+          />
+          {{ locale === "hu" ? "Y invert" : "Invert Y" }}
         </label>
       </div>
     </details>
 
     <details class="stick-panel">
-      <summary>{{ locale === 'hu' ? 'Ravaszok — gáz / fék' : 'Triggers — throttle / brake' }}</summary>
+      <summary>
+        {{
+          locale === "hu"
+            ? "Ravaszok — gáz / fék"
+            : "Triggers — throttle / brake"
+        }}
+      </summary>
       <div class="sliders">
         <label>
           Deadzone
@@ -241,7 +307,7 @@
           />
         </label>
         <label>
-          {{ locale === 'hu' ? 'Érzékenység' : 'Sensitivity' }}
+          {{ locale === "hu" ? "Érzékenység" : "Sensitivity" }}
           <input
             type="range"
             min="25"
@@ -251,7 +317,7 @@
           />
         </label>
         <label>
-          {{ locale === 'hu' ? 'Görbe' : 'Curve' }}
+          {{ locale === "hu" ? "Görbe" : "Curve" }}
           <input
             type="range"
             min="50"
@@ -268,19 +334,33 @@
         <article class="binding-card">
           <h3>{{ label(actionId) }}</h3>
           <p class="subhint">
-            @if (actionId === 'pitch' || actionId === 'yaw' || actionId === 'throttle') {
-              {{ locale === 'hu' ? 'Analóg tengely + opcionális gombok' : 'Analog axis + optional buttons' }}
+            @if (
+              actionId === "pitch" ||
+              actionId === "yaw" ||
+              actionId === "throttle"
+            ) {
+              {{
+                locale === "hu"
+                  ? "Analóg tengely + opcionális gombok"
+                  : "Analog axis + optional buttons"
+              }}
             } @else {
-              {{ locale === 'hu' ? 'Gomb hozzárendelés' : 'Button assignment' }}
+              {{ locale === "hu" ? "Gomb hozzárendelés" : "Button assignment" }}
             }
           </p>
           <div class="pole-row">
             <span class="pole-label">+</span>
             <div class="chips">
-              @for (btn of axisButtons(actionId, 'positive'); track btn) {
+              @for (btn of axisButtons(actionId, "positive"); track btn) {
                 <span class="chip pad">
                   {{ formatPad(btn) }}
-                  <button type="button" class="chip-x" (click)="removePadButton(actionId, 'positive', btn)">×</button>
+                  <button
+                    type="button"
+                    class="chip-x"
+                    (click)="removePadButton(actionId, 'positive', btn)"
+                  >
+                    ×
+                  </button>
                 </span>
               }
             </div>
@@ -296,10 +376,16 @@
           <div class="pole-row">
             <span class="pole-label">−</span>
             <div class="chips">
-              @for (btn of axisButtons(actionId, 'negative'); track btn) {
+              @for (btn of axisButtons(actionId, "negative"); track btn) {
                 <span class="chip pad">
                   {{ formatPad(btn) }}
-                  <button type="button" class="chip-x" (click)="removePadButton(actionId, 'negative', btn)">×</button>
+                  <button
+                    type="button"
+                    class="chip-x"
+                    (click)="removePadButton(actionId, 'negative', btn)"
+                  >
+                    ×
+                  </button>
                 </span>
               }
             </div>
@@ -314,8 +400,12 @@
           </div>
           @if (getAxis(actionId); as axis) {
             <label class="check axis-invert">
-              <input type="checkbox" [(ngModel)]="axis.curve.invert" (change)="onStickChange()" />
-              {{ locale === 'hu' ? 'Digitális invert' : 'Digital invert' }}
+              <input
+                type="checkbox"
+                [(ngModel)]="axis.curve.invert"
+                (change)="onStickChange()"
+              />
+              {{ locale === "hu" ? "Digitális invert" : "Digital invert" }}
             </label>
           }
         </article>
@@ -329,7 +419,13 @@
               @for (btn of buttonPads(actionId); track btn) {
                 <span class="chip pad">
                   {{ formatPad(btn) }}
-                  <button type="button" class="chip-x" (click)="removePadButton(actionId, 'button', btn)">×</button>
+                  <button
+                    type="button"
+                    class="chip-x"
+                    (click)="removePadButton(actionId, 'button', btn)"
+                  >
+                    ×
+                  </button>
                 </span>
               }
             </div>

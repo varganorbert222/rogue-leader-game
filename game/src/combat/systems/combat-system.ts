@@ -1,17 +1,17 @@
 import type { Scene, Vector3 } from '@babylonjs/core';
 import type { ShipAnchors, ShipManifestEntry } from '@rogue-leader/engine';
 import type { FactionId } from '../faction';
-import type { TargetingConfig } from '../../data/config/combat-config';
+import type { TargetingConfig } from '../../config/loaders/combat-config';
 import type { GameEventBus } from '../../core/events/game-events';
 import type { SphereBody } from '../../collision/collision-system';
-import type { WeaponsManifest } from '../../data/config/weapons-manifest';
+import type { WeaponsManifest } from '../../config/loaders/weapons-manifest';
 import type { CombatTeam } from '../weapons/combat-team';
 import { ProjectileManager, type ProjectileHitCallback, type ProjectilePassByCallback } from '../projectiles/projectile-manager';
 import type { ProjectilePassByObserver } from '../../audio/projectile-pass-by';
 import type { ProjectileHit } from '../projectiles/projectile';
 import { VehicleWeaponSystem } from '../weapons/vehicle-weapon-system';
-import { resolvePlayerAmmoMagazines, resolveShipWeaponsConfig } from '../../data/config/ship-weapons-config';
-import type { ResolvedShipWeaponGroup } from '../../data/config/ship-weapon-groups';
+import { resolvePlayerAmmoMagazines, resolveShipWeaponsConfig } from '../../config/loaders/ship-weapons-config';
+import type { ResolvedShipWeaponGroup } from '../../config/loaders/ship-weapon-groups';
 import { PlayerAmmoStore } from '../weapons/player-ammo';
 import type { WeaponEnergyComponent } from '../../ecs/components/weapon-energy-component';
 

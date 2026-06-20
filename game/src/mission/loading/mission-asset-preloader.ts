@@ -10,9 +10,9 @@ import {
   preparePropInstanceTemplate,
 } from "@rogue-leader/engine";
 import type { Scene } from "@babylonjs/core";
-import type { WeaponsManifest } from "../../data/config/weapons-manifest";
+import type { WeaponsManifest } from "../../config/loaders/weapons-manifest";
 import type { MissionConfig } from "../mission-types";
-import type { WreckDebrisManager } from "../../vfx/wreck-debris-manager";
+import type { DeathEffectManager } from "../../vfx/death-effect-manager";
 import { collectMissionAssetPlan } from "./collect-mission-assets";
 import { ShipTemplatePool } from "./ship-template-pool";
 import {
@@ -26,7 +26,7 @@ export interface MissionPreloadContext {
   weaponsManifest: WeaponsManifest;
   scene: Scene;
   shipLoader: GltfShipLoader;
-  wreckDebris: WreckDebrisManager;
+  deathEffects: DeathEffectManager;
   audio: AudioManager;
   onMessage?: (message: string) => void;
 }
@@ -48,7 +48,10 @@ export class MissionAssetPreloader {
       ctx.manifest,
       ctx.shipLoader,
     );
-    const wreckPromise = ctx.wreckDebris.preload(plan.shipIds, ctx.manifest);
+    const deathEffectInit = ctx.deathEffects.initialize(ctx.manifest);
+    const deathEffectPromise = deathEffectInit.then(() =>
+      ctx.deathEffects.preload(plan.deathPrefabIds),
+    );
 
     ctx.onMessage?.("Preloading audio…");
     ctx.audio.preloadFileVariants(BULLET_WHOOSH_BASE_PATH, BULLET_WHOOSH_FILES);
@@ -69,17 +72,14 @@ export class MissionAssetPreloader {
       const asteroidEntry = ctx.manifest.props[plan.asteroidPrefabId];
       if (asteroidEntry) {
         ctx.onMessage?.("Preloading asteroids…");
-        asteroidPromise = Promise.all([
-          ctx.shipLoader
-            .loadPropVariantTemplates(plan.asteroidPrefabId, asteroidEntry)
-            .then((templates) => {
-              for (const template of templates) {
-                preparePropInstanceTemplate(template);
-              }
-              this.asteroidTemplates = templates;
-            }),
-          ctx.wreckDebris.preloadAsteroidWrecks(plan.asteroidPrefabId, ctx.manifest),
-        ]).then(() => undefined);
+        asteroidPromise = ctx.shipLoader
+          .loadPropVariantTemplates(plan.asteroidPrefabId, asteroidEntry)
+          .then((templates) => {
+            for (const template of templates) {
+              preparePropInstanceTemplate(template);
+            }
+            this.asteroidTemplates = templates;
+          });
       }
     }
 
@@ -93,7 +93,7 @@ export class MissionAssetPreloader {
 
     await Promise.all([
       shipPromise,
-      wreckPromise,
+      deathEffectPromise,
       audioPromise,
       vfxPromise,
       asteroidPromise,

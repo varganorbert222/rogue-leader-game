@@ -4,6 +4,7 @@ export const DevConfigTools = {
   particleEditor: 'particle-editor',
   lodEditor: 'lod-editor',
   cockpitEditor: 'cockpit-editor',
+  prefabManager: 'prefab-manager',
 } as const;
 
 export type DevConfigToolId = (typeof DevConfigTools)[keyof typeof DevConfigTools];
@@ -21,6 +22,9 @@ export const DevConfigPaths = {
   },
   cockpitEditor: {
     shipConfig: (shipId: string) => `${DEV_CONFIG_BASE}/cockpit-editor/ships/${shipId}.json`,
+  },
+  prefabManager: {
+    library: `${DEV_CONFIG_BASE}/prefab-manager/library.json`,
   },
 } as const;
 

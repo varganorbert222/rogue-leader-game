@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
-import type { DevNodeTransform, DevTransformGizmoMode } from '@rogue-leader/engine';
+import type { DevNodeTransform, DevTransformGizmoMode } from '@rogue-leader/engine/dev';
 import { DevInspectorSectionComponent } from '../dev-inspector-section/dev-inspector-section.component';
 import { DevVec3FieldComponent } from '../../dev-vec3-field/dev-vec3-field.component';
 

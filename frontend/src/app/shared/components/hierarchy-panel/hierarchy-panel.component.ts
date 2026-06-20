@@ -17,7 +17,7 @@ import {
   type HierarchyOutlinerRow,
   type HierarchyOutlinerState,
   type HierarchyReorderEvent,
-} from '@rogue-leader/engine';
+} from '@rogue-leader/engine/dev';
 
 export type HierarchyContextAction =
   | 'addCatalog'
@@ -45,6 +45,8 @@ export class HierarchyPanelComponent implements OnChanges {
   @Input() resetKey: string | number = 0;
   @Input() syncViewport = false;
   @Input() canRemoveNode: (node: HierarchyNode) => boolean = () => false;
+  @Input() canAddBelowNode: (node: HierarchyNode) => boolean = () => true;
+  @Input() canDragNode: (node: HierarchyNode) => boolean = () => true;
   @Input() showClipboardActions = false;
   @Input() clipboardReady = false;
   @Input() canCopyNode: (node: HierarchyNode) => boolean = () => false;
@@ -132,6 +134,7 @@ export class HierarchyPanelComponent implements OnChanges {
 
   onAddClick(node: HierarchyNode, event: MouseEvent): void {
     event.stopPropagation();
+    if (!this.canAddBelowNode(node)) return;
     this.contextMenu = null;
     this.addBelow.emit(node);
   }
@@ -152,6 +155,7 @@ export class HierarchyPanelComponent implements OnChanges {
 
   canDrag(row: HierarchyOutlinerRow): boolean {
     if (!this.editable) return false;
+    if (!this.canDragNode(row.node)) return false;
     if (this.treeReorder) {
       return row.node.kind !== 'effectRoot';
     }
@@ -162,10 +166,13 @@ export class HierarchyPanelComponent implements OnChanges {
   }
 
   canDropInside(row: HierarchyOutlinerRow): boolean {
+    if (!this.canAddBelowNode(row.node)) return false;
     return (
       this.treeReorder &&
       (row.node.kind === 'effectRoot' ||
         row.node.kind === 'effectGroup' ||
+        row.node.kind === 'prefabRoot' ||
+        row.node.kind === 'prefabGroup' ||
         row.hasChildren)
     );
   }
@@ -274,6 +281,14 @@ export class HierarchyPanelComponent implements OnChanges {
         return '◎';
       case 'effectGroup':
         return '▣';
+      case 'prefabRoot':
+        return '◎';
+      case 'prefabGroup':
+        return '▣';
+      case 'prefabModel':
+        return '◆';
+      case 'sceneNode':
+        return '◇';
       default:
         return '•';
     }

@@ -6,13 +6,13 @@ import type {
 import type {
   WeaponsManifest,
   WeaponDefinitionEntry,
-} from '../../data/config/weapons-manifest';
+} from '../../config/loaders/weapons-manifest';
 import {
   resolveProjectileVisual,
   resolveWeaponDefinitionEntry,
   resolveWeaponIdForMount,
-} from '../../data/config/weapons-manifest';
-import { resolveShipWeaponsConfig } from '../../data/config/ship-weapons-config';
+} from '../../config/loaders/weapons-manifest';
+import { resolveShipWeaponsConfig } from '../../config/loaders/ship-weapons-config';
 import type { ResolvedWeaponDefinition } from './weapon-definition';
 import type { ProjectileConfig } from '../projectiles/projectile-config';
 

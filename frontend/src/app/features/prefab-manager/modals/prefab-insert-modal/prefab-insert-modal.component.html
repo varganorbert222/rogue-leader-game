@@ -1,0 +1,75 @@
+<app-dev-modal
+  [open]="open"
+  title="Add node"
+  titleId="prefab-insert-modal-title"
+  (dismiss)="cancel.emit()"
+>
+  @if (anchorLabel) {
+    <p class="hint">Child of: <strong>{{ anchorLabel }}</strong></p>
+  }
+
+  <label class="field">
+    <span>Node type</span>
+    <select [ngModel]="insertMode" (ngModelChange)="onInsertModeChange($event)">
+      <option value="group">Empty group</option>
+      <option value="model">Model reference (manifest)</option>
+      <option value="particle">Particle system reference (read-only)</option>
+      <option value="nested-readonly">Nested prefab (read-only link)</option>
+      <option value="nested-edit">Nested prefab (linked edit)</option>
+      <option value="nested-clone">Nested prefab (detached clone)</option>
+    </select>
+  </label>
+
+  @if (insertMode === 'model') {
+    <app-dev-model-picker
+      [models]="models"
+      [modelId]="modelId"
+      [variantId]="variantId"
+      assetLabel="Manifest model"
+      (modelChange)="onModelChange($event)"
+      (variantChange)="variantId = $event"
+    />
+    <p class="hint">Models are stored as read-only manifest references only.</p>
+  }
+
+  @if (insertMode === 'particle') {
+    <label class="field">
+      <span>Particle preset</span>
+      <select [(ngModel)]="particlePresetId">
+        @for (option of particlePresetOptions; track option.presetId) {
+          <option [value]="option.presetId">{{ option.label }}</option>
+        }
+      </select>
+    </label>
+    @if (!particlePresetOptions.length) {
+      <p class="hint warn">No particle presets available.</p>
+    } @else if (!selectedParticlePresetHasTree) {
+      <p class="hint warn">Selected preset has no modules — pick another.</p>
+    } @else {
+      <p class="hint">Inserts the full particle effect tree from its root (read-only references).</p>
+    }
+  }
+
+  @if (insertMode.startsWith('nested')) {
+    <label class="field">
+      <span>Prefab</span>
+      <select [(ngModel)]="prefabId">
+        @for (entry of availablePrefabs; track entry.id) {
+          <option [value]="entry.id">{{ entry.label }}</option>
+        }
+      </select>
+    </label>
+    @if (!availablePrefabs.length) {
+      <p class="hint warn">No other prefabs available in the library.</p>
+    } @else if (!selectedPrefabHasTree) {
+      <p class="hint warn">Selected prefab has no content — pick another.</p>
+    } @else {
+      <p class="hint">Inserts the full prefab tree from its root.</p>
+    }
+  }
+
+  <div devModalActions>
+    <button type="button" class="secondary-btn" (click)="cancel.emit()">Cancel</button>
+    <button type="button" class="primary-btn" (click)="submit()" [disabled]="!canSubmit">OK</button>
+  </div>
+</app-dev-modal>

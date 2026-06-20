@@ -1,7 +1,7 @@
 import { Vector3, type Scene } from '@babylonjs/core';
 import { angularOffsetDeg } from '@rogue-leader/engine';
 import { isAutoAimCandidate, type FactionId } from '../faction';
-import type { TargetingConfig } from '../../data/config/combat-config';
+import type { TargetingConfig } from '../../config/loaders/combat-config';
 import { projectWorldToScreen, type HudScreenPoint } from '../../flight/screen-project';
 import { isTargetInAimHemisphere } from './aim-solver';
 import { isInsideAimCone } from './targeting-cone';

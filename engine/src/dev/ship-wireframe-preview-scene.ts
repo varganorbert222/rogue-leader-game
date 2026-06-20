@@ -17,6 +17,7 @@ import { collectShipPreviewVisualMeshes } from '../loaders/collider-mesh-detecto
 import { attachGltfImportToParent } from '../loaders/gltf-import-utils';
 import { resolveLodPlan } from '../loaders/lod-config';
 import { createGraphicsEngine } from '../core/backend';
+import { ShipPreviewAnimationLoop } from './ship-preview-animation-loop';
 
 const WIREFRAME_COLOR = new Color3(0.35, 0.85, 1);
 const BG_COLOR = new Color4(0.02, 0.04, 0.08, 1);
@@ -31,6 +32,7 @@ export class ShipWireframePreviewScene {
   private loadGeneration = 0;
   private readonly wireMaterials = new Map<AbstractMesh, StandardMaterial>();
   private spin = 0;
+  private animationLoop: ShipPreviewAnimationLoop | null = null;
 
   private constructor(
     engine: AbstractEngine,
@@ -102,6 +104,15 @@ export class ShipWireframePreviewScene {
     }
 
     this.fitCameraToMeshes(visualMeshes);
+
+    const previewGroups = ShipPreviewAnimationLoop.resolveGroups(
+      entry,
+      result.animationGroups ?? [],
+    );
+    if (previewGroups.length > 0) {
+      this.animationLoop = new ShipPreviewAnimationLoop(previewGroups, this.scene);
+      this.animationLoop.start();
+    }
   }
 
   render(): void {
@@ -150,6 +161,9 @@ export class ShipWireframePreviewScene {
   }
 
   private disposeLoaded(): void {
+    this.animationLoop?.dispose();
+    this.animationLoop = null;
+
     for (const mat of this.wireMaterials.values()) {
       mat.dispose();
     }

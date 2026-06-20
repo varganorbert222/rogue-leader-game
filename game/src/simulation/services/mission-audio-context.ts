@@ -1,19 +1,19 @@
 import { Vector3 } from '@babylonjs/core';
 import type { Camera } from '@babylonjs/core/Cameras/camera';
-import type { NpcBehaviorConfig } from '../../../data/config/npc-behavior-config';
-import { Role } from '../../../ecs/components/role-tag';
-import type { EntityId } from '../../../ecs/entity-id';
+import type { NpcBehaviorConfig } from '../../config/loaders/npc-behavior-config';
+import { Role } from '../../ecs/components/role-tag';
+import type { EntityId } from '../../ecs/entity-id';
 import {
   getEngineSpeedRatio,
   getShipPosition,
   getShipVelocity,
-} from '../../../ecs/queries/ship-queries';
-import type { World } from '../../../ecs/world';
+} from '../../ecs/queries/ship-queries';
+import type { World } from '../../ecs/world';
 import type {
   GameAudioUpdateContext,
   ShipEngineAudioSource,
-} from '../../../audio/game-audio-bridge';
-import type { PlayerInput } from '../../../player/input/player-input';
+} from '../../audio/game-audio-bridge';
+import type { PlayerInput } from '../../player/input/player-input';
 
 export function buildNpcEngineSources(world: World): ShipEngineAudioSource[] {
   const sources: ShipEngineAudioSource[] = [];

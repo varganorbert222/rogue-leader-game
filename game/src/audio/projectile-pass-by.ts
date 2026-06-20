@@ -1,6 +1,6 @@
 import { Vector3 } from '@babylonjs/core';
 import { closestPointOnSegment } from '@rogue-leader/engine';
-import { CombatTeams, type CombatTeamId } from '../data/constants/combat-teams';
+import { CombatTeams, type CombatTeamId } from '../config/constants/combat-teams';
 
 export interface ProjectileNearMiss {
   weaponId: string;

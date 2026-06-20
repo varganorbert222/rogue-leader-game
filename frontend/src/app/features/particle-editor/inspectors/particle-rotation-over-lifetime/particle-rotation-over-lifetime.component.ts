@@ -4,7 +4,7 @@ import {
   ROTATION_OVER_LIFETIME_PRESETS,
   cloneVec3CurveKeyframes,
   type RotationOverLifetimeEditable,
-} from '@rogue-leader/engine';
+} from '@rogue-leader/engine/dev';
 import { DevVec3CurveEditorComponent } from '../../../../shared/dev-editor/dev-vec3-curve-editor/dev-vec3-curve-editor.component';
 import { DevVec3FieldComponent } from '../../../../shared/dev-editor/dev-vec3-field/dev-vec3-field.component';
 

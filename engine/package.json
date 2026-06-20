@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./dev": "./src/dev/index.ts"
+  },
   "dependencies": {
     "@babylonjs/core": "^7.54.3",
     "@babylonjs/gui": "^7.54.3",

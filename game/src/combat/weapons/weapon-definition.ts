@@ -5,7 +5,7 @@ import type {
   WeaponFireGroup,
   WeaponFaction,
   WeaponHomingConfig,
-} from '../../data/config/weapons-manifest';
+} from '../../config/loaders/weapons-manifest';
 import type { ProjectileConfig } from '../projectiles/projectile-config';
 
 export type { WeaponDelivery, WeaponBehavior, WeaponFireGroup, WeaponFaction };

@@ -7,7 +7,7 @@ import {
   SfxClipIds,
   DEFAULT_PLAYER_SHIP_ID,
   DamageSeverities,
-} from "../data/constants";
+} from "../config/constants";
 import {
   GameEventPayloadKeys,
   GameEventTypes,

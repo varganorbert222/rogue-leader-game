@@ -12,6 +12,7 @@ import type { ShipIdentityComponent } from './components/ship-identity-component
 import type { TargetingComponent } from './components/targeting-component';
 import type { WeaponEnergyComponent } from './components/weapon-energy-component';
 import type { WeaponsComponent } from './components/weapons-component';
+import type { DeathEffectRefComponent } from './components/death-effect-ref';
 
 /** Typed component registry — every key maps to one component type. */
 export interface ComponentMap {
@@ -29,6 +30,7 @@ export interface ComponentMap {
   targeting: TargetingComponent;
   npcSteering: NpcSteeringComponent;
   asteroidBody: AsteroidBodyComponent;
+  deathEffectRef: DeathEffectRefComponent;
 }
 
 export type ComponentKey = keyof ComponentMap;

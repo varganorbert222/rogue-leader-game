@@ -1,10 +1,11 @@
 import type { AssetManifest, ShipManifestEntry } from "@rogue-leader/engine";
-import type { WeaponsManifest } from "../../data/config/weapons-manifest";
-import { resolveWeaponDefinitionEntry } from "../../data/config/weapons-manifest";
-import { collectShipWeaponIds, resolveShipWeaponsConfig } from "../../data/config/ship-weapons-config";
+import { collectDeathPrefabIds } from "@rogue-leader/engine";
+import type { WeaponsManifest } from "../../config/loaders/weapons-manifest";
+import { resolveWeaponDefinitionEntry } from "../../config/loaders/weapons-manifest";
+import { collectShipWeaponIds, resolveShipWeaponsConfig } from "../../config/loaders/ship-weapons-config";
 import type { MissionConfig } from "../mission-types";
 import { ShipAudioCatalog } from "../../audio/ship-audio-map";
-import { SfxClipIds } from "../../data/constants/audio-clips";
+import { SfxClipIds } from "../../config/constants/audio-clips";
 import { resolveShipSfoilSfx } from "../../audio/sfoil-sfx";
 import { resolveFaction } from "../../combat/faction";
 import { collectSelectableShipIds } from "../spawn/selectable-ships";
@@ -16,6 +17,7 @@ export interface SfoilFileVariantSet {
 
 export interface MissionAssetPlan {
   shipIds: readonly string[];
+  deathPrefabIds: readonly string[];
   asteroidPrefabId?: string;
   skyboxId: string;
   skyboxTexture?: number | string;
@@ -95,6 +97,10 @@ export function collectMissionAssetPlan(
 
   return {
     shipIds: uniqueShipIds,
+    deathPrefabIds: collectDeathPrefabIds(uniqueShipIds, manifest, {
+      asteroidPropId: config.asteroids?.prefabId,
+      asteroidDeathPrefabOverride: config.asteroids?.deathPrefabId,
+    }),
     asteroidPrefabId: config.asteroids?.prefabId,
     skyboxId: config.skyboxId,
     skyboxTexture: config.skyboxTexture,

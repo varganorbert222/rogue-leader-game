@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import type { Vec3Editable } from '@rogue-leader/engine';
+import type { Vec3Editable } from '@rogue-leader/engine/dev';
 
 @Component({
   selector: 'app-dev-vec3-field',

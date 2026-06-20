@@ -82,10 +82,6 @@ export class ControlsPanelComponent implements OnInit, OnDestroy {
     }
   }
 
-  get title(): string {
-    return this.locale === 'hu' ? 'Irányítás' : 'Controls';
-  }
-
   get hasGamepad(): boolean {
     return this.gamepads.length > 0;
   }
@@ -122,7 +118,7 @@ export class ControlsPanelComponent implements OnInit, OnDestroy {
 
   onGamepadSelect(): void {
     this.config.gamepad.selectedGamepadId = normalizeSelectedGamepadId(
-      this.config.gamepad.selectedGamepadId
+      this.config.gamepad.selectedGamepadId,
     );
     this.persist();
   }
@@ -131,7 +127,11 @@ export class ControlsPanelComponent implements OnInit, OnDestroy {
     this.persist();
   }
 
-  startCapture(actionId: ControlActionId, pole: BindingPole, tab: ControlsTab): void {
+  startCapture(
+    actionId: ControlActionId,
+    pole: BindingPole,
+    tab: ControlsTab,
+  ): void {
     this.cancelCapture();
     this.captureTarget = { actionId, pole, tab };
     this.captureSession = startBindingCapture(
@@ -150,7 +150,7 @@ export class ControlsPanelComponent implements OnInit, OnDestroy {
           this.config,
           actionId,
           pole,
-          binding
+          binding,
         );
         this.captureTarget = null;
         this.captureSession = null;
@@ -163,7 +163,7 @@ export class ControlsPanelComponent implements OnInit, OnDestroy {
       {
         allowKeyboard: tab === 'keyboard',
         allowGamepad: tab === 'gamepad',
-      }
+      },
     );
   }
 
@@ -173,7 +173,11 @@ export class ControlsPanelComponent implements OnInit, OnDestroy {
     this.captureTarget = null;
   }
 
-  isCapturing(actionId: ControlActionId, pole: BindingPole, tab: ControlsTab): boolean {
+  isCapturing(
+    actionId: ControlActionId,
+    pole: BindingPole,
+    tab: ControlsTab,
+  ): boolean {
     const target = this.captureTarget;
     return (
       target?.actionId === actionId &&
@@ -187,8 +191,17 @@ export class ControlsPanelComponent implements OnInit, OnDestroy {
     this.persist();
   }
 
-  removePadButton(actionId: ControlActionId, pole: BindingPole, index: number): void {
-    this.config = removeGamepadButtonBinding(this.config, actionId, pole, index);
+  removePadButton(
+    actionId: ControlActionId,
+    pole: BindingPole,
+    index: number,
+  ): void {
+    this.config = removeGamepadButtonBinding(
+      this.config,
+      actionId,
+      pole,
+      index,
+    );
     this.persist();
   }
 
@@ -206,7 +219,10 @@ export class ControlsPanelComponent implements OnInit, OnDestroy {
     return pole === 'positive' ? axis.keysPositive : axis.keysNegative;
   }
 
-  axisButtons(actionId: ControlActionId, pole: 'positive' | 'negative'): number[] {
+  axisButtons(
+    actionId: ControlActionId,
+    pole: 'positive' | 'negative',
+  ): number[] {
     const axis = this.getAxis(actionId);
     if (!axis) return [];
     return pole === 'positive' ? axis.buttonsPositive : axis.buttonsNegative;
@@ -232,11 +248,15 @@ export class ControlsPanelComponent implements OnInit, OnDestroy {
     return this.config[actionId] as ButtonActionBindings;
   }
 
-  isAxis(actionId: ControlActionId): actionId is (typeof AXIS_ACTION_IDS)[number] {
+  isAxis(
+    actionId: ControlActionId,
+  ): actionId is (typeof AXIS_ACTION_IDS)[number] {
     return (AXIS_ACTION_IDS as readonly ControlActionId[]).includes(actionId);
   }
 
-  isButton(actionId: ControlActionId): actionId is (typeof BUTTON_ACTION_IDS)[number] {
+  isButton(
+    actionId: ControlActionId,
+  ): actionId is (typeof BUTTON_ACTION_IDS)[number] {
     return (BUTTON_ACTION_IDS as readonly ControlActionId[]).includes(actionId);
   }
 

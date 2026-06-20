@@ -13,4 +13,7 @@ export const RuntimePaths = {
   renderConfig: `${DATA_BASE_URL}/render.json`,
   audioManifest: `${DATA_BASE_URL}/audio/manifest.json`,
   audioConfigBase: `${DATA_BASE_URL}/audio`,
+  prefabLibrary: `${DATA_BASE_URL}/prefab/library.json`,
+  /** Dev-authored particle presets — used by prefab death effects until a runtime catalog exists. */
+  particlePresets: `${DATA_BASE_URL}/dev/particle-editor/presets.json`,
 } as const;

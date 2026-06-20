@@ -52,6 +52,8 @@ export interface MissionConfig {
     damageOnImpact: number;
     slowTumble: boolean;
     maxAngularSpeed: number;
+    /** Optional mission override for prop `deathPrefabId`. */
+    deathPrefabId?: string;
   };
   waves: MissionWave[];
   navigation?: MissionNavigationConfig;

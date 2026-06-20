@@ -132,7 +132,7 @@ export type {
 export {
   loadWeaponsManifest,
   type WeaponsManifest,
-} from "./data/config/weapons-manifest";
+} from "./config/loaders/weapons-manifest";
 export { VehicleWeaponSystem } from "./combat/weapons/vehicle-weapon-system";
 export { BoidNpcInput, type EnemyBehavior } from "./ai/boid-npc-input";
 export { BehaviorNpcInput } from "./ai/behavior-npc-input";
@@ -144,7 +144,7 @@ export {
   DEFAULT_NPC_BEHAVIOR_CONFIG,
   type NpcBehaviorConfig,
   type NpcStateId,
-} from "./data/config/npc-behavior-config";
+} from "./config/loaders/npc-behavior-config";
 export { GameDebugOverlay } from "./debug/game-debug-overlay";
 export { CollisionSystem, buildSphereBody } from "./collision/collision-system";
 export {
@@ -155,8 +155,8 @@ export {
 export { AsteroidSpawnService as AsteroidField } from "./hazards/asteroid-spawn-service";
 export { MissionManager } from "./mission/session/mission-manager";
 export { MissionBootstrap } from "./mission/bootstrap/mission-bootstrap";
-export { MissionSimulationCoordinator } from "./mission/simulation/coordinator/mission-simulation-coordinator";
-export type { MissionRuntimeContext } from "./mission/simulation/mission-runtime-context";
+export { MissionSimulationCoordinator } from "./simulation/coordinator/mission-simulation-coordinator";
+export type { MissionRuntimeContext } from "./simulation/runtime-context";
 export type { MissionHudState, MissionLoadState } from "./mission/presentation/mission-hud-state";
 export type { MissionConfig, MissionEndState, MissionSessionPhase } from "./mission/mission-types";
 export { MissionEndStates } from "./mission/mission-types";
@@ -186,7 +186,7 @@ export {
   type MissionId,
   type EntityDestroyKind,
   type DamageSeverity,
-} from "./data/constants";
+} from "./config/constants";
 export {
   GameEventTypes,
   GameEventPayloadKeys,

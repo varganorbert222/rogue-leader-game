@@ -12,6 +12,7 @@ import {
   randomInRange,
   randomPointInSphericalShell,
   randomTumbleAxis,
+  resolvePropDeathPrefabId,
   setLoadedEntityVisible,
 } from '@rogue-leader/engine';
 import { HealthComponent } from '../ecs/components/health-component';
@@ -21,6 +22,7 @@ import type { EntityId } from '../ecs/entity-id';
 
 export interface AsteroidConfig {
   prefabId: string;
+  deathPrefabId?: string;
   count: number;
   seed: number;
   spawnRegion: {
@@ -118,10 +120,11 @@ export class AsteroidSpawnService {
         attempts++;
       } while (Vector3.Distance(pos, playerSpawn) < 80 && attempts < 20);
 
-      const variantIndex = variantIndices[i];
-      const template = this.templates[variantIndex];
-      const group = this.variantGroups[variantIndex];
-      const instanceId = `asteroid_${i}`;
+    const variantIndex = variantIndices[i];
+    const template = this.templates[variantIndex];
+    const group = this.variantGroups[variantIndex];
+    const instanceId = `asteroid_${i}`;
+    const deathPrefabId = resolvePropDeathPrefabId(entry, config.deathPrefabId);
       const loaded = group
         ? group.spawn(instanceId)
         : loader.instanceProp(template, instanceId, entry);
@@ -157,6 +160,9 @@ export class AsteroidSpawnService {
         tumbleAxis,
         tumbleSpeed,
       });
+      if (deathPrefabId) {
+        world.add(entity, 'deathEffectRef', { prefabId: deathPrefabId });
+      }
     }
   }
 
