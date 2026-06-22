@@ -8,6 +8,7 @@ import {
   cloneParticleEffect,
   cloneSlotAsInstance,
   cloneTreeNodeSubtree,
+  collectEffectParticleSystemIdsInSubtree,
   countParticleModules,
   copyNodeTransform,
   createInlineSlot,
@@ -16,9 +17,11 @@ import {
   DevConfigTools,
   ensureTreeNodeTransform,
   estimateEffectPreviewDurationMs,
+  estimatePreviewDurationMsForModuleIds,
   findSlotById,
   findTreeNode,
   insertNodeUnderAnchor,
+  insertNodeAtEffectTreeRoot,
   isSlotEditRef,
   isSlotReadonlyRef,
   loadParticlePresets,
@@ -105,6 +108,7 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
 
   catalogModalOpen = false;
   catalogAnchor: HierarchyNode | null = null;
+  catalogInsertAtRoot = false;
   catalogInitialMode: ParticleCatalogInsertMode = 'blank';
   catalogAllowBlank = true;
   deleteModalOpen = false;
@@ -175,7 +179,6 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
 
   get selectedTreeNode(): ParticleEffectTreeNode | null {
     if (!this.effect || !this.selectedNodeId) return null;
-    if (this.selectedNodeId === this.effect.id) return null;
     const located = findTreeNode(this.effect.tree, this.selectedNodeId);
     if (!located) return null;
     ensureTreeNodeTransform(located.node);
@@ -240,9 +243,7 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
     return this.treeClipboard !== null;
   }
 
-  canCopyHierarchyNode = (node: HierarchyNode): boolean => {
-    return node.kind !== 'effectRoot';
-  };
+  canCopyHierarchyNode = (_node: HierarchyNode): boolean => true;
 
   canCutHierarchyNode = (node: HierarchyNode): boolean => {
     return this.canCopyHierarchyNode(node) && this.canRemoveHierarchyNode(node);
@@ -254,7 +255,6 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
 
   canRemoveHierarchyNode = (node: HierarchyNode): boolean => {
     if (!this.effect) return false;
-    if (node.kind === 'effectRoot') return false;
     if (node.kind === 'particleSystem') {
       return countParticleModules(this.effect.tree) > 1;
     }
@@ -347,20 +347,7 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
 
   onHierarchyReorder(event: HierarchyReorderEvent): void {
     if (!this.effect) return;
-    const tree = this.effect.tree;
-
-    if (event.targetId === this.effect.id) {
-      const located = findTreeNodeForMove(tree, event.sourceId);
-      if (!located) return;
-      const [moved] = located.parentChildren.splice(located.index, 1);
-      if (event.position === 'before') {
-        tree.unshift(moved);
-      } else {
-        tree.push(moved);
-      }
-    } else {
-      moveTreeNode(tree, event);
-    }
+    moveTreeNode(this.effect.tree, event);
 
     syncEffectSystemsFromTree(this.effect);
     void this.resyncPreview();
@@ -369,7 +356,16 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
   }
 
   onAddBelow(node: HierarchyNode): void {
+    this.catalogInsertAtRoot = false;
     this.catalogAnchor = node;
+    this.catalogInitialMode = 'blank';
+    this.catalogAllowBlank = true;
+    this.catalogModalOpen = true;
+  }
+
+  onAddAtRoot(): void {
+    this.catalogInsertAtRoot = true;
+    this.catalogAnchor = null;
     this.catalogInitialMode = 'blank';
     this.catalogAllowBlank = true;
     this.catalogModalOpen = true;
@@ -379,6 +375,7 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
     if (!this.effect || !this.previewReady) return;
 
     if (event.action === 'addCatalog') {
+      this.catalogInsertAtRoot = false;
       this.catalogAnchor = event.node;
       this.catalogInitialMode = 'reference-readonly';
       this.catalogAllowBlank = false;
@@ -414,16 +411,22 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
   onCatalogModalCancel(): void {
     this.catalogModalOpen = false;
     this.catalogAnchor = null;
+    this.catalogInsertAtRoot = false;
   }
 
   async onCatalogModalConfirm(result: ParticleCatalogInsertResult): Promise<void> {
     const anchor = this.catalogAnchor;
+    const insertAtRoot = this.catalogInsertAtRoot;
     this.catalogModalOpen = false;
     this.catalogAnchor = null;
-    if (!anchor) return;
+    this.catalogInsertAtRoot = false;
 
     if (result.mode === 'blank') {
-      await this.insertModuleUnder(anchor);
+      if (insertAtRoot) {
+        await this.insertModuleAtRoot();
+      } else if (anchor) {
+        await this.insertModuleUnder(anchor);
+      }
       return;
     }
 
@@ -431,14 +434,14 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
 
     if (result.mode === 'clone') {
       const nodes = buildClonedPresetTree(result.presetId, this.presets);
-      await this.insertPresetTreeUnder(anchor, nodes);
+      await this.insertPresetTreeUnder(anchor, nodes, insertAtRoot);
       return;
     }
 
     const refMode: ParticlePresetRefMode =
       result.mode === 'reference-edit' ? 'edit' : 'readonly';
     const nodes = buildReferencedPresetTree(result.presetId, refMode, this.presets);
-    await this.insertPresetTreeUnder(anchor, nodes);
+    await this.insertPresetTreeUnder(anchor, nodes, insertAtRoot);
   }
 
   async onRemoveHierarchyNode(node: HierarchyNode): Promise<void> {
@@ -599,6 +602,24 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
     }, durationMs);
   }
 
+  playSelectedSubtree(): void {
+    if (!this.preview || !this.selectedNodeId || !this.effect) return;
+    this.playing = true;
+    this.preview.stopAll();
+    this.preview.playSubtree(this.selectedNodeId);
+    const systemIds = collectEffectParticleSystemIdsInSubtree(
+      this.effect,
+      this.selectedNodeId,
+    );
+    const resolved = this.effect.systems
+      .map((slot) => resolveParticleSystemSlot(slot, this.presets))
+      .filter((cfg): cfg is ParticleSystemEditable => !!cfg);
+    const durationMs = estimatePreviewDurationMsForModuleIds(resolved, systemIds);
+    window.setTimeout(() => {
+      this.playing = false;
+    }, durationMs);
+  }
+
   playSelectedSystem(): void {
     if (!this.selectedNodeId || !this.preview) return;
     this.preview.stopAll();
@@ -633,13 +654,18 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
   }
 
   private async insertPresetTreeUnder(
-    anchor: HierarchyNode,
+    anchor: HierarchyNode | null,
     nodes: ParticleEffectTreeNode[],
+    insertAtRoot = false,
   ): Promise<void> {
     if (!this.effect || !this.previewReady || !nodes.length) return;
 
     for (const node of nodes) {
-      insertNodeUnderAnchor(this.effect, anchor.id, anchor.kind, node);
+      if (insertAtRoot || !anchor) {
+        insertNodeAtEffectTreeRoot(this.effect, node);
+      } else {
+        insertNodeUnderAnchor(this.effect, anchor.id, node);
+      }
     }
     syncEffectSystemsFromTree(this.effect);
 
@@ -669,13 +695,38 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
     await this.insertTreeNodeUnder(anchor, createModuleTreeNode(slot));
   }
 
+  private async insertModuleAtRoot(): Promise<void> {
+    const slot = createInlineSlot(
+      defaultParticleSystem(`System ${countParticleModules(this.effect!.tree) + 1}`),
+    );
+    await this.insertTreeNodeAtRoot(createModuleTreeNode(slot));
+  }
+
   private async insertTreeNodeUnder(
     anchor: HierarchyNode,
     node: ParticleEffectTreeNode,
   ): Promise<void> {
     if (!this.effect || !this.previewReady) return;
 
-    insertNodeUnderAnchor(this.effect, anchor.id, anchor.kind, node);
+    insertNodeUnderAnchor(this.effect, anchor.id, node);
+    syncEffectSystemsFromTree(this.effect);
+
+    this.selectedNodeId = node.id;
+    if (node.kind === 'particleSystem') {
+      this.refreshResolvedSystem();
+    } else {
+      this.resolvedSystemCache = null;
+    }
+
+    await this.resyncPreview();
+    this.refreshHierarchy();
+    this.syncCurrentPreset();
+  }
+
+  private async insertTreeNodeAtRoot(node: ParticleEffectTreeNode): Promise<void> {
+    if (!this.effect || !this.previewReady) return;
+
+    insertNodeAtEffectTreeRoot(this.effect, node);
     syncEffectSystemsFromTree(this.effect);
 
     this.selectedNodeId = node.id;
@@ -784,24 +835,4 @@ export class ParticleEditorComponent implements OnInit, OnDestroy {
       this.preview?.updateSystem(system);
     }, 120);
   }
-}
-
-function findTreeNodeForMove(
-  tree: ParticleEffectTreeNode[],
-  nodeId: string,
-): { parentChildren: ParticleEffectTreeNode[]; index: number } | null {
-  const topIndex = tree.findIndex((node) => node.id === nodeId);
-  if (topIndex >= 0) {
-    return { parentChildren: tree, index: topIndex };
-  }
-
-  let found: { parentChildren: ParticleEffectTreeNode[]; index: number } | null = null;
-  walkTree(tree, (node) => {
-    if (found) return;
-    const childIndex = node.children.findIndex((child) => child.id === nodeId);
-    if (childIndex >= 0) {
-      found = { parentChildren: node.children, index: childIndex };
-    }
-  });
-  return found;
 }

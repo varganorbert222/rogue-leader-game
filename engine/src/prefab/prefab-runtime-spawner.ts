@@ -28,6 +28,7 @@ import type {
 import { applyTransformToBabylonNode } from '../dev/particle/transform';
 import type { LodEditorModelEntry } from '../dev/lod-editor-types';
 import { loadManifestModelEntity } from '../dev/prefab/model-hierarchy';
+import { showLoadedEntityForDevPreview } from '../loaders/loaded-entity-visibility';
 import {
   isPrefabModelSlot,
   isPrefabNestedSlot,

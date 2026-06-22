@@ -11,6 +11,8 @@ import {
 } from '@babylonjs/core';
 import type { BabylonHost } from '../../core/babylon-host';
 import { RuntimePaths } from '../../runtime-paths';
+import { collectDescendantMeshes } from '../../loaders/clone-entity-utils';
+import { showLoadedEntityForDevPreview } from '../../loaders/loaded-entity-visibility';
 import { type AssetManifest } from '../../loaders/asset-manifest';
 import type { LodEditorModelEntry } from '../lod-editor-types';
 import { DevTransformGizmo, type DevTransformGizmoMode } from '../dev-transform-gizmo';
@@ -27,7 +29,7 @@ import { MeshParticlePreview } from '../particle/mesh/mesh-particle-preview';
 import { createLocalOriginCross, disposeLineMeshes } from '../particle/origin-cross';
 import { resolveParticleSystemSlot } from '../particle/refs';
 import { walkTree } from '../particle/tree';
-import { startParticlePlayback } from '../particle/playback';
+import { startParticlePlayback, playParticleModuleIds } from '../particle/playback';
 import type {
   ParticlePresetEntry,
   ParticleSystemEditable,
@@ -44,7 +46,7 @@ import {
 import { applyTransformToBabylonNode } from './transform';
 import type { PrefabNodeTransform } from './types';
 import { loadManifestModelEntity } from './model-hierarchy';
-import { walkPrefabTree } from './tree';
+import { collectPrefabParticleSystemIdsInSubtree, walkPrefabTree } from './tree';
 import type {
   PrefabEditable,
   PrefabLibraryEntry,
@@ -170,21 +172,26 @@ export class PrefabPreviewScene {
   }
 
   playAll(): void {
+    if (!this.prefab) return;
+    this.playSubtree(this.prefab.id);
+  }
+
+  playSubtree(anchorNodeId: string): void {
+    if (!this.prefab) return;
     this.stopAll();
+
+    const systemIds = collectPrefabParticleSystemIdsInSubtree(this.prefab, anchorNodeId);
     const resolved = this.collectResolvedParticleConfigs();
     const subOnly = collectSubEmitterTargetIds(resolved);
 
-    for (const [id, ps] of this.systems) {
-      if (subOnly.has(id)) continue;
-      const config = resolved.find((c) => c.id === id);
-      if (!config) continue;
-      startParticlePlayback(ps, config, this.playbackTimers);
-    }
-
-    for (const [id, meshPreview] of this.meshPreviews) {
-      if (subOnly.has(id)) continue;
-      meshPreview.play(this.host.scene);
-    }
+    playParticleModuleIds(systemIds, {
+      systems: this.systems,
+      meshPreviews: this.meshPreviews,
+      resolved,
+      subOnly,
+      scene: this.host.scene,
+      timers: this.playbackTimers,
+    });
   }
 
   playSystem(systemId: string): void {
@@ -313,7 +320,11 @@ export class PrefabPreviewScene {
     entity.root.position.set(0, 0, 0);
     entity.root.rotationQuaternion = null;
     entity.root.rotation.set(0, 0, 0);
-    this.devRendering.applyEmissiveBloomToMeshes(entity.meshes);
+    showLoadedEntityForDevPreview(entity);
+    const previewMeshes = collectDescendantMeshes(entity.root).filter((mesh) => mesh.isVisible);
+    this.devRendering.applyEmissiveBloomToMeshes(
+      previewMeshes.length > 0 ? previewMeshes : entity.meshes,
+    );
     this.modelRoots.set(nodeId, entity.root);
   }
 

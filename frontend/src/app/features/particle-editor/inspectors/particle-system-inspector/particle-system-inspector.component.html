@@ -1,8 +1,13 @@
-<fieldset class="particle-inspector-body" [disabled]="readonly">
+<div class="particle-inspector-body">
 <div class="inspector-toolbar">
   <label class="field">
     <span>Name</span>
-    <input type="text" [(ngModel)]="system.name" (ngModelChange)="systemChange.emit()" />
+    <input
+      type="text"
+      [(ngModel)]="system.name"
+      [readOnly]="readonly"
+      (ngModelChange)="systemChange.emit()"
+    />
   </label>
 
   <div class="panel-actions">
@@ -11,6 +16,8 @@
     <button type="button" class="secondary-btn" (click)="stop.emit()">Stop</button>
   </div>
 </div>
+
+<fieldset class="inspector-fields" [disabled]="readonly">
 
 <section class="inspector-section">
   <h3>Main</h3>
@@ -419,3 +426,4 @@
   </button>
 </section>
 </fieldset>
+</div>

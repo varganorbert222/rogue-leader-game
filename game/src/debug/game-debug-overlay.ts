@@ -95,9 +95,14 @@ function selectMeshWireframeColliders(
     prefs.overlays.vehicleWireframes || prefs.overlays.colliderWireframes;
   const showAsteroids =
     prefs.overlays.asteroidWireframes || prefs.overlays.colliderWireframes;
+  const showPlayerShipWireframes = prefs.overlays.colliderWireframes;
 
   return frame.colliders.filter((collider) => {
-    if (collider.kind === "ship") return showShips;
+    if (collider.kind === "ship") {
+      if (!showShips) return false;
+      if (collider.isPlayer && !showPlayerShipWireframes) return false;
+      return true;
+    }
     return showAsteroids;
   });
 }

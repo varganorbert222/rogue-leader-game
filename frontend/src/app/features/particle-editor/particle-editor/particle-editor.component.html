@@ -32,6 +32,12 @@
         >
           Delete
         </button>
+        <button type="button" class="primary-btn" (click)="playPreview()" [disabled]="playing || !effect">
+          Play all
+        </button>
+        <button type="button" class="secondary-btn" (click)="stopPreview()" [disabled]="!playing">
+          Stop
+        </button>
       </div>
 
       @if (effect) {
@@ -50,6 +56,7 @@
       [editable]="true"
       [treeReorder]="true"
       [showRowActions]="true"
+      [showRootActions]="true"
       [showGeneratedBadge]="false"
       [canRemoveNode]="canRemoveHierarchyNode"
       [showClipboardActions]="true"
@@ -57,10 +64,11 @@
       [canCopyNode]="canCopyHierarchyNode"
       [canCutNode]="canCutHierarchyNode"
       [canPasteIntoNode]="canPasteIntoHierarchyNode"
-      emptyMessage="Use + on the effect root to add a module"
+      emptyMessage="Use + above the tree to add a root module, or + on a node to add a child"
       (nodeSelect)="onHierarchySelect($event)"
       (nodeReorder)="onHierarchyReorder($event)"
       (addBelow)="onAddBelow($event)"
+      (addAtRoot)="onAddAtRoot()"
       (removeNode)="onRemoveHierarchyNode($event)"
       (contextAction)="onHierarchyContextAction($event)"
     />
@@ -95,6 +103,12 @@
           />
         </label>
         <p class="hint">Groups organize child modules; transform offsets all descendants.</p>
+        <div class="panel-actions">
+          <button type="button" class="primary-btn" (click)="playSelectedSubtree()" [disabled]="playing">
+            Play all
+          </button>
+          <button type="button" class="secondary-btn" (click)="stopPreview()">Stop</button>
+        </div>
       </section>
     } @else if (!selectedSystem || !selectedSlot) {
       <p class="hint">Select a node in the hierarchy.</p>

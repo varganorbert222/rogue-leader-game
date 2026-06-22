@@ -83,6 +83,34 @@ export function findPrefabSlotById(
   return found;
 }
 
+/** Collect particle-system node ids under a prefab root or tree node (inclusive subtree). */
+export function collectPrefabParticleSystemIdsInSubtree(
+  prefab: PrefabEditable,
+  anchorNodeId: string,
+): string[] {
+  const ids: string[] = [];
+
+  const collectFromNodes = (nodes: readonly PrefabTreeNode[]): void => {
+    walkPrefabTree(nodes, (node) => {
+      if (node.kind === 'particleSystem') ids.push(node.id);
+    });
+  };
+
+  if (anchorNodeId === prefab.id) {
+    collectFromNodes(prefab.tree);
+    return ids;
+  }
+
+  const located = findPrefabTreeNode(prefab.tree, anchorNodeId);
+  if (!located) return [];
+  if (located.node.kind === 'particleSystem') {
+    return [located.node.id];
+  }
+
+  collectFromNodes([located.node]);
+  return ids;
+}
+
 export function countPrefabContentNodes(tree: readonly PrefabTreeNode[]): number {
   let count = 0;
   walkPrefabTree(tree, (node) => {
@@ -94,17 +122,19 @@ export function countPrefabContentNodes(tree: readonly PrefabTreeNode[]): number
 export function insertPrefabNodeUnderAnchor(
   prefab: PrefabEditable,
   anchorId: string,
-  anchorKind: string,
   node: PrefabTreeNode,
 ): boolean {
-  if (anchorKind === 'prefabRoot' || anchorId === prefab.id) {
-    prefab.tree.push(node);
-    return true;
-  }
   const located = findPrefabTreeNode(prefab.tree, anchorId);
   if (!located) return false;
   located.node.children.push(node);
   return true;
+}
+
+export function insertPrefabNodeAtTreeRoot(
+  prefab: PrefabEditable,
+  node: PrefabTreeNode,
+): void {
+  prefab.tree.push(node);
 }
 
 export function removePrefabTreeNode(

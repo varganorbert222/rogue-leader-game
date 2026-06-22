@@ -57,14 +57,7 @@ function treeNodeToHierarchy(node: PrefabTreeNode, readonlySubtree: boolean): Hi
 }
 
 export function buildPrefabHierarchy(prefab: PrefabEditable): HierarchyNode[] {
-  return [
-    {
-      id: prefab.id,
-      label: prefab.name,
-      kind: 'prefabRoot',
-      children: prefab.tree.map((node) => treeNodeToHierarchy(node, false)),
-    },
-  ];
+  return prefab.tree.map((node) => treeNodeToHierarchy(node, false));
 }
 
 export function isPrefabHierarchyNodeLocked(node: HierarchyNode): boolean {
@@ -106,7 +99,7 @@ export function canRemovePrefabHierarchyNode(
   prefab: PrefabEditable,
   node: HierarchyNode,
 ): boolean {
-  if (node.kind === 'prefabRoot' || node.kind === 'sceneNode') return false;
+  if (node.kind === 'sceneNode') return false;
 
   if (isPrefabHierarchyNodeLocked(node)) {
     const parent = findHierarchyNodeParent(hierarchy, node.id);
@@ -120,7 +113,6 @@ export function canRemovePrefabHierarchyNode(
 }
 
 export function canDragPrefabHierarchyNode(node: HierarchyNode): boolean {
-  if (node.kind === 'prefabRoot') return false;
   return !isPrefabHierarchyNodeLocked(node);
 }
 

@@ -1,4 +1,5 @@
-import type { ParticleSystem } from '@babylonjs/core';
+import type { ParticleSystem, Scene } from '@babylonjs/core';
+import type { MeshParticlePreview } from './mesh/mesh-particle-preview';
 import type { ParticleEffectEditable, ParticleSystemEditable } from './types';
 import { resolveParticleEffect } from './refs';
 
@@ -122,6 +123,44 @@ export function estimateEffectPreviewDurationMs(
         .map((slot) => slot.config)
         .filter((config): config is ParticleSystemEditable => !!config);
 
+  if (!configs.length) return 2000;
+  return Math.max(2000, ...configs.map(estimateSystemPreviewDurationMs));
+}
+
+/** Play resolved particle modules by id (skips sub-emitter-only targets). */
+export function playParticleModuleIds(
+  systemIds: Iterable<string>,
+  options: {
+    systems: ReadonlyMap<string, ParticleSystem>;
+    meshPreviews: ReadonlyMap<string, MeshParticlePreview>;
+    resolved: readonly ParticleSystemEditable[];
+    subOnly: ReadonlySet<string>;
+    scene: Scene;
+    timers: number[];
+  },
+): void {
+  for (const id of systemIds) {
+    if (options.subOnly.has(id)) continue;
+    const config = options.resolved.find((entry) => entry.id === id);
+    if (!config) continue;
+
+    const meshPreview = options.meshPreviews.get(id);
+    if (meshPreview) {
+      meshPreview.play(options.scene);
+      continue;
+    }
+
+    const ps = options.systems.get(id);
+    if (ps) startParticlePlayback(ps, config, options.timers);
+  }
+}
+
+export function estimatePreviewDurationMsForModuleIds(
+  resolved: readonly ParticleSystemEditable[],
+  systemIds: Iterable<string>,
+): number {
+  const idSet = new Set(systemIds);
+  const configs = resolved.filter((entry) => idSet.has(entry.id));
   if (!configs.length) return 2000;
   return Math.max(2000, ...configs.map(estimateSystemPreviewDurationMs));
 }

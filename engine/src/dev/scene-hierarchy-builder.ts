@@ -52,34 +52,50 @@ function classifySceneNode(node: TransformNode | AbstractMesh): {
   return { kind: 'transform', hiddenInViewportByDefault: false };
 }
 
-function buildNode(
+function isRedundantGltfWrapperNode(node: TransformNode | AbstractMesh): boolean {
+  return node.name === '__root__';
+}
+
+function buildHierarchyNodesFromSceneNode(
   node: TransformNode | AbstractMesh,
   idPrefix: string,
-): HierarchyNode {
+): HierarchyNode[] {
+  if (isRedundantGltfWrapperNode(node)) {
+    const hoisted: HierarchyNode[] = [];
+    for (const child of node.getChildren()) {
+      if (child instanceof Mesh || child instanceof TransformNode) {
+        hoisted.push(...buildHierarchyNodesFromSceneNode(child, idPrefix));
+      }
+    }
+    return hoisted;
+  }
+
   const id = nextNodeId(idPrefix);
   const { kind, hiddenInViewportByDefault } = classifySceneNode(node);
   const children: HierarchyNode[] = [];
 
   for (const child of node.getChildren()) {
     if (child instanceof Mesh || child instanceof TransformNode) {
-      children.push(buildNode(child, idPrefix));
+      children.push(...buildHierarchyNodesFromSceneNode(child, idPrefix));
     }
   }
 
-  return {
-    id,
-    label: node.name || '(unnamed)',
-    kind,
-    hiddenInViewportByDefault,
-    sceneName: node.name || undefined,
-    isGenerated: isSceneNodeGenerated(node),
-    children,
-  };
+  return [
+    {
+      id,
+      label: node.name || '(unnamed)',
+      kind,
+      hiddenInViewportByDefault,
+      sceneName: node.name || undefined,
+      isGenerated: isSceneNodeGenerated(node),
+      children,
+    },
+  ];
 }
 
 /** Build a hierarchy tree from a loaded model root. */
 export function buildSceneHierarchy(root: TransformNode): HierarchyNode[] {
-  return [buildNode(root, 'scene')];
+  return buildHierarchyNodesFromSceneNode(root, 'scene');
 }
 
 function collectHierarchyChildren(parent: TransformNode): (TransformNode | AbstractMesh)[] {
@@ -108,10 +124,10 @@ export function buildModelContentHierarchy(entityRoot: TransformNode): Hierarchy
   }
 
   if (nodes.length === 0) {
-    return [buildNode(entityRoot, 'scene')];
+    return buildHierarchyNodesFromSceneNode(entityRoot, 'scene');
   }
 
-  return nodes.map((node) => buildNode(node, 'scene'));
+  return nodes.flatMap((node) => buildHierarchyNodesFromSceneNode(node, 'scene'));
 }
 
 /** Find a Babylon node by matching hierarchical name (depth-first). */

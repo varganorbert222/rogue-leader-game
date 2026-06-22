@@ -112,6 +112,7 @@ export {
   findModuleTreeNode,
   insertNodeAsLastChild,
   insertNodeUnderAnchor,
+  insertNodeAtEffectTreeRoot,
   removeTreeNode,
   isTreeDescendant,
   moveTreeNode,
@@ -120,6 +121,7 @@ export {
   syncEffectSystemsFromTree,
   cloneEffectTree,
   cloneTreeNodeSubtree,
+  collectEffectParticleSystemIdsInSubtree,
   buildReferencedPresetTree,
   buildClonedPresetTree,
   serializeEffectTree,
@@ -159,6 +161,8 @@ export {
   loopCycleDurationMs,
   estimateSystemPreviewDurationMs,
   estimateEffectPreviewDurationMs,
+  estimatePreviewDurationMsForModuleIds,
+  playParticleModuleIds,
 } from './playback';
 
 // Units

@@ -1,19 +1,37 @@
 <section class="hierarchy-panel" (click)="contextMenu = null">
-  <h3>{{ title }}</h3>
+  <div class="panel-header">
+    <h3>{{ title }}</h3>
+    @if (showRootActions && editable) {
+      <button
+        type="button"
+        class="root-add-btn"
+        title="Add node"
+        (click)="onAddAtRootClick($event)"
+      >
+        +
+      </button>
+    }
+  </div>
 
   @if (!rows.length) {
     <p class="empty">{{ emptyMessage }}</p>
   } @else {
     <ul class="tree" role="tree">
-      @for (row of rows; track row.node.id + ':' + resetKey) {
+      @for (row of rows; track row.node.id + ":" + resetKey) {
         <li
           class="tree-node"
           [class.selected]="selectedId === row.node.id"
           [class.dimmed]="!row.viewportVisible"
           [class.draggable]="canDrag(row)"
-          [class.drop-before]="dropHintId === row.node.id && dropHintPosition === 'before'"
-          [class.drop-after]="dropHintId === row.node.id && dropHintPosition === 'after'"
-          [class.drop-inside]="dropHintId === row.node.id && dropHintPosition === 'inside'"
+          [class.drop-before]="
+            dropHintId === row.node.id && dropHintPosition === 'before'
+          "
+          [class.drop-after]="
+            dropHintId === row.node.id && dropHintPosition === 'after'
+          "
+          [class.drop-inside]="
+            dropHintId === row.node.id && dropHintPosition === 'inside'
+          "
           [attr.draggable]="canDrag(row) ? true : null"
           (click)="onNodeClick(row.node)"
           (contextmenu)="onRowContextMenu(row, $event)"
@@ -31,7 +49,7 @@
                 (click)="toggleExpanded(row.node.id, $event)"
                 [attr.aria-expanded]="isExpanded(row.node.id)"
               >
-                {{ isExpanded(row.node.id) ? '▼' : '▶' }}
+                {{ isExpanded(row.node.id) ? "▼" : "▶" }}
               </button>
             } @else {
               <span class="expand-spacer"></span>
@@ -41,31 +59,47 @@
               class="visibility-btn"
               [class.off]="!row.selfViewportVisible"
               (click)="onVisibilityClick(row, $event)"
-              [attr.aria-label]="row.selfViewportVisible ? 'Hide in viewport' : 'Show in viewport'"
+              [attr.aria-label]="
+                row.selfViewportVisible
+                  ? 'Hide in viewport'
+                  : 'Show in viewport'
+              "
               title="Toggle viewport visibility (children follow in 3D)"
             >
-              {{ row.selfViewportVisible ? '●' : '○' }}
+              {{ row.selfViewportVisible ? "●" : "○" }}
             </button>
             <span class="kind">{{ kindIcon(row.node.kind) }}</span>
             <span class="label">{{ row.node.label }}</span>
             <span class="meta">
               @if (showGeneratedBadge && row.node.isGenerated) {
-                <span class="gen-badge" title="Generált elem (nem az eredeti modellből)">GEN</span>
+                <span
+                  class="gen-badge"
+                  title="Generált elem (nem az eredeti modellből)"
+                  >GEN</span
+                >
               } @else if (row.node.particlePresetRef) {
                 <span
                   class="preset-ref-badge"
-                  [class.readonly]="row.node.particlePresetRef.mode === 'readonly'"
+                  [class.readonly]="
+                    row.node.particlePresetRef.mode === 'readonly'
+                  "
                   [class.edit]="row.node.particlePresetRef.mode === 'edit'"
                   [title]="presetRefBadgeTitle(row.node.particlePresetRef.mode)"
                 >
                   {{ presetRefBadgeLabel(row.node.particlePresetRef.mode) }}
                 </span>
               } @else if (row.node.modelRef) {
-                <span class="preset-ref-badge readonly" title="Manifest model reference">ref</span>
+                <span
+                  class="preset-ref-badge readonly"
+                  title="Manifest model reference"
+                  >ref</span
+                >
               } @else if (row.node.prefabNestedRef) {
                 <span
                   class="preset-ref-badge"
-                  [class.readonly]="row.node.prefabNestedRef.mode === 'readonly'"
+                  [class.readonly]="
+                    row.node.prefabNestedRef.mode === 'readonly'
+                  "
                   [class.edit]="row.node.prefabNestedRef.mode === 'edit'"
                   [title]="presetRefBadgeTitle(row.node.prefabNestedRef.mode)"
                 >
@@ -109,8 +143,20 @@
       [style.top.px]="contextMenu.y"
       (click)="$event.stopPropagation()"
     >
-      <button type="button" [disabled]="!canAddBelowNode(contextMenu.node)" (click)="onContextPick('addCatalog')">Reuse saved preset…</button>
-      <button type="button" [disabled]="!canAddBelowNode(contextMenu.node)" (click)="onContextPick('addBlank')">Blank module</button>
+      <button
+        type="button"
+        [disabled]="!canAddBelowNode(contextMenu.node)"
+        (click)="onContextPick('addCatalog')"
+      >
+        Reuse saved preset…
+      </button>
+      <button
+        type="button"
+        [disabled]="!canAddBelowNode(contextMenu.node)"
+        (click)="onContextPick('addBlank')"
+      >
+        Blank module
+      </button>
       @if (showClipboardActions) {
         <div class="context-menu-separator" role="separator"></div>
         <button

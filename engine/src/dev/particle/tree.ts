@@ -102,6 +102,34 @@ function findTreeNodeInList(
   return null;
 }
 
+/** Collect particle-system node ids under an effect root or tree node (inclusive subtree). */
+export function collectEffectParticleSystemIdsInSubtree(
+  effect: ParticleEffectEditable,
+  anchorNodeId: string,
+): string[] {
+  const ids: string[] = [];
+
+  const collectFromNodes = (nodes: readonly ParticleEffectTreeNode[]): void => {
+    walkTree(nodes, (node) => {
+      if (node.kind === 'particleSystem') ids.push(node.id);
+    });
+  };
+
+  if (anchorNodeId === effect.id) {
+    collectFromNodes(effect.tree);
+    return ids;
+  }
+
+  const located = findTreeNode(effect.tree, anchorNodeId);
+  if (!located) return [];
+  if (located.node.kind === 'particleSystem') {
+    return [located.node.id];
+  }
+
+  collectFromNodes([located.node]);
+  return ids;
+}
+
 export function findSlotInEffect(
   effect: ParticleEffectEditable,
   slotId: string,
@@ -144,18 +172,20 @@ export function insertNodeAsLastChild(
   return true;
 }
 
-/** Insert as the last child of the anchor (effect root appends to top-level tree). */
+/** Insert as the last child of the anchor node. */
 export function insertNodeUnderAnchor(
   effect: ParticleEffectEditable,
   anchorId: string,
-  anchorKind: string,
   node: ParticleEffectTreeNode,
 ): boolean {
-  if (anchorKind === 'effectRoot' || anchorId === effect.id) {
-    effect.tree.push(node);
-    return true;
-  }
   return insertNodeAsLastChild(effect.tree, anchorId, node);
+}
+
+export function insertNodeAtEffectTreeRoot(
+  effect: ParticleEffectEditable,
+  node: ParticleEffectTreeNode,
+): void {
+  effect.tree.push(node);
 }
 
 export function removeTreeNode(

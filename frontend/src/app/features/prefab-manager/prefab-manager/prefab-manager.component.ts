@@ -22,6 +22,7 @@ import {
   findPrefabSlotById,
   findPrefabTreeNode,
   insertPrefabNodeUnderAnchor,
+  insertPrefabNodeAtTreeRoot,
   isPrefabModelSlot,
   isPrefabNestedSlot,
   isPrefabNodeInspectorReadonly,
@@ -123,6 +124,7 @@ export class PrefabManagerComponent implements OnInit, OnDestroy {
 
   insertModalOpen = false;
   insertAnchor: HierarchyNode | null = null;
+  insertAtRoot = false;
   insertInitialMode: PrefabInsertMode = 'model';
   deleteModalOpen = false;
   deleteModalMessage = '';
@@ -194,7 +196,6 @@ export class PrefabManagerComponent implements OnInit, OnDestroy {
 
   get selectedTreeNode(): PrefabTreeNode | null {
     if (!this.prefab || !this.selectedNodeId) return null;
-    if (this.selectedNodeId === this.prefab.id) return null;
     return findPrefabTreeNode(this.prefab.tree, this.selectedNodeId)?.node ?? null;
   }
 
@@ -210,6 +211,20 @@ export class PrefabManagerComponent implements OnInit, OnDestroy {
 
   get selectedSystem(): ParticleSystemEditable | null {
     return this.resolvedParticleCache;
+  }
+
+  get selectedParticleSiblingModules(): { id: string; name: string }[] {
+    const slot = this.selectedSlot;
+    if (!slot || !isPrefabParticleSlot(slot)) return [];
+    const preset = this.particlePresets.find((p) => p.id === slot.particleRef.presetId);
+    if (!preset) return [];
+    const modules: { id: string; name: string }[] = [];
+    walkTree(preset.effect.tree, (node) => {
+      if (node.kind === 'particleSystem' && node.slot) {
+        modules.push({ id: node.id, name: node.slot.name });
+      }
+    });
+    return modules;
   }
 
   get selectedInspectorReadonly(): boolean {
@@ -245,8 +260,7 @@ export class PrefabManagerComponent implements OnInit, OnDestroy {
     return node?.kind === 'sceneNode' ? node : null;
   }
 
-  canCopyHierarchyNode = (node: HierarchyNode): boolean =>
-    node.kind !== 'prefabRoot' && node.kind !== 'sceneNode';
+  canCopyHierarchyNode = (node: HierarchyNode): boolean => node.kind !== 'sceneNode';
 
   canCutHierarchyNode = (node: HierarchyNode): boolean =>
     this.canCopyHierarchyNode(node) && this.canRemoveHierarchyNode(node);
@@ -339,17 +353,7 @@ export class PrefabManagerComponent implements OnInit, OnDestroy {
 
   onHierarchyReorder(event: HierarchyReorderEvent): void {
     if (!this.prefab || !canReorderPrefabHierarchy(this.hierarchy, event)) return;
-    const tree = this.prefab.tree;
-
-    if (event.targetId === this.prefab.id) {
-      const located = findTreeNodeForMove(tree, event.sourceId);
-      if (!located) return;
-      const [moved] = located.parentChildren.splice(located.index, 1);
-      if (event.position === 'before') tree.unshift(moved);
-      else tree.push(moved);
-    } else {
-      movePrefabTreeNode(tree, event);
-    }
+    movePrefabTreeNode(this.prefab.tree, event);
 
     void this.resyncPreview();
     this.refreshHierarchy();
@@ -358,7 +362,15 @@ export class PrefabManagerComponent implements OnInit, OnDestroy {
 
   onAddBelow(node: HierarchyNode): void {
     if (!canInsertUnderPrefabHierarchyNode(node)) return;
+    this.insertAtRoot = false;
     this.insertAnchor = node;
+    this.insertInitialMode = 'model';
+    this.insertModalOpen = true;
+  }
+
+  onAddAtRoot(): void {
+    this.insertAtRoot = true;
+    this.insertAnchor = null;
     this.insertInitialMode = 'model';
     this.insertModalOpen = true;
   }
@@ -371,6 +383,7 @@ export class PrefabManagerComponent implements OnInit, OnDestroy {
     }
 
     if (event.action === 'addCatalog') {
+      this.insertAtRoot = false;
       this.insertAnchor = event.node;
       this.insertInitialMode = 'nested-readonly';
       this.insertModalOpen = true;
@@ -405,16 +418,22 @@ export class PrefabManagerComponent implements OnInit, OnDestroy {
   onInsertModalCancel(): void {
     this.insertModalOpen = false;
     this.insertAnchor = null;
+    this.insertAtRoot = false;
   }
 
   async onInsertModalConfirm(result: PrefabInsertResult): Promise<void> {
     const anchor = this.insertAnchor;
+    const insertAtRoot = this.insertAtRoot;
     this.insertModalOpen = false;
     this.insertAnchor = null;
-    if (!anchor) return;
+    this.insertAtRoot = false;
 
     if (result.mode === 'group') {
-      await this.insertGroupUnder(anchor);
+      if (insertAtRoot) {
+        await this.insertTreeNodeAtRoot(createPrefabGroupNode());
+      } else if (anchor) {
+        await this.insertGroupUnder(anchor);
+      }
       return;
     }
 
@@ -438,7 +457,11 @@ export class PrefabManagerComponent implements OnInit, OnDestroy {
           this.manifest,
           label,
         );
-        await this.insertTreeNodeUnder(anchor, treeNode);
+        if (insertAtRoot) {
+          await this.insertTreeNodeAtRoot(treeNode);
+        } else if (anchor) {
+          await this.insertTreeNodeUnder(anchor, treeNode);
+        }
       } catch (err) {
         this.errorMessage = toErrorMessage(err);
       } finally {
@@ -452,7 +475,7 @@ export class PrefabManagerComponent implements OnInit, OnDestroy {
         result.particlePresetId,
         this.particlePresets,
       );
-      await this.insertPrefabTreeUnder(anchor, nodes);
+      await this.insertPrefabTreeUnder(anchor, nodes, insertAtRoot);
       return;
     }
 
@@ -460,13 +483,13 @@ export class PrefabManagerComponent implements OnInit, OnDestroy {
 
     if (result.mode === 'nested-clone') {
       const nodes = buildClonedPrefabTree(result.prefabId, this.prefabs);
-      await this.insertPrefabTreeUnder(anchor, nodes);
+      await this.insertPrefabTreeUnder(anchor, nodes, insertAtRoot);
       return;
     }
 
     const refMode = result.mode === 'nested-edit' ? 'edit' : 'readonly';
     const nodes = buildReferencedPrefabTree(result.prefabId, refMode, this.prefabs);
-    await this.insertPrefabTreeUnder(anchor, nodes);
+    await this.insertPrefabTreeUnder(anchor, nodes, insertAtRoot);
   }
 
   async onRemoveHierarchyNode(node: HierarchyNode): Promise<void> {
@@ -551,6 +574,16 @@ export class PrefabManagerComponent implements OnInit, OnDestroy {
     }, 2500);
   }
 
+  playSelectedSubtree(): void {
+    if (!this.preview || !this.selectedNodeId) return;
+    this.playing = true;
+    this.preview.stopAll();
+    this.preview.playSubtree(this.selectedNodeId);
+    window.setTimeout(() => {
+      this.playing = false;
+    }, 2500);
+  }
+
   playSelectedSystem(): void {
     if (!this.selectedNodeId || !this.preview) return;
     this.preview.stopAll();
@@ -586,12 +619,17 @@ export class PrefabManagerComponent implements OnInit, OnDestroy {
   }
 
   private async insertPrefabTreeUnder(
-    anchor: HierarchyNode,
+    anchor: HierarchyNode | null,
     nodes: PrefabTreeNode[],
+    insertAtRoot = false,
   ): Promise<void> {
     if (!this.prefab || !nodes.length) return;
     for (const node of nodes) {
-      insertPrefabNodeUnderAnchor(this.prefab, anchor.id, anchor.kind, node);
+      if (insertAtRoot || !anchor) {
+        insertPrefabNodeAtTreeRoot(this.prefab, node);
+      } else {
+        insertPrefabNodeUnderAnchor(this.prefab, anchor.id, node);
+      }
     }
     this.selectedNodeId = this.firstNodeIdInNodes(nodes);
     this.refreshResolvedParticle();
@@ -605,7 +643,17 @@ export class PrefabManagerComponent implements OnInit, OnDestroy {
     node: PrefabTreeNode,
   ): Promise<void> {
     if (!this.prefab || !canInsertUnderPrefabHierarchyNode(anchor)) return;
-    insertPrefabNodeUnderAnchor(this.prefab, anchor.id, anchor.kind, node);
+    insertPrefabNodeUnderAnchor(this.prefab, anchor.id, node);
+    this.selectedNodeId = node.id;
+    this.refreshResolvedParticle();
+    await this.resyncPreview();
+    this.refreshHierarchy();
+    this.syncCurrentPrefab();
+  }
+
+  private async insertTreeNodeAtRoot(node: PrefabTreeNode): Promise<void> {
+    if (!this.prefab) return;
+    insertPrefabNodeAtTreeRoot(this.prefab, node);
     this.selectedNodeId = node.id;
     this.refreshResolvedParticle();
     await this.resyncPreview();
@@ -733,22 +781,4 @@ export class PrefabManagerComponent implements OnInit, OnDestroy {
     }
     return nodes[0]?.id ?? '';
   }
-}
-
-function findTreeNodeForMove(
-  tree: PrefabTreeNode[],
-  nodeId: string,
-): { parentChildren: PrefabTreeNode[]; index: number } | null {
-  const topIndex = tree.findIndex((node) => node.id === nodeId);
-  if (topIndex >= 0) return { parentChildren: tree, index: topIndex };
-
-  let found: { parentChildren: PrefabTreeNode[]; index: number } | null = null;
-  walkPrefabTree(tree, (node) => {
-    if (found) return;
-    const childIndex = node.children.findIndex((child) => child.id === nodeId);
-    if (childIndex >= 0) {
-      found = { parentChildren: node.children, index: childIndex };
-    }
-  });
-  return found;
 }

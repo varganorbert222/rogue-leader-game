@@ -5,9 +5,7 @@ export type HierarchyNodeKind =
   | 'empty'
   | 'collider'
   | 'particleSystem'
-  | 'effectRoot'
   | 'effectGroup'
-  | 'prefabRoot'
   | 'prefabGroup'
   | 'prefabModel';
 

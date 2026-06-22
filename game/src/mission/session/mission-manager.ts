@@ -310,9 +310,12 @@ export class MissionManager {
 
   async confirmShipSelection(shipId: string): Promise<void> {
     if (!this.awaitingShipSelection) return;
-    this.shipPreview?.stopRenderLoop();
+    this.shipPreview?.dispose();
+    this.shipPreview = undefined;
+    this.flushDebugOverlay();
     await this.spawnPlayerShip(shipId);
     this.awaitingShipSelection = false;
+    this.flushDebugOverlay();
   }
 
   getHudState(): MissionHudState {
@@ -374,6 +377,7 @@ export class MissionManager {
       return;
     }
     if (this.awaitingShipSelection) {
+      this.flushDebugOverlay();
       return;
     }
 
@@ -520,6 +524,15 @@ export class MissionManager {
         combat: this.combat,
       }),
       prefs,
+    );
+  }
+
+  /** Drop stale collider wireframe state while ship-select pauses the sim tick. */
+  private flushDebugOverlay(): void {
+    this.gameDebugOverlay.render(
+      this.host.scene,
+      null,
+      this.debugPreferences,
     );
   }
 

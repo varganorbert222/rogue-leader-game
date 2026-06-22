@@ -49,6 +49,7 @@
       [editable]="true"
       [treeReorder]="true"
       [showRowActions]="true"
+      [showRootActions]="true"
       [showGeneratedBadge]="false"
       [canRemoveNode]="canRemoveHierarchyNode"
       [canAddBelowNode]="canAddBelowHierarchyNode"
@@ -58,10 +59,11 @@
       [canCopyNode]="canCopyHierarchyNode"
       [canCutNode]="canCutHierarchyNode"
       [canPasteIntoNode]="canPasteIntoHierarchyNode"
-      emptyMessage="Use + on the prefab root to add a model, particle, or nested prefab"
+      emptyMessage="Use + above the tree to add a root node, or + on a node to add a child"
       (nodeSelect)="onHierarchySelect($event)"
       (nodeReorder)="onHierarchyReorder($event)"
       (addBelow)="onAddBelow($event)"
+      (addAtRoot)="onAddAtRoot()"
       (removeNode)="onRemoveHierarchyNode($event)"
       (contextAction)="onHierarchyContextAction($event)"
     />
@@ -95,6 +97,13 @@
             (ngModelChange)="onGroupNameChange()"
           />
         </label>
+        <p class="hint">Groups organize child modules; transform offsets all descendants.</p>
+        <div class="panel-actions">
+          <button type="button" class="primary-btn" (click)="playSelectedSubtree()" [disabled]="playing">
+            Play all
+          </button>
+          <button type="button" class="secondary-btn" (click)="stopPreview()">Stop</button>
+        </div>
       </section>
     } @else if (selectedSlot && isPrefabModelSlot(selectedSlot)) {
       <app-prefab-model-inspector
@@ -134,7 +143,7 @@
       <app-particle-system-inspector
         [system]="selectedSystem"
         [particleTextures]="particleTextures"
-        [siblingModules]="[]"
+        [siblingModules]="selectedParticleSiblingModules"
         [playing]="playing"
         [readonly]="true"
         (playAll)="playPreview()"

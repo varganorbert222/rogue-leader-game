@@ -159,6 +159,7 @@ export {
   refreshLoadedEntityColliders,
   resetLoadedEntityTransform,
   setLoadedEntityVisible,
+  showLoadedEntityForDevPreview,
 } from '../loaders/loaded-entity-visibility';
 export {
   LodShipLoader,

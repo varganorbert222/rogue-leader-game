@@ -45,6 +45,7 @@ export class HierarchyPanelComponent implements OnChanges {
   @Input() resetKey: string | number = 0;
   @Input() syncViewport = false;
   @Input() canRemoveNode: (node: HierarchyNode) => boolean = () => false;
+  @Input() showRootActions = false;
   @Input() canAddBelowNode: (node: HierarchyNode) => boolean = () => true;
   @Input() canDragNode: (node: HierarchyNode) => boolean = () => true;
   @Input() showClipboardActions = false;
@@ -59,6 +60,7 @@ export class HierarchyPanelComponent implements OnChanges {
   @Output() viewportVisibilityChange =
     new EventEmitter<HierarchyOutlinerState>();
   @Output() addBelow = new EventEmitter<HierarchyNode>();
+  @Output() addAtRoot = new EventEmitter<void>();
   @Output() removeNode = new EventEmitter<HierarchyNode>();
   @Output() contextAction = new EventEmitter<{
     action: HierarchyContextAction;
@@ -139,6 +141,12 @@ export class HierarchyPanelComponent implements OnChanges {
     this.addBelow.emit(node);
   }
 
+  onAddAtRootClick(event: MouseEvent): void {
+    event.stopPropagation();
+    this.contextMenu = null;
+    this.addAtRoot.emit();
+  }
+
   onRemoveClick(node: HierarchyNode, event: MouseEvent): void {
     event.stopPropagation();
     if (!this.canRemoveNode(node)) return;
@@ -157,7 +165,7 @@ export class HierarchyPanelComponent implements OnChanges {
     if (!this.editable) return false;
     if (!this.canDragNode(row.node)) return false;
     if (this.treeReorder) {
-      return row.node.kind !== 'effectRoot';
+      return true;
     }
     if (this.flatReorderUnderRoot) {
       return row.depth === 1 && row.node.kind === 'particleSystem';
@@ -169,9 +177,7 @@ export class HierarchyPanelComponent implements OnChanges {
     if (!this.canAddBelowNode(row.node)) return false;
     return (
       this.treeReorder &&
-      (row.node.kind === 'effectRoot' ||
-        row.node.kind === 'effectGroup' ||
-        row.node.kind === 'prefabRoot' ||
+      (row.node.kind === 'effectGroup' ||
         row.node.kind === 'prefabGroup' ||
         row.hasChildren)
     );
@@ -195,13 +201,6 @@ export class HierarchyPanelComponent implements OnChanges {
     )
       return;
     if (!this.canDrag(row) && !this.treeReorder) return;
-    if (
-      this.treeReorder &&
-      row.node.kind === 'effectRoot' &&
-      this.dragSourceId === row.node.id
-    ) {
-      return;
-    }
 
     event.preventDefault();
     event.dataTransfer!.dropEffect = 'move';
@@ -268,29 +267,25 @@ export class HierarchyPanelComponent implements OnChanges {
   kindIcon(kind: string): string {
     switch (kind) {
       case 'mesh':
-        return '◆';
+        return '\u25C6';
       case 'transform':
-        return '▸';
+        return '\u25B8';
       case 'empty':
-        return '○';
+        return '\u25CB';
       case 'collider':
-        return '⬡';
+        return '\u2B21';
       case 'particleSystem':
-        return '✦';
-      case 'effectRoot':
-        return '◎';
+        return '\u2726';
       case 'effectGroup':
-        return '▣';
-      case 'prefabRoot':
-        return '◎';
+        return '\u25A3';
       case 'prefabGroup':
-        return '▣';
+        return '\u25A3';
       case 'prefabModel':
-        return '◆';
+        return '\u25C6';
       case 'sceneNode':
-        return '◇';
+        return '\u25C7';
       default:
-        return '•';
+        return '\u2022';
     }
   }
 

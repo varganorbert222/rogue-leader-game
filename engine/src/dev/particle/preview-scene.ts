@@ -30,7 +30,11 @@ import {
   disposeLineMeshes,
 } from './origin-cross';
 import { resolveParticleSystemSlot } from './refs';
-import { startParticlePlayback } from './playback';
+import {
+  playParticleModuleIds,
+  startParticlePlayback,
+} from './playback';
+import { collectEffectParticleSystemIdsInSubtree } from './tree';
 import { applyTransformToBabylonNode, type ParticleNodeTransform } from './transform';
 import type {
   ParticleEffectEditable,
@@ -217,27 +221,28 @@ export class ParticlePreviewScene {
   }
 
   playAll(): void {
-    this.stopAll();
     if (!this.effect) return;
+    this.playSubtree(this.effect.id);
+  }
 
+  playSubtree(anchorNodeId: string): void {
+    if (!this.effect) return;
+    this.stopAll();
+
+    const systemIds = collectEffectParticleSystemIdsInSubtree(this.effect, anchorNodeId);
     const resolved = this.effect.systems
       .map((slot) => resolveParticleSystemSlot(slot, this.catalog))
       .filter((cfg): cfg is ParticleSystemEditable => !!cfg);
     const subOnly = collectSubEmitterTargetIds(resolved);
 
-    for (const [id, ps] of this.systems) {
-      if (subOnly.has(id)) continue;
-      const slot = this.effect.systems.find((s) => s.id === id);
-      if (!slot) continue;
-      const config = resolveParticleSystemSlot(slot, this.catalog);
-      if (!config) continue;
-      startParticlePlayback(ps, config, this.playbackTimers);
-    }
-
-    for (const [id, meshPreview] of this.meshPreviews) {
-      if (subOnly.has(id)) continue;
-      meshPreview.play(this.host.scene);
-    }
+    playParticleModuleIds(systemIds, {
+      systems: this.systems,
+      meshPreviews: this.meshPreviews,
+      resolved,
+      subOnly,
+      scene: this.host.scene,
+      timers: this.playbackTimers,
+    });
   }
 
   playSystem(systemId: string): void {

@@ -844,8 +844,8 @@
                 "capacity": 120,
                 "minLifeTime": 1,
                 "maxLifeTime": 2,
-                "minSize": 5,
-                "maxSize": 6,
+                "minSize": 10,
+                "maxSize": 12,
                 "sizeOverLifetime": {
                   "mode": "range",
                   "rangeStart": 1,
@@ -1032,8 +1032,8 @@
                 "capacity": 60,
                 "minLifeTime": 1,
                 "maxLifeTime": 2,
-                "minSize": 4,
-                "maxSize": 6,
+                "minSize": 8,
+                "maxSize": 12,
                 "sizeOverLifetime": {
                   "mode": "range",
                   "rangeStart": 1,

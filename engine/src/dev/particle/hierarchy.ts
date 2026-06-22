@@ -45,22 +45,6 @@ function treeNodeToHierarchy(node: ParticleEffectTreeNode): HierarchyNode {
 
 
 export function buildParticleEffectHierarchy(effect: ParticleEffectEditable): HierarchyNode[] {
-
-  return [
-
-    {
-
-      id: effect.id,
-
-      label: effect.name,
-
-      kind: 'effectRoot',
-
-      children: effect.tree.map(treeNodeToHierarchy),
-
-    },
-
-  ];
-
+  return effect.tree.map(treeNodeToHierarchy);
 }
 

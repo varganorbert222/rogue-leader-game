@@ -19,6 +19,31 @@
   }
 }
 
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.root-add-btn {
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border-radius: 3px;
+  border: 1px solid #4f8fd8;
+  font-size: 0.82rem;
+  line-height: 1;
+  font-weight: 700;
+  color: #d8ecff;
+  background: #2a4f7a;
+  cursor: pointer;
+
+  &:hover {
+    background: #35639a;
+  }
+}
+
 .empty {
   margin: 0;
   font-size: var(--dev-font-size-xs);
